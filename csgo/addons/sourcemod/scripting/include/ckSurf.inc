@@ -9,7 +9,7 @@
  * Checks clients timer status
  *
  * @param client    Client's id
- * @return          True / False 
+ * @return          True / False
  */
 native bool:ckSurf_GetTimerStatus(client);
 
@@ -84,7 +84,7 @@ native bool:ckSurf_SafeTeleport(client, Float:fDestination[3], Float:fAngle[3], 
  * @param client     Player index.
  * @return           Plugin_Handled; to stop the player from searching.
  */
-forward Action:ckSurf_OnMapFinished(client, Float:fRunTime, String:sRunTime[54], rank, total);
+forward Action:ckSurf_OnMapFinished(client, Float:fRunTime, String:sRunTime[54], rank, total, bool:improved);
 
 /**
  * Called when a player finishes a bonus
@@ -92,7 +92,7 @@ forward Action:ckSurf_OnMapFinished(client, Float:fRunTime, String:sRunTime[54],
  * @param client     Player index.
  * @return           Plugin_Handled; to stop the player from searching.
  */
-forward Action:ckSurf_OnBonusFinished(client, Float:fRunTime, String:sRunTime[54], rank, total, bonusid);
+forward Action:ckSurf_OnBonusFinished(client, Float:fRunTime, String:sRunTime[54], rank, total, bonusid, bool:improved);
 
 /**
  * Called when a player finishes a map in practice mode
@@ -118,7 +118,7 @@ public __pl_ckSurf_SetNTVOptional()
 {
 	MarkNativeAsOptional("ckSurf_GetTimerStatus");
 	MarkNativeAsOptional("ckSurf_StopTimer");
-	MarkNativeAsOptional("ckSurf_EmulateStartButtonPress");	
+	MarkNativeAsOptional("ckSurf_EmulateStartButtonPress");
 	MarkNativeAsOptional("ckSurf_EmulateStopButtonPress");
 	MarkNativeAsOptional("ckSurf_GetCurrentTime");
 	MarkNativeAsOptional("ckSurf_ClientIsVIP");
