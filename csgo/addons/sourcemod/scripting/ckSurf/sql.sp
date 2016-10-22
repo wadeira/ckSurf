@@ -113,7 +113,7 @@ char sql_selectMapRecord[] = "SELECT MIN(runtimepro), name, steamid FROM ck_play
 char sql_selectPersonalRecords[] = "SELECT runtimepro, name FROM ck_playertimes WHERE mapname = '%s' AND steamid = '%s' AND runtimepro > 0.0";
 char sql_selectPersonalAllRecords[] = "SELECT db1.name, db2.steamid, db2.mapname, db2.runtimepro as overall, db1.steamid FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.steamid = '%s' AND db2.runtimepro > -1.0 ORDER BY mapname ASC;";
 char sql_selectProSurfers[] = "SELECT db1.name, db2.runtimepro, db2.steamid, db1.steamid FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY db2.runtimepro ASC LIMIT 20";
-char sql_selectTopSurfers2[] = "SELECT db2.steamid, db1.name, db2.runtimepro as overall, db1.steamid, db2.mapname FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtimepro > -1.0 ORDER BY overall ASC LIMIT 100;";
+char sql_selectTopSurfers2[] = "SELECT db2.steamid, db1.name, db2.runtimepro as overall, db1.steamid, db2.mapname FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtimepro > -1.0 ORDER BY (CASE WHEN db2.mapname = '%s' THEN 1 WHEN db2.mapname LIKE '%s%c' THEN 2 ELSE 3 END), mapname, overall ASC LIMIT 100;";
 char sql_selectTopSurfers[] = "SELECT db2.steamid, db1.name, db2.runtimepro as overall, db1.steamid, db2.mapname FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY overall ASC LIMIT 100;";
 char sql_selectPlayerProCount[] = "SELECT name FROM ck_playertimes WHERE mapname = '%s' AND runtimepro  > -1.0;";
 char sql_selectPlayerRankProTime[] = "SELECT name,mapname FROM ck_playertimes WHERE runtimepro <= (SELECT runtimepro FROM ck_playertimes WHERE steamid = '%s' AND mapname = '%s' AND runtimepro > -1.0) AND mapname = '%s' AND runtimepro > -1.0 ORDER BY runtimepro;";
@@ -1982,19 +1982,18 @@ public void SQL_ViewRankedPlayerCallback5(Handle owner, Handle hndl, const char[
 	profileMenu.SetTitle(szTitle);
 	profileMenu.AddItem("Current Map time", "Current Map time");
 	profileMenu.AddItem("Challenge history", "Challenge history");
-	profileMenu.AddItem("Finished maps", "Finished maps", ITEMDRAW_DISABLED);
+
+	profileMenu.AddItem("View online", "View online");
 
 	if (IsValidClient(client))
 	{
 		if (StrEqual(szSteamId, g_szSteamID[client]))
 		{
-			profileMenu.AddItem("Unfinished maps", "Unfinished maps", ITEMDRAW_DISABLED);
 			if (GetConVarBool(g_hPointSystem))
 				profileMenu.AddItem("Refresh my profile", "Refresh my profile");
 		}
 	}
 
-	profileMenu.AddItem("View online", "View online");
 
 	profileMenu.ExitButton = true;
 	profileMenu.Display(client, MENU_TIME_FOREVER);
@@ -2780,7 +2779,7 @@ public void db_selectTopSurfers(int client, char mapname[128])
 public void db_selectMapTopSurfers(int client, char mapname[128])
 {
 	char szQuery[1024];
-	Format(szQuery, 1024, sql_selectTopSurfers2, PERCENT, mapname, PERCENT);
+	Format(szQuery, 1024, sql_selectTopSurfers2, PERCENT, mapname, PERCENT, mapname, mapname, PERCENT);
 	Handle pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackString(pack, mapname);
@@ -6465,9 +6464,14 @@ public int ProfileMenuHandler(Handle menu, MenuAction action, int client, int it
 		{
 			case 0:db_viewRecord(client, g_szProfileSteamId[client], g_szMapName);
 			case 1:db_viewChallengeHistory(client, g_szProfileSteamId[client]);
-			case 2:db_viewAllRecords(client, g_szProfileSteamId[client]);
-			case 3:db_viewUnfinishedMaps(client, g_szProfileSteamId[client]);
-			case 4:
+			case 2:
+			{
+				char sUrl[128];
+				Format(sUrl, sizeof(sUrl), "http://nightimate.pt/motd.php?u=http://surf.nightimate.pt/players/view/%s", g_szProfileSteamId[client]);
+
+				ShowMOTDPanel(client, "Profile", sUrl, MOTDPANEL_TYPE_URL);
+			}
+			case 3:
 			{
 				if (g_bRecalcRankInProgess[client])
 				{
@@ -6480,13 +6484,6 @@ public int ProfileMenuHandler(Handle menu, MenuAction action, int client, int it
 					PrintToChat(client, "%t", "Rc_PlayerRankStart", MOSSGREEN, WHITE, GRAY);
 					CalculatePlayerRank(client);
 				}
-			}
-			case 5:
-			{
-				char sUrl[128];
-				Format(sUrl, sizeof(sUrl), "http://nightimate.pt/motd.php?u=http://surf.nightimate.pt/players/view/%s", g_szProfileSteamId[client]);
-
-				ShowMOTDPanel(client, "Profile", sUrl, MOTDPANEL_TYPE_URL);
 			}
 		}
 	}
