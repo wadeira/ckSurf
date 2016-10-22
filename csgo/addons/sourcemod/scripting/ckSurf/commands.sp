@@ -1166,22 +1166,22 @@ public Action Client_Knife(int client, int args)
 	if (!IsValidClient(client) || !IsPlayerAlive(client))
 		return Plugin_Handled;
 
-		// Can also be used for the knife delay
-		if ((GetGameTime() - g_flastClientKnife[client]) < 10.0)
-			return Plugin_Handled;
-
-		g_flastClientKnife[client] = GetGameTime();
-
-		if (Client_HasWeapon(client, "weapon_knife"))
-		{
-			int weapon = Client_GetWeapon(client, "weapon_knife");
-			FakeClientCommand(client, "use %s", weapon);
-			InstantSwitch(client, weapon);
-		}
-		else
-			GivePlayerItem(client, "weapon_knife");
-
+	// Can also be used for the knife delay
+	if ((GetGameTime() - g_flastClientKnife[client]) < 10.0)
 		return Plugin_Handled;
+
+	g_flastClientKnife[client] = GetGameTime();
+
+	if (Client_HasWeapon(client, "weapon_knife"))
+	{
+		int weapon = Client_GetWeapon(client, "weapon_knife");
+		FakeClientCommand(client, "use %s", weapon);
+		InstantSwitch(client, weapon);
+	}
+	else
+		GivePlayerItem(client, "weapon_knife");
+
+	return Plugin_Handled;
 }
 
 public Action Client_Usp(int client, int args)

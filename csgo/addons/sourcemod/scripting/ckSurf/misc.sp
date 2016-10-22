@@ -3000,18 +3000,17 @@ public void CenterHudAlive(int client)
 		if (g_bTimeractivated[client] && !g_bPause[client])
 		{
 			FormatTimeFloat(client, g_fCurrentRunTime[client], 3, pAika, 128);
-			if (g_bMissedMapBest[client] && g_fPersonalRecord[client] > 0.0) // missed best personal time
-			{
-				Format(pAika, 128, "<font color='#FFFFB2'>%s</font>", pAika);
-			}
-			else if (g_fPersonalRecord[client] < 0.1) // hasn't finished the map yet
-			{
-				Format(pAika, 128, "<font color='#7F7FFF'>%s</font>", pAika);
-			}
+
+			// missed best personal time
+			if (g_bMissedMapBest[client] && g_fPersonalRecord[client] > 0.0)
+				Format(pAika, 128, "<font color='#7C0000'>%s</font>", pAika);
+
+			// missed map record
+			else if (g_fRecordMapTime < g_fCurrentRunTime[client])
+				Format(pAika, 128, "<font color='#FFA500'>%s</font>", pAika);
+
 			else
-			{
-				Format(pAika, 128, "<font color='#99FF99'>%s</font>", pAika); // hasn't missed best personal time yet
-			}
+				Format(pAika, 128, "<font color='#55FF55'>%s</font>", pAika);
 		}
 
 		if (g_bPracticeMode[client])
