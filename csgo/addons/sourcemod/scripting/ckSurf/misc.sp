@@ -3079,15 +3079,15 @@ public void CenterHudAlive(int client)
 			{
 				if (g_bPause[client])
 				{
-					PrintHintText(client, "<font face=''>%s<font color='#FF0000'>Paused</font> %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, g_szLastSRDifference[client], g_szLastPBDifference[client], szRank, StageString, RoundToNearest(g_fLastSpeed[client]));
+					PrintHintText(client, "<font face=''>%s<font color='#FF0000'>Paused</font> %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, szRank, g_szLastPBDifference[client], g_szLastSRDifference[client], StageString, RoundToNearest(g_fLastSpeed[client]));
 				}
 				else
 				{
-					PrintHintText(client, "<font face=''>%s%s %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, pAika, g_szLastSRDifference[client], g_szLastPBDifference[client], szRank, StageString, RoundToNearest(g_fLastSpeed[client]));
+					PrintHintText(client, "<font face=''>%s%s %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, pAika, szRank, g_szLastPBDifference[client], g_szLastSRDifference[client], StageString, RoundToNearest(g_fLastSpeed[client]));
 				}
 			}
 			else
-				PrintHintText(client, "<font face=''>%s<font color='#FF0000'>Stopped</font> %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, g_szLastSRDifference[client], g_szLastPBDifference[client], szRank, StageString, RoundToNearest(g_fLastSpeed[client]));
+				PrintHintText(client, "<font face=''>%s<font color='#FF0000'>Stopped</font> %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, szRank, g_szLastPBDifference[client], g_szLastSRDifference[client], StageString, RoundToNearest(g_fLastSpeed[client]));
 		}
 	}
 }
