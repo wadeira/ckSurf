@@ -2978,118 +2978,135 @@ public void CenterHudDead(int client)
 
 public void CenterHudAlive(int client)
 {
+
+	// Check if its a valid client
 	if (!IsValidClient(client))
 		return;
 
-	char pAika[54], timerText[32], StageString[24];
+	// Check if client hud is disabled
+	if (!g_bInfoPanel[client])
+		return;
 
-	if (g_bInfoPanel[client])
-	{
-		if (!g_bhasStages) // map is linear
-		{
-			Format(StageString, 24, "Linear\t");
+	// Variables
+	int zgroup = g_iClientInZone[client][2];
+
+	// Buffers
+	char sTime[64],
+			 sRank[32],
+			 sPBest[64],
+			 sSRec[64],
+			 sStage[32];
+
+	/*************
+	 * Timer
+	 *************/
+
+	// Check if timer is disabled
+	if (!g_bTimeractivated[client])
+		Format(sTime, sizeof(sTime), "Disabled");
+
+	// Check if timer is paused
+	else if (g_bPause[client])
+		Format(sTime, sizeof(sTime), "Paused");
+
+	// Display current time
+	else
+		FormatTimeFloat(client, g_fCurrentRunTime[client], 3, sTime, sizeof(sTime));
+
+	// Add colors to time
+	if ((zgroup == 0 && g_bMissedMapBest[client] && g_fPersonalRecord[client] > 0.0) ||
+			(zgroup > 0 && g_fPersonalRecordBonus[zgroup][client] > 0.0 && g_fCurrentRunTime[client] > g_fPersonalRecordBonus[zgroup][client]) ||
+			!g_bTimeractivated[client])
+		Format(sTime, sizeof(sTime), "<font color='#FF0000'>%s</font>", sTime);
+
+	else if ((zgroup == 0 && g_fCurrentRunTime[client] > g_fRecordMapTime) ||
+					 (zgroup > 0 && g_fCurrentRunTime[client] > g_fBonusFastest[zgroup]))
+		Format(sTime, sizeof(sTime), "<font color='#FFA500'>%s</font>", sTime);
+
+	else
+		Format(sTime, sizeof(sTime), "<font color='#00CC00'>%s</font>", sTime);
+
+
+	/********************
+	 * Rank, PB and SR
+	 ********************/
+
+	// Bonus
+	if (zgroup > 0) {
+		if (g_fPersonalRecordBonus[zgroup][client] > 0.0) {
+			Format(sRank, sizeof(sRank), "%i / %i", g_MapRankBonus[zgroup][client], g_iBonusCount[zgroup]);
+			Format(sPBest, sizeof(sPBest), "%s", g_szPersonalRecordBonus[zgroup][client]);
+			Format(sSRec, sizeof(sSRec), "%s", g_szRecordMapTime);
 		}
-		else // map has stages
-		{
-			if (g_Stage[g_iClientInZone[client][2]][client] > 9)
-				Format(StageString, 24, "%i / %i\t", g_Stage[g_iClientInZone[client][2]][client], (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1)); // less \t's to make lines align
-			else
-				Format(StageString, 24, "%i / %i\t\t", g_Stage[g_iClientInZone[client][2]][client], (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1));
-		}
-
-		if (g_bTimeractivated[client] && !g_bPause[client])
-		{
-			FormatTimeFloat(client, g_fCurrentRunTime[client], 3, pAika, 128);
-
-			// missed best personal time
-			if (g_bMissedMapBest[client] && g_fPersonalRecord[client] > 0.0)
-				Format(pAika, 128, "<font color='#7C0000'>%s</font>", pAika);
-
-			// missed map record
-			else if (g_fRecordMapTime < g_fCurrentRunTime[client])
-				Format(pAika, 128, "<font color='#FFA500'>%s</font>", pAika);
-
-			else
-				Format(pAika, 128, "<font color='#55FF55'>%s</font>", pAika);
-		}
-
-		if (g_bPracticeMode[client])
-			Format(timerText, 32, "[PRAC]: ");
-		else
-			Format(timerText, 32, "");
-
-		// Set Checkpoint back to normal
-		if (GetGameTime() - g_fLastDifferenceTime[client] > 5.0)
-		{
-			if (g_iClientInZone[client][2] == 0)
-			{
-				if (g_fRecordMapTime != 9999999.0)
-				{
-					Format(g_szLastSRDifference[client], 64, "\t\tSR: %s", g_szRecordMapTime);
-					if (g_fPersonalRecord[client] > 0.0)
-					{
-						Format(g_szLastPBDifference[client], 64, "%s", g_szPersonalRecord[client]);
-					}
-					else
-					{
-						Format(g_szLastPBDifference[client], 64, "N/A");
-					}
-				}
-				else
-				{
-					Format(g_szLastSRDifference[client], 64, "\t\tSR: N/A");
-					Format(g_szLastPBDifference[client], 64, "N/A");
-				}
-			}
-			else
-			{
-				Format(g_szLastPBDifference[client], 64, "%s", g_szPersonalRecordBonus[g_iClientInZone[client][2]][client]);
-				Format(g_szLastSRDifference[client], 64, "\t\tSR: %s", g_szBonusFastestTime[g_iClientInZone[client][2]]);
-			}
+		else if (g_iBonusCount[zgroup] > 0) {
+			Format(sRank, sizeof(sRank), "N/A / %i", g_iBonusCount[zgroup]);
+			Format(sPBest, sizeof(sPBest), "N/A\t");
+			Format(sSRec, sizeof(sSRec), "%s", g_szBonusFastestTime[zgroup]);
 		}
 
-
-
-		char szRank[32];
-		if (g_iClientInZone[client][2] > 0) // if in bonus stage, get bonus times
-		{
-			if (g_fPersonalRecordBonus[g_iClientInZone[client][2]][client] > 0.0)
-				Format(szRank, 64, "\tRank: %i / %i", g_MapRankBonus[g_iClientInZone[client][2]][client], g_iBonusCount[g_iClientInZone[client][2]]);
-			else
-				if (g_iBonusCount[g_iClientInZone[client][2]] > 0)
-					Format(szRank, 64, "\t\tRank: N/A / %i", g_iBonusCount[g_iClientInZone[client][2]]);
-				else
-					Format(szRank, 64, "\t\tRank: N/A");
-
-		}
-		else // if in normal map, get normal times
-		{
-			if (g_fPersonalRecord[client] > 0.0)
-				Format(szRank, 64, "\tRank: %i / %i", g_MapRank[client], g_MapTimesCount);
-			else
-				if (g_MapTimesCount > 0)
-					Format(szRank, 64, "\t\tRank: N/A / %i", g_MapTimesCount);
-				else
-					Format(szRank, 64, "\t\tRank: N/A");
-		}
-
-		if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
-		{
-			if (g_bTimeractivated[client])
-			{
-				if (g_bPause[client])
-				{
-					PrintHintText(client, "<font face=''>%s<font color='#FF0000'>Paused</font> %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, szRank, g_szLastPBDifference[client], g_szLastSRDifference[client], StageString, RoundToNearest(g_fLastSpeed[client]));
-				}
-				else
-				{
-					PrintHintText(client, "<font face=''>%s%s %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, pAika, szRank, g_szLastPBDifference[client], g_szLastSRDifference[client], StageString, RoundToNearest(g_fLastSpeed[client]));
-				}
-			}
-			else
-				PrintHintText(client, "<font face=''>%s<font color='#FF0000'>Stopped</font> %s\nPB: %s%s\nStage: %sSpeed: %i</font>", timerText, szRank, g_szLastPBDifference[client], g_szLastSRDifference[client], StageString, RoundToNearest(g_fLastSpeed[client]));
+		else {
+			Format(sRank, sizeof(sRank), "N/A");
+			Format(sPBest, sizeof(sPBest), "N/A\t");
+			Format(sSRec, sizeof(sSRec), "N/A");
 		}
 	}
+
+	// Map
+	else {
+		if (g_fPersonalRecord[client] > 0.0) {
+			Format(sRank, sizeof(sRank), "%i / %i", g_MapRank[client], g_MapTimesCount);
+			Format(sPBest, sizeof(sPBest), "%s", g_szPersonalRecord[client]);
+			Format(sSRec, sizeof(sSRec), "%s", g_szRecordMapTime);
+		}
+		else if (g_MapTimesCount > 0) {
+			Format(sRank, sizeof(sRank), "N/A / %i", g_MapTimesCount);
+			Format(sPBest, sizeof(sPBest), "N/A\t");
+			Format(sSRec, sizeof(sSRec), "%s", g_szRecordMapTime);
+		}
+
+		else {
+			Format(sRank, sizeof(sRank), "N/A");
+			Format(sPBest, sizeof(sPBest), "N/A\t");
+			Format(sSRec, sizeof(sSRec), "N/A");
+		}
+	}
+
+
+	// Swap SR and PB with CP diff
+	if (GetGameTime() - g_fLastDifferenceTime[client] <= 5.0)
+	{
+		if (zgroup > 0) {
+			if (g_fPersonalRecord[client] > 0.0)
+				Format(sPBest, sizeof(sPBest), "%s", g_szLastPBDifference[client]);
+
+			if (g_fRecordMapTime > 0.0)
+				Format(sPBest, sizeof(sPBest), "%s", g_szLastSRDifference[client]);
+		} else {
+			Format(g_szLastPBDifference[client], 64, "%s", sPBest);
+			Format(g_szLastSRDifference[client], 64, "%s", sSRec);
+		}
+	}
+
+
+	/*******************
+	 * Stages
+ 	 *******************/
+
+	// Check if map is linear
+	if (!g_bhasStages)
+		Format(sStage, sizeof(sStage), "Linear");
+	else
+		Format(sStage, sizeof(sStage), "%i / %i\t", g_Stage[zgroup][client], (g_mapZonesTypeCount[zgroup][3] + 1));
+
+	// Add \t (TAB) to keep the hud aligned
+	if (g_Stage[zgroup][client] <= 9)
+		Format(sStage, sizeof(sStage), "%s\t", sStage);
+
+
+
+	// Verify that the user is valid to send the message
+	if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
+		PrintHintText(client, "<font face=''>%s\t\tRank: %s\nPB: %s\tSR: %s\nStage: %sSpeed: %i u/s</font>", sTime, sRank, sPBest, sSRec, sStage, RoundToNearest(g_fLastSpeed[client]));
 }
 
 public void Checkpoint(int client, int zone, int zonegroup)
@@ -3140,9 +3157,9 @@ public void Checkpoint(int client, int zone, int zonegroup)
 			Format(sz_srDiff_colorless, 128, "-%s", sz_srDiff);
 			Format(sz_srDiff, 128, " %c%cSR: %c-%s%c", YELLOW, PURPLE, GREEN, sz_srDiff, YELLOW);
 			if (zonegroup > 0)
-				Format(g_szLastSRDifference[client], 64, "SR: <font color='#99ff99'>%s</font>", sz_srDiff_colorless);
+				Format(g_szLastSRDifference[client], 64, "SR: <font color='#00CC00'>%s</font>", sz_srDiff_colorless);
 			else
-				Format(g_szLastSRDifference[client], 64, "\t\tSR: <font color='#99ff99'>%s</font>", sz_srDiff_colorless);
+				Format(g_szLastSRDifference[client], 64, "\tSR: <font color='#FF0000'>%s</font>", sz_srDiff_colorless);
 
 		}
 		else
@@ -3150,9 +3167,9 @@ public void Checkpoint(int client, int zone, int zonegroup)
 			Format(sz_srDiff_colorless, 128, "+%s", sz_srDiff);
 			Format(sz_srDiff, 128, " %c%cSR: %c+%s%c", YELLOW, PURPLE, RED, sz_srDiff, YELLOW);
 			if (zonegroup > 0)
-				Format(g_szLastSRDifference[client], 64, "SR: <font color='#FF9999'>%s</font>", sz_srDiff_colorless);
+				Format(g_szLastSRDifference[client], 64, "SR: <font color='#FF0000'>%s</font>", sz_srDiff_colorless);
 			else
-				Format(g_szLastSRDifference[client], 64, "\t\tSR: <font color='#FF9999'>%s</font>", sz_srDiff_colorless);
+				Format(g_szLastSRDifference[client], 64, "\tSR: <font color='#FF0000'>%s</font>", sz_srDiff_colorless);
 		}
 		g_fLastDifferenceTime[client] = GetGameTime();
 	}
@@ -3185,10 +3202,7 @@ public void Checkpoint(int client, int zone, int zonegroup)
 		{
 			Format(szDiff_colorless, 32, "-%s", szDiff);
 			Format(szDiff, sizeof(szDiff), " %c-%s", GREEN, szDiff);
-			if (zonegroup > 0)
-				Format(g_szLastPBDifference[client], 64, "<font color='#99ff99'>%s</font>\t", szDiff_colorless);
-			else
-				Format(g_szLastPBDifference[client], 64, "<font color='#99ff99'>%s</font>\t", szDiff_colorless);
+			Format(g_szLastPBDifference[client], 64, "<font color='#00CC00'>%s</font>\t", szDiff_colorless);
 
 			/*
 			if (zonegroup > 0)
@@ -3202,9 +3216,9 @@ public void Checkpoint(int client, int zone, int zonegroup)
 			Format(szDiff_colorless, 32, "+%s", szDiff);
 			Format(szDiff, sizeof(szDiff), " %c+%s", RED, szDiff);
 			if (zonegroup > 0)
-				Format(g_szLastPBDifference[client], 64, "<font color='#FF9999'>%s</font>\t", szDiff_colorless);
+				Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>\t", szDiff_colorless);
 			else
-				Format(g_szLastPBDifference[client], 64, "<font color='#FF9999'>%s</font>\t", szDiff_colorless);
+				Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>\t", szDiff_colorless);
 			/*
 			if (zonegroup > 0)
 				Format(g_szLastPBDifference[client], 64, "%s <font color='#FF9999' size='16'>%s</font>", g_szPersonalRecordBonus[zonegroup][client], szDiff_colorless);
