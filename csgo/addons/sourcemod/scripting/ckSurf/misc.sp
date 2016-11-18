@@ -3075,16 +3075,11 @@ public void CenterHudAlive(int client)
 	// Swap SR and PB with CP diff
 	if (GetGameTime() - g_fLastDifferenceTime[client] <= 5.0)
 	{
-		if (zgroup > 0) {
-			if (g_fPersonalRecord[client] > 0.0)
-				Format(sPBest, sizeof(sPBest), "%s", g_szLastPBDifference[client]);
+		if (g_fPersonalRecord[client] > 0.0)
+			Format(sPBest, sizeof(sPBest), "%s", g_szLastPBDifference[client]);
 
-			if (g_fRecordMapTime > 0.0)
-				Format(sPBest, sizeof(sPBest), "%s", g_szLastSRDifference[client]);
-		} else {
-			Format(g_szLastPBDifference[client], 64, "%s", sPBest);
-			Format(g_szLastSRDifference[client], 64, "%s", sSRec);
-		}
+		if (g_fRecordMapTime > 0.0)
+			Format(sSRec, sizeof(sSRec), "%s", g_szLastSRDifference[client]);
 	}
 
 
