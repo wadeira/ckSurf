@@ -505,6 +505,7 @@ bool g_bBonusFirstRecord[MAXPLAYERS + 1];						// First bonus time in map?
 bool g_bBonusPBRecord[MAXPLAYERS + 1];							// Personal best time in bonus
 bool g_bBonusSRVRecord[MAXPLAYERS + 1];							// New server record in bonus
 char g_szBonusTimeDifference[MAXPLAYERS + 1];					// How many seconds were improved / lost in that run
+char g_szBonusSRTimeDifference[MAXPLAYERS + 1];				// Difference between the run and the bonus record
 float g_fStartTime[MAXPLAYERS + 1]; 							// Time when run was started
 float g_fFinalTime[MAXPLAYERS + 1]; 							// Total time the run took
 char g_szFinalTime[MAXPLAYERS + 1][32]; 						// Total time the run took in 00:00:00 format
@@ -515,7 +516,8 @@ bool g_bMissedMapBest[MAXPLAYERS + 1]; 							// Missed personal record time?
 bool g_bMapFirstRecord[MAXPLAYERS + 1];							// Was players run his first time finishing the map?
 bool g_bMapPBRecord[MAXPLAYERS + 1];							// Was players run his personal best?
 bool g_bMapSRVRecord[MAXPLAYERS + 1];							// Was players run the new server record?
-char g_szTimeDifference[MAXPLAYERS + 1][32]; 					// Used to print the client's new times difference to record
+char g_szTimeDifference[MAXPLAYERS + 1][32]; 					// Used to print the client's new times difference to personal record
+char g_szSRTimeDifference[MAXPLAYERS + 1][32];        // Used to print the client's new times difference to map record
 float g_fRecordMapTime; 										// Record map time in seconds
 char g_szRecordMapTime[64]; 									// Record map time in 00:00:00 format
 char g_szPersonalRecord[MAXPLAYERS + 1][64]; 					// Client's peronal record in 00:00:00 format
