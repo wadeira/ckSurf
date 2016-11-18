@@ -34,7 +34,7 @@ char sql_selectzoneTypeIds[] = "SELECT zonetypeid FROM ck_zones WHERE mapname='%
 char sql_selectMapZones[] = "SELECT zoneid, zonetype, zonetypeid, pointa_x, pointa_y, pointa_z, pointb_x, pointb_y, pointb_z, vis, team, zonegroup, zonename FROM ck_zones WHERE mapname = '%s' ORDER BY zonetypeid ASC";
 char sql_selectTotalBonusCount[] = "SELECT mapname, zoneid, zonetype, zonetypeid, pointa_x, pointa_y, pointa_z, pointb_x, pointb_y, pointb_z, vis, team, zonegroup, zonename FROM ck_zones WHERE zonetype = 3 GROUP BY mapname, zonegroup;";
 char sql_selectZoneIds[] = "SELECT mapname, zoneid, zonetype, zonetypeid, pointa_x, pointa_y, pointa_z, pointb_x, pointb_y, pointb_z, vis, team, zonegroup, zonename FROM ck_zones WHERE mapname = '%s' ORDER BY zoneid ASC";
-char sql_selectBonusesInMap[] = "SELECT mapname, zonegroup, zonename FROM `ck_zones` WHERE mapname LIKE '%c%s%c' AND zonegroup > 0 GROUP BY zonegroup;";
+char sql_selectBonusesInMap[] = "SELECT mapname, zonegroup, zonename FROM `ck_zones` WHERE mapname LIKE '%c%s%c' AND zonegroup > 0 GROUP BY zonegroup ORDER BY (CASE WHEN mapname = '%s' THEN 1 WHEN mapname LIKE '%s%c' THEN 2 ELSE 3 END);";
 char sql_deleteMapZones[] = "DELETE FROM ck_zones WHERE mapname = '%s'";
 char sql_deleteZone[] = "DELETE FROM ck_zones WHERE mapname = '%s' AND zoneid = '%i'";
 char sql_deleteAllZones[] = "DELETE FROM ck_zones";
@@ -2793,7 +2793,7 @@ public void db_selectBonusesInMap(int client, char mapname[128])
 {
 	// SELECT mapname, zonegroup, zonename FROM `ck_zones` WHERE mapname LIKE '%c%s%c' AND zonegroup > 0 GROUP BY zonegroup;
 	char szQuery[512];
-	Format(szQuery, 512, sql_selectBonusesInMap, PERCENT, mapname, PERCENT);
+	Format(szQuery, 512, sql_selectBonusesInMap, PERCENT, mapname, PERCENT, mapname, mapname, PERCENT);
 	SQL_TQuery(g_hDb, db_selectBonusesInMapCallback, szQuery, client, DBPrio_Low);
 }
 

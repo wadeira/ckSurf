@@ -1419,7 +1419,7 @@ public Action Client_BonusTop(int client, int args)
 		}
 		case 2: {
 			GetCmdArg(1, szArg, 128);
-			if (StringToInt(szArg) != 0 && szArg[0] != '0') // passes, if not a number (argument is mapname)
+			if (StringToInt(szArg) == 0 && szArg[0] != '0') // passes, if not a number (argument is mapname)
 			{
 				char szZGrp[128];
 				GetCmdArg(2, szZGrp, 128);
@@ -1442,6 +1442,7 @@ public Action Client_BonusTop(int client, int args)
 			return Plugin_Handled;
 		}
 	}
+
 	db_selectBonusTopSurfers(client, szArg, zGrp);
 	return Plugin_Handled;
 }
