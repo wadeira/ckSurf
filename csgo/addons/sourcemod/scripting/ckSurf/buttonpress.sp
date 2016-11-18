@@ -229,7 +229,7 @@ public void CL_OnEndTimerPress(int client)
 
 
 		srdiff = g_fRecordMapTime - g_fFinalTime[client];
-		FormatTimeFloat(client, diff, 3, szSRDiff, sizeof(szSRDiff));
+		FormatTimeFloat(client, srdiff, 3, szSRDiff, sizeof(szSRDiff));
 
 		if (diff > 0.0)
 			Format(g_szSRTimeDifference[client], sizeof(szSRDiff), "-%s", szSRDiff);
