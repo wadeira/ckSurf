@@ -28,12 +28,12 @@
 	"PracticeStartError"
 	{
 		"#format"   "{1:c},{2:c},{3:c}"
-		"en"        "[{1}CK{2}] You don't have a checkpoint to teleport to! Create one by using%c !cp"
+		"en"        "[{1}CK{2}] You don't have a checkpoint to teleport to! Create one by using%c !cp"	
 	}
 	"PracticeUndo"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}CK{2}] Undid your last Player Checkpoint."
+		"en"        "[{1}CK{2}] Undid your last Player Checkpoint."	
 	}
 	"PracticeUndoError"
 	{
@@ -132,25 +132,25 @@
 	}
 	"TimeleftCounter"
 	{
-
+	
 		"#format"   "{1:c},{2:c},{3:i}"
 		"en"        "[{1}MAP{2}] {3}.."
 	}
 	"TimeleftMinutes"
 	{
-
+	
 		"#format"   "{1:c},{2:c},{3:i}"
 		"en"        "[{1}MAP{2}] {3} minutes remaining"
 	}
 	"TimeleftSeconds"
 	{
-
+	
 		"#format"   "{1:c},{2:c},{3:i}"
 		"en"        "[{1}MAP{2}] {3} seconds remaining"
 	}
 	"TimerStopped"
 	{
-
+	
 		"#format"   "{1:s}"
 		"en"        "<font size='22'>Congratulations!</font>\nYou finished the map in: <font color='#86D53B'>{1}</font>"
 	}
@@ -193,7 +193,7 @@
 	{
 		"#format"   "{1:c},{2:c},{3:i},{4:.1f},{5:.1f},{6:.1f}"
 		"en"       "[{1}CK{2}] Got Point {3} at X: {4}, Y: {5}, Z: {6}"
-	}
+	}	
 	"KnifeDead"
 	{
 		"#format"   "{1:c},{2:c}"
@@ -293,7 +293,7 @@
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i},{6:c}"
 		"en"        "[{1}CK{2}] {3}Profile refreshed. [{4}{5}{6}]"
-	}
+	}	
 	"EarnedPoints"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:i},{8:c},{9:c},{10:i},{11:c}"
@@ -374,22 +374,22 @@
 	"MapFinished1"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:c},{8:c},{9:s},{10:c},{11:c},{12:c},{13:i},{14:c},{15:i},{16:c},{17:s},{18:c}"
-		"en"        "[{1}CK{2}] {3}{4}{5} finished the {6}map{7} with a time of ({8}{9}{10}). {11}[Rank {12}#{13}{14}/{15} | SR: {16}{17}{18}]"
+		"en"        "[{1}CK{2}] {3}{4}{5} finished the {6}map{7} with a time of ({8}{9}{10}). {11}[rank {12}#{13}{14}/{15} | record {16}{17}{18}]"
 	}
 	"MapFinished3"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:c},{8:c},{9:s},{10:c},{11:c},{12:s},{13:c},{14:c},{15:c},{16:i},{17:c},{18:i},{19:c},{20:s},{21:c}"
-		"en"        "[{1}CK{2}] {3}{4}{5} finished the {6}map{7} with a time of ({8}{9}{10}). Improving their best time by ({11}{12}{13}). {14}[Rank {15}#{16}{17}/{18} | SR: {19}{20}{21}]"
+		"en"        "[{1}CK{2}] {3}{4}{5} finished the {6}map{7} with a time of ({8}{9}{10}). Improving their best time by ({11}{12}{13}). {14}[rank {15}#{16}{17}/{18} | record {19}{20}{21}]"
 	}
 	"MapFinished5"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:c},{8:c},{9:s},{10:c},{11:c},{12:s},{13:c},{14:c},{15:c},{16:i},{17:c},{18:i},{19:c},{20:s},{21:c}"
-		"en"        "[{1}CK{2}] {3}{4}{5} finished the {6}map{7} with a time of ({8}{9}{10}). Missing their best time by ({11}{12}{13}). {14}[Rank {15}#{16}{17}/{18} | SR: {19}{20}{21}]"
+		"en"        "[{1}CK{2}] {3}{4}{5} finished the {6}map{7} with a time of ({8}{9}{10}). Missing their best time by ({11}{12}{13}). {14}[rank {15}#{16}{17}/{18} | record {19}{20}{21}]"
 	}
 	"BonusFinished1"
 	{
 		"#format"	"{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:s},{8:c},{9:c},{10:s},{11:c},{12:c},{13:s},{14:c},{15:c},{16:i},{17:c},{18:i},{19:c},{20:s},{21:c}"
-		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Missing their best time by {12}{13}{14}. [Rank {15}#{16} {17}/ {18} | SR: {19}{20}{21}]"
+		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Missing their best time by {12}{13}{14}. [rank {15}#{16} {17}/ {18} | record {19}{20}{21}]"
 	}
 	"BonusFinished2"
 	{
@@ -399,27 +399,27 @@
 	"BonusFinished3"
 	{
 		"#format"	"{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:s},{8:c},{9:c},{10:s},{11:c},{12:c},{13:c},{14:c},{15:s},{16:c}"
-		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10}{11}. [Rank {12}#1 {13}/ 1 | SR: {14}{15}{16}]"
+		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10}{11}. [rank {12}#1 {13}/ 1 | record {14}{15}{16}]"
 	}
 	"BonusFinished4"
 	{
 		"#format"	"{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:s},{8:c},{9:c},{10:s},{11:c},{12:c},{13:s},{14:c},{15:c},{16:i},{17:c},{18:i},{19:c},{20:s},{21:c}"
-		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Improving the best time by {12}{13} {14}. [Rank {15}#{16} {17}/ {18} | SR: {19}{20}{21}]"
+		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Improving the best time by {12}{13} {14}. [rank {15}#{16} {17}/ {18} | record {19}{20}{21}]"
 	}
 	"BonusFinished5"
 	{
 		"#format"	"{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:s},{8:c},{9:c},{10:s},{11:c},{12:c},{13:s},{14:c},{15:c},{16:i},{17:c},{18:i},{19:c},{20:s},{21:c}"
-		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Improving the best time by {12}{13} {14}. [Rank {15}#{16} {17}/ {18} | SR: {19}{20}{21}]"
+		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Improving the best time by {12}{13} {14}. [rank {15}#{16} {17}/ {18} | record {19}{20}{21}]"
 	}
 	"BonusFinished6"
 	{
 		"#format"	"{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:s},{8:c},{9:c},{10:s},{11:c},{12:c},{13:s},{14:c},{15:c},{16:i},{17:c},{18:i},{19:c},{20:s},{21:c}"
-		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Improving their best time by {12}{13} {14}. [Rank {15}#{16} {17}/ {18} | SR: {19}{20}{21}]"
+		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10} {11}. Improving their best time by {12}{13} {14}. [rank {15}#{16} {17}/ {18} | record {19}{20}{21}]"
 	}
 	"BonusFinished7"
 	{
 		"#format"	"{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:s},{8:c},{9:c},{10:s},{11:c},{12:c},{13:i},{14:c},{15:i},{16:c},{17:s},{18:c}"
-		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10}{11}. [Rank {12}#{13} {14}/ {15} | SR: {16}{17}{18}]"
+		"en"		"[{1}CK{2}] {3}{4} {5}finished the {6}{7} {8}with a time of {9}{10}{11}. [rank {12}#{13} {14}/ {15} | record {16}{17}{18}]"
 	}
 	"Checkpoint1"
 	{
