@@ -3036,7 +3036,7 @@ public void CenterHudAlive(int client)
 		if (g_fPersonalRecordBonus[zgroup][client] > 0.0) {
 			Format(sRank, sizeof(sRank), "%i / %i", g_MapRankBonus[zgroup][client], g_iBonusCount[zgroup]);
 			Format(sPBest, sizeof(sPBest), "%s", g_szPersonalRecordBonus[zgroup][client]);
-			Format(sSRec, sizeof(sSRec), "%s", g_szRecordMapTime);
+			Format(sSRec, sizeof(sSRec), "%s", g_szBonusFastestTime[zgroup]);
 		}
 		else if (g_iBonusCount[zgroup] > 0) {
 			Format(sRank, sizeof(sRank), "N/A / %i", g_iBonusCount[zgroup]);
