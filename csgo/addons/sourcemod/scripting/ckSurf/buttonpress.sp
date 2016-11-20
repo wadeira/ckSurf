@@ -222,19 +222,22 @@ public void CL_OnEndTimerPress(int client)
 
 		diff = g_fPersonalRecord[client] - g_fFinalTime[client];
 		FormatTimeFloat(client, diff, 3, szDiff, sizeof(szDiff));
+
 		if (diff > 0.0)
 			Format(g_szTimeDifference[client], sizeof(szDiff), "-%s", szDiff);
 		else
 			Format(g_szTimeDifference[client], sizeof(szDiff), "+%s", szDiff);
 
 
+
 		srdiff = g_fRecordMapTime - g_fFinalTime[client];
 		FormatTimeFloat(client, srdiff, 3, szSRDiff, sizeof(szSRDiff));
 
-		if (diff > 0.0)
-			Format(g_szSRTimeDifference[client], sizeof(szSRDiff), "-%s", szSRDiff);
+		if (srdiff > 0.0)
+			Format(g_szSRTimeDifference[client], sizeof(szSRDiff), "%c-%s", GREEN, szSRDiff);
 		else
-			Format(g_szSRTimeDifference[client], sizeof(szSRDiff), "+%s", szSRDiff);
+			Format(g_szSRTimeDifference[client], sizeof(szSRDiff), "%c+%s", RED, szSRDiff);
+
 
 		// Check for SR
 		if (g_MapTimesCount > 0)
@@ -293,6 +296,9 @@ public void CL_OnEndTimerPress(int client)
 				}
 				g_bCheckpointRecordFound[zGroup] = true;
 			}
+
+			// Remove SR diff since there was no record
+			Format(g_szSRTimeDifference[client], sizeof(szSRDiff), "N/A", szSRDiff);
 		}
 
 
@@ -410,10 +416,10 @@ public void CL_OnEndTimerPress(int client)
 		srdiff = g_fBonusFastest[zGroup] - g_fFinalTime[client];
 		FormatTimeFloat(client, diff, 3, szSRDiff, sizeof(szSRDiff));
 
-		if (diff > 0.0)
-			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "-%s", szSRDiff);
+		if (srdiff > 0.0)
+			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "%c+%s", RED, szSRDiff);
 		else
-			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "+%s", szSRDiff);
+			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "%c-%s", GREEN, szSRDiff);
 
 		g_tmpBonusCount[zGroup] = g_iBonusCount[zGroup];
 
@@ -478,6 +484,9 @@ public void CL_OnEndTimerPress(int client)
 			g_bBonusSRVRecord[client] = true;
 
 			g_fOldBonusRecordTime[zGroup] = g_fBonusFastest[zGroup];
+
+			// Remove SR diff since the bonus didn't had any record
+			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "N/A", szSRDiff);
 		}
 
 
