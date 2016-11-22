@@ -2711,3 +2711,110 @@ public Action Command_ViewStats(int client, int args)
 {
 	ShowMOTDPanel(client, "Surf statistics", "http://nightimate.pt/motd.php?u=http://surf.nightimate.pt/", MOTDPANEL_TYPE_URL);
 }
+
+public Action Command_saveLoc(int client, int args)
+{
+	int id = g_SavedLocationsCount++;
+
+	int target = client;
+
+	// Check if the player is spectating
+	if (!IsPlayerAlive(client) || GetClientTeam(client) <= 1)
+		// Get the player who is being observed
+		target = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
+
+
+	// Buffers
+	float origin[3], velocity[3], angles[3];
+
+	// Get location
+	GetClientAbsOrigin(target, origin);
+	GetEntPropVector(target, Prop_Data, "m_vecVelocity", velocity);
+	GetClientEyeAngles(target, angles);
+
+	// Get Creator and Target name
+	GetClientName(client, g_SavedLocations[id][slCreator], 32);
+	GetClientName(target, g_SavedLocations[id][slPlayer], 32);
+
+	// Get current run time
+	g_SavedLocations[id][slRunTime] = g_fCurrentRunTime[target];
+
+	// Save location
+	Array_Copy(origin, g_SavedLocations[id][slOrigin], sizeof(origin));
+	Array_Copy(velocity, g_SavedLocations[id][slVelocity], sizeof(velocity));
+	Array_Copy(angles, g_SavedLocations[id][slAngles], sizeof(angles));
+
+
+	// Print saveloc's info to chat
+	PrintToChat(client, "[%cCK%c] Your location was saved with the ID: %c#%d%c type %c!loadloc %d %cto teleport to the location.", MOSSGREEN, WHITE, GREEN, id, WHITE, GREEN, id, WHITE);
+
+	return Plugin_Handled;
+}
+
+public Action Command_loadLoc(int client, int args)
+{
+	// Check if the client is in spectator
+	if (GetClientTeam(client) <= 1 || !IsPlayerAlive(client) || !IsValidClient(client))
+		return Plugin_Handled;
+
+	int id;
+
+	// Check if no args were given
+	if (args < 1) {
+
+		// Check if the player used an loadloc before
+		if (g_LastSaveLocUsed[client] >= 0) {
+
+			// Use the last used loadloc id
+			id = g_LastSaveLocUsed[client];
+
+		} else {
+			PrintToChat(client, "[%cCK%c] Usage: %c!loadloc <id>", MOSSGREEN, WHITE, GREEN);
+			return Plugin_Handled;
+		}
+	}
+	else {
+		// Get the argument given
+		char arg1[3];
+		GetCmdArg(1, arg1, sizeof(arg1));
+		id = StringToInt(arg1);
+	}
+
+	// Make sure the saveloc id exists and is not from the past map
+	if (g_SavedLocationsCount < id) {
+		PrintToChat(client, "[%cCK%c] No location was found with the id %c#%d", MOSSGREEN, WHITE, GREEN, id);
+		return Plugin_Handled;
+	}
+
+	// Make run as invalid
+	g_bValidRun[client] = false;
+
+	// Reset player velocity
+	SetEntPropVector(client, Prop_Data, "m_vecVelocity", view_as<float>( { 0.0, 0.0, 0.0 } ));
+
+	// Get saved location
+	float origin[3], angles[3], velocity[3];
+
+	Array_Copy(g_SavedLocations[id][slOrigin], origin, sizeof(origin));
+	Array_Copy(g_SavedLocations[id][slAngles], angles, sizeof(angles));
+	Array_Copy(g_SavedLocations[id][slVelocity], velocity, sizeof(velocity));
+
+	// Teleport player
+	teleportEntitySafe(client, origin, angles, velocity, true);
+
+	// Check if its the first time the player is using this saved location
+	if (g_LastSaveLocUsed[client] != id) {
+
+		// Format run time
+		char sTime[64];
+		FormatTimeFloat(client, g_SavedLocations[id][slRunTime], 3, sTime, sizeof(sTime));
+
+		// Print message to chat
+		PrintToChat(client, "[%cCK%c] Loaded location %c#%d %ccreated by: %c%s %c[Player: %c%s %c| Time: %c%s%c]", MOSSGREEN, WHITE, GREEN, id, WHITE, GREEN, g_SavedLocations[id][slCreator], WHITE, GREEN, g_SavedLocations[id][slPlayer], WHITE, GREEN, sTime, WHITE);
+	}
+
+	// Store the id
+	g_LastSaveLocUsed[client] = id;
+
+	return Plugin_Handled;
+}

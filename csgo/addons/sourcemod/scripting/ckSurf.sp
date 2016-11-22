@@ -130,7 +130,7 @@
 #define TITLE_COUNT 23		// The amount of custom titles that can be configured in custom_chat_titles.txt
 
 
-
+#define MAX_SAVELOCS 1024
 
 /*====================================
 =            Enumerations            =
@@ -192,6 +192,15 @@ enum SkillGroup
 	String:RankNameColored[32], // Skillgroup name with colors
 }
 
+enum SaveLoc
+{
+	Float:slOrigin[3],
+	Float:slAngles[3],
+	Float:slVelocity[3],
+	String:slCreator[32],
+	String:slPlayer[32],
+	Float:slRunTime
+}
 
 
 
@@ -685,6 +694,12 @@ bool g_bCreatedTeleport[MAXPLAYERS + 1];						// Client has created atleast one 
 bool g_bPracticeMode[MAXPLAYERS + 1]; 							// Client is in the practice mode
 
 
+/*--------- Save Location ------------*/
+float g_SavedLocations[1024][SaveLoc];
+int g_SavedLocationsCount = 0;
+int g_LastSaveLocUsed[MAXPLAYERS+1];
+
+
 /*=========================================
 =            Predefined arrays            =
 =========================================*/
@@ -927,6 +942,13 @@ public void OnMapStart()
 		g_szUsedVoteExtend[i][0] = '\0';
 
 	g_VoteExtends = 0;
+
+
+	// clear savelocs
+	g_SavedLocationsCount = 0;
+
+	int resetArray[MAXPLAYERS+1] = {-1, ...};
+	Array_Copy(resetArray, g_LastSaveLocUsed, MAXPLAYERS+1);
 }
 
 public void OnMapEnd()
@@ -1955,6 +1977,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_undo", Command_undoPlayerCheckpoint, "[ckSurf] Undoes the players lchast checkpoint.");
 	RegConsoleCmd("sm_normal", Command_normalMode, "[ckSurf] Switches player back to normal mode.");
 	RegConsoleCmd("sm_n", Command_normalMode, "[ckSurf] Switches player back to normal mode.");
+	RegConsoleCmd("sm_saveloc", Command_saveLoc, "[ckSurf] Saves current location.");
+	RegConsoleCmd("sm_loadloc", Command_loadLoc, "[ckSurf] Loads a saved location.");
 
 	RegAdminCmd("sm_ckadmin", Admin_ckPanel, g_AdminMenuFlag, "[ckSurf] Displays the ckSurf menu panel");
 	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, g_AdminMenuFlag, "[ckSurf] Recalculates player profile for given steam id");
