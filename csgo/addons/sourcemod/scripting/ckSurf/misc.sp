@@ -3003,7 +3003,7 @@ public void CenterHudAlive(int client)
 
 	// Check if timer is disabled
 	if (!g_bTimeractivated[client])
-		Format(sTime, sizeof(sTime), "Disabled");
+		Format(sTime, sizeof(sTime), "Stopped");
 
 	// Check if timer is paused
 	else if (g_bPause[client])
@@ -3151,20 +3151,13 @@ public void Checkpoint(int client, int zone, int zonegroup)
 		{
 			Format(sz_srDiff_colorless, 128, "-%s", sz_srDiff);
 			Format(sz_srDiff, 128, " %c%cSR: %c-%s%c", YELLOW, PURPLE, GREEN, sz_srDiff, YELLOW);
-			if (zonegroup > 0)
-				Format(g_szLastSRDifference[client], 64, "<font color='#00CC00'>%s</font>", sz_srDiff_colorless);
-			else
-				Format(g_szLastSRDifference[client], 64, "<font color='#FF0000'>%s</font>", sz_srDiff_colorless);
-
+			Format(g_szLastSRDifference[client], 64, "<font color='#00CC00'>%s</font>", sz_srDiff_colorless);
 		}
 		else
 		{
 			Format(sz_srDiff_colorless, 128, "+%s", sz_srDiff);
 			Format(sz_srDiff, 128, " %c%cSR: %c+%s%c", YELLOW, PURPLE, RED, sz_srDiff, YELLOW);
-			if (zonegroup > 0)
-				Format(g_szLastSRDifference[client], 64, "<font color='#FF0000'>%s</font>", sz_srDiff_colorless);
-			else
-				Format(g_szLastSRDifference[client], 64, "<font color='#FF0000'>%s</font>", sz_srDiff_colorless);
+			Format(g_szLastSRDifference[client], 64, "<font color='#FF0000'>%s</font>", sz_srDiff_colorless);
 		}
 		g_fLastDifferenceTime[client] = GetGameTime();
 	}
@@ -3198,29 +3191,14 @@ public void Checkpoint(int client, int zone, int zonegroup)
 			Format(szDiff_colorless, 32, "-%s", szDiff);
 			Format(szDiff, sizeof(szDiff), " %c-%s", GREEN, szDiff);
 			Format(g_szLastPBDifference[client], 64, "<font color='#00CC00'>%s</font>\t", szDiff_colorless);
-
-			/*
-			if (zonegroup > 0)
-				Format(g_szLastPBDifference[client], 64, "%s <font color='#99ff99' size='16'>%s</font>", g_szPersonalRecordBonus[zonegroup][client], szDiff_colorless);
-			else
-				Format(g_szLastPBDifference[client], 64, "%s <font color='#99ff99' size='16'>%s</font>", g_szPersonalRecord[client], szDiff_colorless);
-				*/
 		}
 		else
 		{
 			Format(szDiff_colorless, 32, "+%s", szDiff);
 			Format(szDiff, sizeof(szDiff), " %c+%s", RED, szDiff);
-			if (zonegroup > 0)
-				Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>\t", szDiff_colorless);
-			else
-				Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>\t", szDiff_colorless);
-			/*
-			if (zonegroup > 0)
-				Format(g_szLastPBDifference[client], 64, "%s <font color='#FF9999' size='16'>%s</font>", g_szPersonalRecordBonus[zonegroup][client], szDiff_colorless);
-			else
-				Format(g_szLastPBDifference[client], 64, "%s <font color='#FF9999' size='16'>%s</font>", g_szPersonalRecord[client], szDiff_colorless);
-				*/
+			Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>\t", szDiff_colorless);
 		}
+
 		g_fLastDifferenceTime[client] = GetGameTime();
 
 
