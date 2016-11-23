@@ -583,6 +583,7 @@ float g_fErrorMessage[MAXPLAYERS + 1]; 							// Used to limit error message spa
 float g_fClientRestarting[MAXPLAYERS + 1]; 						// Used to track the time the player took to write the second !r, if too long, reset the boolean
 bool g_bClientRestarting[MAXPLAYERS + 1]; 						// Client wanted to restart run
 float g_fLastTimeNoClipUsed[MAXPLAYERS + 1]; 					// Last time the client used noclip
+float g_fLastTimePauseUsed[MAXPLAYERS + 1];					// Last time players used the !pause command
 bool g_bRespawnPosition[MAXPLAYERS + 1]; 						// Does client have a respawn location in memory?
 float g_fLastSpeed[MAXPLAYERS + 1]; 							// Client's last speed, used in panels
 bool g_bLateLoaded = false; 									// Was plugin loaded late?

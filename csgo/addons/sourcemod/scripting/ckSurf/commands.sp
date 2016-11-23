@@ -1122,8 +1122,8 @@ public Action Client_Accept(int client, int args)
 				g_bChallenge_Abort[i] = false;
 				g_Challenge_Bet[client] = g_Challenge_Bet[i];
 				g_bChallenge_Checkpoints[client] = g_bChallenge_Checkpoints[i];
-				TeleportEntity(client, g_fSpawnPosition[i], NULL_VECTOR, view_as<float>( { 0.0, 0.0, -100.0 } ));
-				TeleportEntity(i, g_fSpawnPosition[i], NULL_VECTOR, view_as<float>( { 0.0, 0.0, -100.0 } ));
+				teleportClient(client, 0, 1, true);
+				teleportClient(i, 0, 1, true);
 				SetEntityMoveType(i, MOVETYPE_NONE);
 				SetEntityMoveType(client, MOVETYPE_NONE);
 				g_CountdownTime[i] = 10;
@@ -1954,6 +1954,9 @@ public Action Client_Pause(int client, int args)
 public void PauseMethod(int client)
 {
 	if (GetClientTeam(client) == 1)return;
+
+	g_fLastTimePauseUsed[client] = GetGameTime();
+
 	if (g_bPause[client] == false && IsValidEntity(client))
 	{
 		if (GetConVarBool(g_hPauseServerside) == false && client != g_RecordBot && client != g_BonusBot)

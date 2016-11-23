@@ -2,19 +2,19 @@ public void CreateZoneEntity(int zoneIndex)
 {
 	float fMiddle[3], fMins[3], fMaxs[3];
 	char sZoneName[64];
-	
+
 	if (g_mapZones[zoneIndex][PointA][0] == -1.0 && g_mapZones[zoneIndex][PointA][1] == -1.0 && g_mapZones[zoneIndex][PointA][2] == -1.0)
 	{
 		return;
 	}
-	
+
 	Array_Copy(g_mapZones[zoneIndex][PointA], fMins, 3);
 	Array_Copy(g_mapZones[zoneIndex][PointB], fMaxs, 3);
-	
+
 	Format(sZoneName, sizeof(sZoneName), "%s", g_mapZones[zoneIndex][zoneName]);
-	
+
 	int iEnt = CreateEntityByName("trigger_multiple");
-	
+
 	if (iEnt > 0 && IsValidEntity(iEnt)) {
 		SetEntityModel(iEnt, ZONE_MODEL);
 		// Spawnflags:	1 - only a player can trigger this by touch, makes it so a NPC cannot fire a trigger_multiple
@@ -26,48 +26,48 @@ public void CreateZoneEntity(int zoneIndex)
 		// 256 - multiple players can trigger the entity at the same time
 		DispatchKeyValue(iEnt, "spawnflags", "257");
 		DispatchKeyValue(iEnt, "StartDisabled", "0");
-		
+
 		Format(sZoneName, sizeof(sZoneName), "sm_ckZone %i", zoneIndex);
 		DispatchKeyValue(iEnt, "targetname", sZoneName);
 		DispatchKeyValue(iEnt, "wait", "0");
-		
+
 		if (DispatchSpawn(iEnt))
 		{
 			ActivateEntity(iEnt);
-			
+
 			GetMiddleOfABox(fMins, fMaxs, fMiddle);
-			
+
 			TeleportEntity(iEnt, fMiddle, NULL_VECTOR, NULL_VECTOR);
-			
+
 			// Have the mins always be negative
 			for(int i = 0; i < 3; i++){
 				fMins[i] = fMins[i] - fMiddle[i];
 				if(fMins[i] > 0.0)
 					fMins[i] *= -1.0;
 			}
-			
+
 			// And the maxs always be positive
 			for(int i = 0; i < 3; i++){
 				fMaxs[i] = fMaxs[i] - fMiddle[i];
 				if(fMaxs[i] < 0.0)
 					fMaxs[i] *= -1.0;
 			}
-			
+
 			SetEntPropVector(iEnt, Prop_Send, "m_vecMins", fMins);
 			SetEntPropVector(iEnt, Prop_Send, "m_vecMaxs", fMaxs);
 			SetEntProp(iEnt, Prop_Send, "m_nSolidType", 2);
-			
+
 			int iEffects = GetEntProp(iEnt, Prop_Send, "m_fEffects");
 			iEffects |= 0x020;
 			SetEntProp(iEnt, Prop_Send, "m_fEffects", iEffects);
-			
-			
+
+
 			SDKHook(iEnt, SDKHook_StartTouch, StartTouchTrigger);
 			SDKHook(iEnt, SDKHook_EndTouch, EndTouchTrigger);
 		}
 		else
 		{
-			
+
 			LogError("Not able to dispatchspawn for Entity %i in SpawnTrigger", iEnt);
 		}
 	}
@@ -79,21 +79,21 @@ public Action StartTouchTrigger(int caller, int activator)
 	// Ignore dead players
 	if (!IsValidClient(activator))
 		return Plugin_Handled;
-	
+
 	char sTargetName[256];
 	int action[3];
 	GetEntPropString(caller, Prop_Data, "m_iName", sTargetName, sizeof(sTargetName));
 	ReplaceString(sTargetName, sizeof(sTargetName), "sm_ckZone ", "");
-	
+
 	int id = StringToInt(sTargetName);
-	
+
 	action[0] = g_mapZones[id][zoneType];
 	action[1] = g_mapZones[id][zoneTypeId];
 	action[2] = g_mapZones[id][zoneGroup];
-	
+
 	if (action[2] == g_iClientInZone[activator][2]) // Is touching zone in right zonegroup
 	{
-		// Set client location 
+		// Set client location
 		g_iClientInZone[activator][0] = action[0];
 		g_iClientInZone[activator][1] = action[1];
 		g_iClientInZone[activator][2] = action[2];
@@ -104,7 +104,7 @@ public Action StartTouchTrigger(int caller, int activator)
 	{
 		if (action[0] == 1 || action[0] == 5) // Ignore other than start and misc zones in other zonegroups
 		{
-			// Set client location 
+			// Set client location
 			g_iClientInZone[activator][0] = action[0];
 			g_iClientInZone[activator][1] = action[1];
 			g_iClientInZone[activator][2] = action[2];
@@ -115,7 +115,7 @@ public Action StartTouchTrigger(int caller, int activator)
 			if (action[0] == 6 || action[0] == 7 || action[0] == 8 || action[0] == 0) // Allow MISC zones regardless of zonegroup
 				StartTouch(activator, action);
 	}
-	
+
 	return Plugin_Handled;
 }
 
@@ -124,31 +124,31 @@ public Action EndTouchTrigger(int caller, int activator)
 	// Ignore dead players
 	if (!IsValidClient(activator))
 		return Plugin_Handled;
-	
+
 	// Ignore if teleporting out of the zone
 	if (g_bIgnoreZone[activator])
 	{
 		g_bIgnoreZone[activator] = false;
 		return Plugin_Handled;
 	}
-	
+
 	char sTargetName[256];
 	int action[3];
 	GetEntPropString(caller, Prop_Data, "m_iName", sTargetName, sizeof(sTargetName));
 	ReplaceString(sTargetName, sizeof(sTargetName), "sm_ckZone ", "");
-	
+
 	int id = StringToInt(sTargetName);
-	
+
 	action[0] = g_mapZones[id][zoneType];
 	action[1] = g_mapZones[id][zoneTypeId];
 	action[2] = g_mapZones[id][zoneGroup];
 
-	if (action[2] != g_iClientInZone[activator][2] || action[0] == 6 || action[0] == 8 || action[0] != g_iClientInZone[activator][0]) // Ignore end touches in other zonegroups, zones that teleports away or multiple zones on top of each other 
+	if (action[2] != g_iClientInZone[activator][2] || action[0] == 6 || action[0] == 8 || action[0] != g_iClientInZone[activator][0]) // Ignore end touches in other zonegroups, zones that teleports away or multiple zones on top of each other
 		return Plugin_Handled;
 
 	// End touch
 	EndTouch(activator, action);
-	
+
 	return Plugin_Handled;
 }
 
@@ -157,7 +157,7 @@ public void StartTouch(int client, int action[3])
 	if (IsValidClient(client))
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		
+
 		if (action[0] == 0) // Stop Zone
 		{
 			Client_Stop(client, 1);
@@ -170,7 +170,7 @@ public void StartTouch(int client, int action[3])
 			else
 			{
 				g_Stage[g_iClientInZone[client][2]][client] = 1;
-				
+
 				Client_Stop(client, 1);
 				// Resetting last checkpoint
 				lastCheckpoint[g_iClientInZone[client][2]][client] = 1;
@@ -206,7 +206,7 @@ public void StartTouch(int client, int action[3])
 			else
 			{  // Setting valid to false, in case of checkers
 				g_bValidRun[client] = false;
-				
+
 				// Announcing checkpoint
 				if (action[1] != lastCheckpoint[g_iClientInZone[client][2]][client] && g_iClientInZone[client][2] == action[2])
 				{
@@ -255,14 +255,20 @@ public void EndTouch(int client, int action[3])
 			else
 			{
 				if (!g_bPracticeMode[client])
-				{	
+				{
 					g_Stage[g_iClientInZone[client][2]][client] = 1;
 					lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
-					
+
+					float pauseDelay = GetGameTime() - g_fLastTimePauseUsed[client];
+
 					// NoClip check
 					if (g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
 					{
-						PrintToChat(client, "[%cCK%c] You are noclipping or have noclipped recently, timer disabled.", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cCK%c] %cYou are noclipping or have noclipped recently%c, timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
+						ClientCommand(client, "play buttons\\button10.wav");
+					}
+					else if (pauseDelay < 5.0) {
+						PrintToChat(client, "[%cCK%c] %cYou used the !pause command recently%c, please wait %c%d %cseconds.", MOSSGREEN, WHITE, LIGHTRED, WHITE, GREEN, RoundToCeil(5.0 - pauseDelay), WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
 					else
@@ -272,7 +278,7 @@ public void EndTouch(int client, int action[3])
 				}
 			}
 		}
-		
+
 		// Set client location
 		g_iClientInZone[client][0] = -1;
 		g_iClientInZone[client][1] = -1;
@@ -284,7 +290,7 @@ public void EndTouch(int client, int action[3])
 public void InitZoneVariables()
 {
 	g_mapZonesCount = 0;
-	for (int i = 0; i < MAXZONES; i++) 
+	for (int i = 0; i < MAXZONES; i++)
 	{
 		g_mapZones[i][zoneId] = -1;
 		g_mapZones[i][PointA] = -1.0;
@@ -349,10 +355,10 @@ public Action BeamBoxAll(Handle timer, any data)
 {
 	int zColor[4], tzColor[4];
 	bool draw;
-	
+
 	if (GetConVarInt(g_hZoneDisplayType) < 1)
 		return Plugin_Handled;
-	
+
 	for (int i = 0; i < g_mapZonesCount; ++i)
 	{
 		draw = false;
@@ -382,7 +388,7 @@ public Action BeamBoxAll(Handle timer, any data)
 				}
 			}
 		}
-		
+
 		if (draw)
 		{
 			getZoneDisplayColor(g_mapZones[i][zoneType], zColor, g_mapZones[i][zoneGroup]);
@@ -430,7 +436,7 @@ public void getZoneDisplayColor(int type, int zColor[4], int zGrp)
 	switch (type)
 	{
 		case 1: {
-			
+
 			if (zGrp > 0)
 				zColor = g_iZoneColors[3];
 			else
@@ -481,7 +487,7 @@ public void BeamBox_OnPlayerRunCmd(int client)
 			TR_TraceRayFilter(pos, ang, MASK_PLAYERSOLID, RayType_Infinite, TraceRayDontHitSelf, client);
 			TR_GetEndPosition(g_Positions[client][1]);
 		}
-		
+
 		if (g_Editing[client] == 10 || g_Editing[client] == 11)
 		{
 			GetClientEyePosition(client, pos);
@@ -508,7 +514,7 @@ stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottom
 	//0 = Do not display zones, 1 = Display the lower edges of zones, 2 = Display whole zone
 	if (!IsValidClient(client) || GetConVarInt(g_hZoneDisplayType) < 1)
 		return;
-	
+
 	if (GetConVarInt(g_hZoneDisplayType) > 1 || type == 1) // All sides
 	{
 		float corners[8][3];
@@ -554,7 +560,7 @@ stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottom
 		{
 			float corners[4][3], fTop[3];
 
-			if (g_mapZones[zoneid][PointA][2] > g_mapZones[zoneid][PointB][2]) // Make sure bottom corner is always the lowest 
+			if (g_mapZones[zoneid][PointA][2] > g_mapZones[zoneid][PointB][2]) // Make sure bottom corner is always the lowest
 			{
 				for(int i = 0; i < 3; i++)
 				{
@@ -568,7 +574,7 @@ stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottom
 				{
 					corners[0][i] = g_mapZones[zoneid][PointA][i];
 					fTop[i] = g_mapZones[zoneid][PointB][i];
-				}		
+				}
 			}
 
 			bool foundOther = false;
@@ -606,7 +612,7 @@ stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottom
 			corners[1][2] += 5.0;
 			corners[2][2] += 5.0;
 			corners[3][2] += 5.0;
-			
+
 			for (int i = 0; i < 2; i++) // Connect main corners to the other corners
 			{
 				TE_SetupBeamPoints(corners[i], corners[2], ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
@@ -625,13 +631,13 @@ public void ZoneMenu(int client)
 {
 	if (!IsValidClient(client))
 		return;
-	
+
 	if (!(GetUserFlagBits(client) & g_ZoneMenuFlag) && !(GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
 		PrintToChat(client, "[%cCK%c] You don't have access to the zones menu.", MOSSGREEN, WHITE);
 		return;
 	}
-	
+
 	resetSelection(client);
 	Menu ckZoneMenu = new Menu(Handle_ZoneMenu);
 	ckZoneMenu.SetTitle("Zones");
@@ -674,7 +680,7 @@ public int Handle_ZoneMenu(Handle tMenu, MenuAction action, int client, int item
 				}
 				case 3:
 				{
-					// Edit Zone Settings 
+					// Edit Zone Settings
 					ZoneSettings(client);
 				}
 				case 4:
@@ -749,7 +755,7 @@ public void ListBonusGroups(int client)
 {
 	Menu h_bonusGroupListing = new Menu(Handler_bonusGroupListing);
 	h_bonusGroupListing.SetTitle("Available Bonuses");
-	
+
 	char listGroupName[256], ZoneId[64], Id[64];
 	if (g_mapZoneGroupCount > 1)
 	{  // Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
@@ -796,12 +802,12 @@ public void ListBonusSettings(int client)
 {
 	Menu h_ListBonusSettings = new Menu(Handler_ListBonusSettings);
 	h_ListBonusSettings.SetTitle("Settings for %s", g_szZoneGroupName[g_CurrentSelectedZoneGroup[client]]);
-	
+
 	h_ListBonusSettings.AddItem("1", "Create a new zone");
 	h_ListBonusSettings.AddItem("2", "List Zones in this group");
 	h_ListBonusSettings.AddItem("3", "Rename Bonus");
 	h_ListBonusSettings.AddItem("4", "Delete this group");
-	
+
 	h_ListBonusSettings.ExitButton = true;
 	h_ListBonusSettings.Display(client, MENU_TIME_FOREVER);
 }
@@ -836,13 +842,13 @@ public void checkForMissclick(int client)
 {
 	Menu h_checkForMissclick = new Menu(Handle_checkForMissclick);
 	h_checkForMissclick.SetTitle("Delete all zones in %s?", g_szZoneGroupName[g_CurrentSelectedZoneGroup[client]]);
-	
+
 	h_checkForMissclick.AddItem("1", "NO");
 	h_checkForMissclick.AddItem("2", "NO");
 	h_checkForMissclick.AddItem("3", "YES");
 	h_checkForMissclick.AddItem("4", "NO");
-	
-	
+
+
 	h_checkForMissclick.ExitButton = true;
 	h_checkForMissclick.Display(client, MENU_TIME_FOREVER);
 }
@@ -906,7 +912,7 @@ public int Handler_listBonusZones(Handle tMenu, MenuAction action, int client, i
 			char aID[64];
 			GetMenuItem(tMenu, item, aID, sizeof(aID));
 			g_ClientSelectedZone[client] = StringToInt(aID);
-			g_CurrentZoneType[client] = g_mapZones[g_ClientSelectedZone[client]][zoneType]; 
+			g_CurrentZoneType[client] = g_mapZones[g_ClientSelectedZone[client]][zoneType];
 			DrawBeamBox(client);
 			g_Editing[client] = 2;
 			if (g_ClientSelectedZone[client] != -1)
@@ -931,7 +937,7 @@ public void renameBonusGroup(int client)
 {
 	if (!IsValidClient(client))
 		return;
-	
+
 	PrintToChat(client, "[%cCK%c] Please write the bonus name in chat or use %c!cancel%c to stop.", MOSSGREEN, WHITE, MOSSGREEN, WHITE);
 	g_ClientRenamingZone[client] = true;
 }
@@ -940,12 +946,12 @@ public void SelectBonusZoneType(int client)
 {
 	Menu h_selectBonusZoneType = new Menu(Handler_selectBonusZoneType);
 	h_selectBonusZoneType.SetTitle("Select Bonus Zone Type");
-	
+
 	h_selectBonusZoneType.AddItem("1", "Start");
 	h_selectBonusZoneType.AddItem("2", "End");
 	h_selectBonusZoneType.AddItem("3", "Stage");
 	h_selectBonusZoneType.AddItem("4", "Checkpoint");
-	
+
 	h_selectBonusZoneType.ExitButton = true;
 	h_selectBonusZoneType.Display(client, MENU_TIME_FOREVER);
 }
@@ -982,11 +988,11 @@ public void SelectZoneGroup(int client)
 {
 	Menu newZoneGroupMenu = new Menu(h_newZoneGroupMenu);
 	newZoneGroupMenu.SetTitle("Which zones do you want to create?");
-	
+
 	newZoneGroupMenu.AddItem("1", "Normal map zones");
 	newZoneGroupMenu.AddItem("2", "Bonus zones");
 	newZoneGroupMenu.AddItem("3", "Misc zones");
-	
+
 	newZoneGroupMenu.ExitButton = true;
 	newZoneGroupMenu.Display(client, MENU_TIME_FOREVER);
 }
@@ -1038,7 +1044,7 @@ public void StartBonusZoneCreation(int client)
 	{
 		CreateBonusFirst.AddItem("1", "Restart Drawing");
 		CreateBonusFirst.AddItem("2", "Save Bonus Start Zone");
-		
+
 	}
 	CreateBonusFirst.ExitButton = true;
 	CreateBonusFirst.Display(client, MENU_TIME_FOREVER);
@@ -1067,7 +1073,7 @@ public int H_CreateBonusFirst(Handle tMenu, MenuAction action, int client, int i
 				{
 					if (!IsValidClient(client))
 						return;
-					
+
 					g_Editing[client] = 2;
 					PrintToChat(client, "[%cCK%c] Bonus Start Zone Created", MOSSGREEN, WHITE);
 					EndBonusZoneCreation(client);
@@ -1151,7 +1157,7 @@ public void SaveBonusZones(int client)
 	}
 	else
 		PrintToChat(client, "[%cCK%c] Failed to Save Bonus, error in coordinates", MOSSGREEN, WHITE);
-	
+
 	resetSelection(client);
 	ZoneMenu(client);
 	db_selectMapZones();
@@ -1174,9 +1180,9 @@ public void SelectNormalZoneType(int client)
 	}
 	else if (g_mapZonesTypeCount[g_CurrentSelectedZoneGroup[client]][3] == 0 && g_mapZonesTypeCount[g_CurrentSelectedZoneGroup[client]][4] > 0)
 		SelectNormalZoneMenu.AddItem("4", "Checkpoint");
-	
+
 	SelectNormalZoneMenu.AddItem("5", "Start Speed");
-	
+
 	SelectNormalZoneMenu.ExitButton = true;
 	SelectNormalZoneMenu.Display(client, MENU_TIME_FOREVER);
 }
@@ -1213,7 +1219,7 @@ public void ZoneSettings(int client)
 	Menu ZoneSettingMenu = new Menu(Handle_ZoneSettingMenu);
 	ZoneSettingMenu.SetTitle("Global Zone Settings");
 	switch (GetConVarInt(g_hZoneDisplayType))
-	{	
+	{
 		case 0:
 			ZoneSettingMenu.AddItem("1", "Visible: Nothing");
 		case 1:
@@ -1239,7 +1245,7 @@ public int Handle_ZoneSettingMenu(Handle tMenu, MenuAction action, int client, i
 {
 	switch (action)
 	{
-		
+
 		case MenuAction_Select:
 		{
 			switch (item)
@@ -1281,12 +1287,12 @@ public void SelectMiscZoneType(int client)
 {
 	Menu SelectZoneMenu = new Menu(Handle_SelectMiscZoneType);
 	SelectZoneMenu.SetTitle("Select Misc Zone Type");
-	
+
 	SelectZoneMenu.AddItem("6", "TeleToStart");
 	SelectZoneMenu.AddItem("7", "Validator");
 	SelectZoneMenu.AddItem("8", "Checker");
 	SelectZoneMenu.AddItem("0", "Stop");
-	
+
 	SelectZoneMenu.ExitButton = true;
 	SelectZoneMenu.Display(client, MENU_TIME_FOREVER);
 }
@@ -1344,7 +1350,7 @@ public void ListZones(int client, bool mapzones)
 {
 	Menu ZoneList = new Menu(MenuHandler_ZoneModify);
 	ZoneList.SetTitle("Available Zones");
-	
+
 	char listZoneName[256], ZoneId[64], Id[64];
 	if (g_mapZonesCount > 0)
 	{  // Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
@@ -1435,34 +1441,34 @@ public void EditorMenu(int client)
 		DrawBeamBox(client);
 		g_Editing[client] = 2;
 	}
-	
+
 	Menu editMenu = new Menu(MenuHandler_Editor);
 	// If a zone is selected
 	if (g_ClientSelectedZone[client] != -1)
 		editMenu.SetTitle("Editing Zone: %s-%i", g_szZoneDefaultNames[g_CurrentZoneType[client]], g_mapZones[g_ClientSelectedZone[client]][zoneTypeId]);
 	else
 		editMenu.SetTitle("Creating a New %s Zone", g_szZoneDefaultNames[g_CurrentZoneType[client]]);
-	
+
 	// If creating a completely new zone, or editing an existing one
 	if (g_Editing[client] == 0)
 		editMenu.AddItem("", "Start Drawing the Zone");
 	else
 		editMenu.AddItem("", "Restart the Zone Drawing");
-	
+
 	// If editing an existing zone
 	if (g_Editing[client] > 0)
 	{
 		editMenu.AddItem("", "Set zone type");
-		
+
 		// If editing is paused
 		if (g_Editing[client] == 2)
 			editMenu.AddItem("", "Continue Editing");
 		else
 			editMenu.AddItem("", "Pause Editing");
-		
+
 		editMenu.AddItem("", "Delete Zone");
 		editMenu.AddItem("", "Save Zone");
-		
+
 		switch (g_CurrentZoneTeam[client])
 		{
 			case 0:
@@ -1484,7 +1490,7 @@ public void EditorMenu(int client)
 		}
 		editMenu.AddItem("", "Go to Zone");
 		editMenu.AddItem("", "Strech Zone");
-		
+
 		switch (g_CurrentZoneVis[client])
 		{
 			case 0:
@@ -1535,7 +1541,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 						SelectNormalZoneType(client);
 					else if (g_CurrentSelectedZoneGroup[client] > 0)
 						SelectBonusZoneType(client);
-					
+
 				}
 				case 2:
 				{
@@ -1596,7 +1602,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					ZonePos[0] = FloatDiv(ZonePos[0], 2.0);
 					ZonePos[1] = FloatDiv(ZonePos[1], 2.0);
 					ZonePos[2] = FloatDiv(ZonePos[2], 2.0);
-					
+
 					TeleportEntity(client, ZonePos, NULL_VECTOR, NULL_VECTOR);
 					EditorMenu(client);
 				}
@@ -1654,8 +1660,8 @@ public void resetSelection(int client)
 	g_CurrentZoneTypeId[client] = -1;
 	g_CurrentZoneType[client] = -1;
 	g_bEditZoneType[client] = false;
-	
-	
+
+
 	float resetArray[] =  { -1.0, -1.0, -1.0 };
 	Array_Copy(resetArray, g_Positions[client][0], 3);
 	Array_Copy(resetArray, g_Positions[client][1], 3);
@@ -1670,23 +1676,23 @@ public void ScaleMenu(int client)
 	g_Editing[client] = 3;
 	Menu ckScaleMenu = new Menu(MenuHandler_Scale);
 	ckScaleMenu.SetTitle("Strech Zone");
-	
+
 	if (g_ClientSelectedPoint[client] == 1)
 		ckScaleMenu.AddItem("", "Point B");
 	else
 		ckScaleMenu.AddItem("", "Point A");
-	
+
 	ckScaleMenu.AddItem("", "+ Width");
 	ckScaleMenu.AddItem("", "- Width");
 	ckScaleMenu.AddItem("", "+ Length");
 	ckScaleMenu.AddItem("", "- Length");
 	ckScaleMenu.AddItem("", "+ Height");
 	ckScaleMenu.AddItem("", "- Height");
-	
+
 	char ScaleSize[128];
 	Format(ScaleSize, sizeof(ScaleSize), "Scale Size %f", g_AvaliableScales[g_ClientSelectedScale[client]]);
 	ckScaleMenu.AddItem("", ScaleSize);
-	
+
 	ckScaleMenu.ExitButton = true;
 	ckScaleMenu.Display(client, MENU_TIME_FOREVER);
 }
@@ -1765,12 +1771,12 @@ public void GetClientSelectedZone(int client, int &team, int &vis)
 public void ClearZonesMenu(int client)
 {
 	Menu hClearZonesMenu = new Menu(MenuHandler_ClearZones);
-	
+
 	hClearZonesMenu.SetTitle("Are you sure, you want to clear all zones on this map?");
 	hClearZonesMenu.AddItem("", "NO GO BACK!");
 	hClearZonesMenu.AddItem("", "NO GO BACK!");
 	hClearZonesMenu.AddItem("", "YES! DO IT!");
-	
+
 	hClearZonesMenu.Display(client, 20);
 }
 
@@ -1782,7 +1788,7 @@ public int MenuHandler_ClearZones(Handle tMenu, MenuAction action, int client, i
 		{
 			if (item == 2)
 			{
-				for (int i = 0; i < MAXZONES; i++) 
+				for (int i = 0; i < MAXZONES; i++)
 				{
 					g_mapZones[i][zoneId] = -1;
 					g_mapZones[i][PointA] = -1.0;
