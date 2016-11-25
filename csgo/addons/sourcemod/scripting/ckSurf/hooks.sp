@@ -13,7 +13,7 @@ public Action SayText2(UserMsg msg_id, Handle bf, int[] players, int playersNum,
 		BfReadChar(bf);
 		BfReadChar(bf);
 		BfReadString(bf, buffer, sizeof(buffer));
-		
+
 		if (StrEqual(buffer, "#Cstrike_Name_Change"))
 			return Plugin_Handled;
 	}
@@ -55,7 +55,7 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 		g_bFirstTimerStart[client] = true;
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityRenderMode(client, RENDER_NORMAL);
-		
+
 		//strip weapons
 		if ((GetClientTeam(client) > 1) && IsValidClient(client))
 		{
@@ -75,14 +75,14 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 			SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 		else
 			SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
-		
-		//botmimic2		
+
+		//botmimic2
 		if (g_hBotMimicsRecord[client] != null && IsFakeClient(client))
 		{
 			g_BotMimicTick[client] = 0;
 			g_CurrentAdditionalTeleportIndex[client] = 0;
 		}
-		
+
 		if (IsFakeClient(client))
 		{
 			if (client == g_InfoBot)
@@ -93,7 +93,7 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 				CS_SetClientClanTag(client, "BONUS REPLAY");
 			return Plugin_Continue;
 		}
-		
+
 		//change player skin
 		if (GetConVarBool(g_hPlayerSkinChange) && (GetClientTeam(client) > 1))
 		{
@@ -104,7 +104,7 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 			GetConVarString(g_hPlayerModel, szBuffer, 256);
 			SetEntityModel(client, szBuffer);
 		}
-		
+
 		//1st spawn & t/ct
 		if (g_bFirstSpawn[client] && (GetClientTeam(client) > 1))
 		{
@@ -121,14 +121,14 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 			CreateTimer(1.5, CenterMsgTimer, client, TIMER_FLAG_NO_MAPCHANGE);
 			g_bFirstSpawn[client] = false;
 		}
-		
+
 		//get start pos for challenge
 		GetClientAbsOrigin(client, g_fSpawnPosition[client]);
-		
+
 		//restore position
 		if (!g_specToStage[client])
 		{
-			
+
 			if ((GetClientTeam(client) > 1))
 			{
 				if (g_bRestorePosition[client])
@@ -149,10 +149,10 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 						g_bTimeractivated[client] = false;
 						g_fStartTime[client] = -1.0;
 						g_fCurrentRunTime[client] = -1.0;
-						
+
 						// Spawn client to the start zone.
 						if (GetConVarBool(g_hSpawnToStartZone))
-							Command_Restart(client, 1);	
+							Command_Restart(client, 1);
 					}
 				}
 			}
@@ -165,16 +165,16 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 			teleportEntitySafe(client, g_fTeleLocation[client], NULL_VECTOR, view_as<float>( { 0.0, 0.0, -100.0 } ), false);
 			g_specToStage[client] = false;
 		}
-		
+
 		//hide radar
 		CreateTimer(0.0, HideHud, client, TIMER_FLAG_NO_MAPCHANGE);
-		
+
 		//set clantag
 		CreateTimer(1.5, SetClanTag, client, TIMER_FLAG_NO_MAPCHANGE);
-		
+
 		//set speclist
 		Format(g_szPlayerPanelText[client], 512, "");
-		
+
 		//get speed & origin
 		g_fLastSpeed[client] = GetSpeed(client);
 	}
@@ -182,7 +182,7 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 }
 
 public void PlayerSpawn(int client)
-{	
+{
 
 }
 
@@ -194,22 +194,22 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		g_bClientOwnReason[client] = false;
 		return Plugin_Continue;
 	}
-	
+
 	char sText[1024];
 	GetCmdArgString(sText, sizeof(sText));
-	
+
 	StripQuotes(sText);
 	TrimString(sText);
-	
+
 	if (IsValidClient(client) && g_ClientRenamingZone[client])
 	{
 		Admin_renameZone(client, sText);
 		return Plugin_Handled;
 	}
-	
+
 	if (!GetConVarBool(g_henableChatProcessing))
 		return Plugin_Continue;
-	
+
 	if (IsValidClient(client))
 	{
 		if (client > 0)
@@ -221,15 +221,15 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		{
 			if (StrEqual(g_BlockedChatText[i], sText, true))
 			{
-				
+
 				return Plugin_Handled;
 			}
-		}		
+		}
 
 		// !s and !stage commands
 		if (StrContains(sText, "!s", false) == 0 || StrContains(sText, "!stage", false) == 0)
 			return Plugin_Handled;
-		
+
 		// !b and !bonus commands
 		if (StrContains(sText, "!b", false) == 0 || StrContains(sText, "!bonus", false) == 0)
 			return Plugin_Handled;
@@ -240,9 +240,9 @@ public Action Say_Hook(int client, const char[] command, int argc)
 
 		if (checkSpam(client))
 			return Plugin_Handled;
-		
+
 		parseColorsFromString(sText, 1024);
-		
+
 		//lowercase
 		if ((sText[0] == '/') || (sText[0] == '!'))
 		{
@@ -254,7 +254,7 @@ public Action Say_Hook(int client, const char[] command, int argc)
 				return Plugin_Handled;
 			}
 		}
-		
+
 		//chat trigger?
 		if ((IsChatTrigger() && sText[0] == '/') || (sText[0] == '@' && (GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC)))
 		{
@@ -269,10 +269,10 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		PrintToServer("%s: %s", szName, sText);
 
 		parseColorsFromString(szName, 64);
-		
+
 		if (GetConVarBool(g_hPointSystem) && GetConVarBool(g_hColoredNames))
 			setNameColor(szName, g_PlayerChatRank[client], 64);
-		
+
 		if (GetClientTeam(client) == 1)
 		{
 			PrintSpecMessageAll(client);
@@ -282,7 +282,7 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		{
 			char szChatRank[64];
 			Format(szChatRank, 64, "%s", g_pr_chat_coloredrank[client]);
-			
+
 			if (GetConVarBool(g_hCountry) && (GetConVarBool(g_hPointSystem) || (StrEqual(g_pr_rankname[client], "ADMIN", false) && GetConVarBool(g_hAdminClantag))))
 			{
 				if (IsPlayerAlive(client))
@@ -323,7 +323,7 @@ public Action Event_OnPlayerTeam(Handle event, const char[] name, bool dontBroad
 		return Plugin_Continue;
 	int team = GetEventInt(event, "team");
 	if (team == 1)
-	{	
+	{
 		SpecListMenuDead(client);
 		if (!g_bFirstSpawn[client])
 		{
@@ -444,7 +444,7 @@ public Action Event_OnRoundStart(Handle event, const char[] name, bool dontBroad
 			AcceptEntityInput(iEnt, "Kill");
 		}
 	}
-	
+
 	// PushFix by Mev, George, & Blacky
 	// https://forums.alliedmods.net/showthread.php?t=267131
 	iEnt = -1;
@@ -452,9 +452,9 @@ public Action Event_OnRoundStart(Handle event, const char[] name, bool dontBroad
 	{
 		SDKHook(iEnt, SDKHook_Touch, OnTouchPushTrigger);
 	}
-	
+
 	RefreshZones();
-	
+
 	g_bRoundEnd = false;
 	return Plugin_Continue;
 }
@@ -476,11 +476,11 @@ public Action OnTouchPushTrigger(int entity, int other)
 		}
 		return Plugin_Handled;
 	}
-	
+
 	return Plugin_Continue;
 }
 
-// PlayerHurt 
+// PlayerHurt
 public Action Event_OnPlayerHurt(Handle event, const char[] name, bool dontBroadcast)
 {
 	if (!GetConVarBool(g_hCvarGodMode) && GetConVarInt(g_hAutohealing_Hp) > 0)
@@ -522,7 +522,7 @@ public Action OnLogAction(Handle source, Identity ident, int client, int target,
 			GetPluginFilename(source, logtag, sizeof(logtag));
 		else
 			Format(logtag, sizeof(logtag), "OTHER");
-		
+
 		if ((strcmp("playercommands.smx", logtag, false) == 0) || (strcmp("slap.smx", logtag, false) == 0))
 			Client_Stop(target, 0);
 	}
@@ -531,10 +531,10 @@ public Action OnLogAction(Handle source, Identity ident, int client, int target,
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	
+
 	if (g_bRoundEnd || !IsValidClient(client))
 		return Plugin_Continue;
-	
+
 	if (IsPlayerAlive(client))
 	{
 		g_bLastOnGround[client] = g_bOnGround[client];
@@ -548,45 +548,45 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		// https://forums.alliedmods.net/showthread.php?t=266888
 		//if (GetConVarBool(g_hSlopeFixEnable) == true)
 		if (GetConVarBool(g_hSlopeFixEnable) == true && !IsFakeClient(client))
-		{			
+		{
 			g_vLast[client][0] = g_vCurrent[client][0];
 			g_vLast[client][1] = g_vCurrent[client][1];
 			g_vLast[client][2] = g_vCurrent[client][2];
 			g_vCurrent[client][0] = GetEntPropFloat(client, Prop_Send, "m_vecVelocity[0]");
 			g_vCurrent[client][1] = GetEntPropFloat(client, Prop_Send, "m_vecVelocity[1]");
 			g_vCurrent[client][2] = GetEntPropFloat(client, Prop_Send, "m_vecVelocity[2]");
-			
+
 			// Check if player landed on the ground
 			if (g_bOnGround[client] == true && g_bLastOnGround[client] == false)
 			{
 				// Set up and do tracehull to find out if the player landed on a slope
 				float vPos[3];
 				GetEntPropVector(client, Prop_Data, "m_vecOrigin", vPos);
-				
+
 				float vMins[3];
 				GetEntPropVector(client, Prop_Send, "m_vecMins", vMins);
-				
+
 				float vMaxs[3];
 				GetEntPropVector(client, Prop_Send, "m_vecMaxs", vMaxs);
-				
+
 				float vEndPos[3];
 				vEndPos[0] = vPos[0];
 				vEndPos[1] = vPos[1];
 				vEndPos[2] = vPos[2] - FindConVar("sv_maxvelocity").FloatValue;
-				
+
 				TR_TraceHullFilter(vPos, vEndPos, vMins, vMaxs, MASK_PLAYERSOLID_BRUSHONLY, TraceRayDontHitSelf, client);
-				
+
 				if (TR_DidHit())
 				{
 					// Gets the normal vector of the surface under the player
 					float vPlane[3], vLast[3];
 					TR_GetPlaneNormal(INVALID_HANDLE, vPlane);
-					
+
 					// Make sure it's not flat ground and not a surf ramp (1.0 = flat ground, < 0.7 = surf ramp)
 					if (0.7 <= vPlane[2] < 1.0)
 					{
 						/*
-						Copy the ClipVelocity function from sdk2013 
+						Copy the ClipVelocity function from sdk2013
 						(https://mxr.alliedmods.net/hl2sdk-sdk2013/source/game/shared/gamemovement.cpp#3145)
 						With some minor changes to make it actually work
 						*/
@@ -594,16 +594,16 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 						vLast[1] = g_vLast[client][1];
 						vLast[2] = g_vLast[client][2];
 						vLast[2] -= (FindConVar("sv_gravity").FloatValue * GetTickInterval() * 0.5);
-						
+
 						float fBackOff = GetVectorDotProduct(vLast, vPlane);
-						
+
 						float change, vVel[3];
 						for (int i; i < 2; i++)
 						{
 							change = vPlane[i] * fBackOff;
 							vVel[i] = vLast[i] - change;
 						}
-						
+
 						float fAdjust = GetVectorDotProduct(vVel, vPlane);
 						if (fAdjust < 0.0)
 						{
@@ -612,10 +612,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 								vVel[i] -= (vPlane[i] * fAdjust);
 							}
 						}
-						
+
 						vVel[2] = 0.0;
 						vLast[2] = 0.0;
-						
+
 						// Make sure the player is going down a ramp by checking if they actually will gain speed from the boost
 						if (GetVectorLength(vVel) > GetVectorLength(vLast))
 						{
@@ -624,7 +624,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 							{
 								float vBase[3];
 								GetEntPropVector(client, Prop_Data, "m_vecBaseVelocity", vBase);
-								
+
 								AddVectors(vVel, vBase, vVel);
 							}
 							g_bFixingRamp[client] = true;
@@ -652,28 +652,27 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		float speed, origin[3], ang[3];
 		GetClientAbsOrigin(client, origin);
 		GetClientEyeAngles(client, ang);
-		
+
 		speed = GetSpeed(client);
 
-	
+
 		checkTrailStatus(client, speed);
-		
+
 		//menu refreshing
 		CheckRun(client);
 		
-		AutoBhopFunction(client, buttons);
 		NoClipCheck(client);
 		AttackProtection(client, buttons);
-		
+
 		// If in start zone, cap speed
 		LimitSpeed(client);
-		
+
 		g_fLastSpeed[client] = speed;
 		g_LastButton[client] = buttons;
-		
+
 		BeamBox_OnPlayerRunCmd(client);
 	}
-	
+
 	return Plugin_Continue;
 }
 
@@ -706,7 +705,7 @@ public MRESReturn DHooks_OnTeleport(int client, Handle hParams)
 		g_bValidTeleportCall[client] = false;
 		return MRES_Ignored;
 	}
-	
+
 	// Don't care if he's not recording.
 	if (g_hRecording[client] == null)
 		return MRES_Ignored;
@@ -714,40 +713,40 @@ public MRESReturn DHooks_OnTeleport(int client, Handle hParams)
 	bool bOriginNull = DHookIsNullParam(hParams, 1);
 	bool bAnglesNull = DHookIsNullParam(hParams, 2);
 	bool bVelocityNull = DHookIsNullParam(hParams, 3);
-	
+
 	float origin[3], angles[3], velocity[3];
-	
+
 	if (!bOriginNull)
 		DHookGetParamVector(hParams, 1, origin);
-	
+
 	if (!bAnglesNull)
 	{
 		for (int i = 0; i < 3; i++)
 			angles[i] = DHookGetParamObjectPtrVar(hParams, 2, i * 4, ObjectValueType_Float);
 	}
-	
+
 	if (!bVelocityNull)
 		DHookGetParamVector(hParams, 3, velocity);
-	
+
 	if (bOriginNull && bAnglesNull && bVelocityNull)
 		return MRES_Ignored;
-	
+
 	int iAT[AT_SIZE];
 	Array_Copy(origin, iAT[atOrigin], 3);
 	Array_Copy(angles, iAT[atAngles], 3);
 	Array_Copy(velocity, iAT[atVelocity], 3);
-	
-	// Remember, 
+
+	// Remember,
 	if (!bOriginNull)
 		iAT[atFlags] |= ADDITIONAL_FIELD_TELEPORTED_ORIGIN;
 	if (!bAnglesNull)
 		iAT[atFlags] |= ADDITIONAL_FIELD_TELEPORTED_ANGLES;
 	if (!bVelocityNull)
 		iAT[atFlags] |= ADDITIONAL_FIELD_TELEPORTED_VELOCITY;
-		
+
 	if (g_hRecordingAdditionalTeleport[client] != null)
 		PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT, AT_SIZE);
-	
+
 	return MRES_Ignored;
 }
 

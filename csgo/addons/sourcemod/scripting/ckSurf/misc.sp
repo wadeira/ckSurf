@@ -1054,7 +1054,7 @@ public void PrintConsoleInfo(int client)
 	PrintToConsole(client, "!maptop, !top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !avg,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ranks, !flashlight, !language, !usp, !wr");
 	PrintToConsole(client, "(options menu contains: !info");
-	PrintToConsole(client, "!hide, !hidespecs, !disablegoto, !bhop)");
+	PrintToConsole(client, "!hide, !hidespecs, !disablegoto");
 	PrintToConsole(client, "!hidechat, !hideweapon)");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Practice Mode:");
@@ -1570,7 +1570,6 @@ public void SetClientDefaults(int client)
 	g_bHide[client] = false;
 	g_bStartWithUsp[client] = false;
 	g_bShowSpecs[client] = true;
-	g_bAutoBhopClient[client] = true;
 	g_bHideChat[client] = false;
 	g_bViewModel[client] = true;
 	g_bCheckpointsEnabled[client] = true;
@@ -2586,22 +2585,6 @@ public void NoClipCheck(int client)
 	if (mt == MOVETYPE_NOCLIP && (g_bTimeractivated[client]))
 	{
 		Client_Stop(client, 1);
-	}
-}
-
-
-public void AutoBhopFunction(int client, int &buttons)
-{
-	if (!IsValidClient(client))
-		return;
-	if (g_bAutoBhop && g_bAutoBhopClient[client])
-	{
-		if (buttons & IN_JUMP)
-			if (!(g_bOnGround[client]))
-			if (!(GetEntityMoveType(client) & MOVETYPE_LADDER))
-			if (GetEntProp(client, Prop_Data, "m_nWaterLevel") <= 1)
-			buttons &= ~IN_JUMP;
-
 	}
 }
 

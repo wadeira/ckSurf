@@ -407,8 +407,6 @@ bool g_bMapBonusReplay[MAXZONEGROUPS];
 ConVar g_hColoredNames = null; 									// Colored names in chat?
 ConVar g_hPauseServerside = null; 								// Allow !pause?
 ConVar g_hChallengePoints = null; 								// Allow betting points in challenges?
-ConVar g_hAutoBhopConVar = null; 								// Allow autobhop?
-bool g_bAutoBhop;
 ConVar g_hDynamicTimelimit = null; 								// Dynamic timelimit?
 ConVar g_hAdminClantag = null;									// Admin clan tag?
 ConVar g_hConnectMsg = null; 									// Connect message?
@@ -501,8 +499,6 @@ bool g_bShowSpecs[MAXPLAYERS + 1];								// Show spectator list?
 bool g_borg_ShowSpecs[MAXPLAYERS + 1];
 bool g_bGoToClient[MAXPLAYERS + 1]; 							// Allow !goto
 bool g_borg_GoToClient[MAXPLAYERS + 1];
-bool g_bAutoBhopClient[MAXPLAYERS + 1]; 						// Use auto bhop?
-bool g_borg_AutoBhopClient[MAXPLAYERS + 1];
 bool g_bInfoPanel[MAXPLAYERS + 1]; 								// Client is showing the info panel
 bool g_borg_InfoPanel[MAXPLAYERS + 1];
 
@@ -896,12 +892,6 @@ public void OnMapStart()
 	CreateTimer(60.0, AttackTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 	CreateTimer(600.0, PlayerRanksTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE | TIMER_REPEAT);
 	g_hZoneTimer = CreateTimer(GetConVarFloat(g_hChecker), BeamBoxAll, _, TIMER_REPEAT);
-
-	//AutoBhop?
-	if (GetConVarBool(g_hAutoBhopConVar))
-		g_bAutoBhop = true;
-	else
-		g_bAutoBhop = false;
 
 
 	//main.cfg & replays
@@ -1392,10 +1382,6 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 			}
 		}
 	}
-	else if (convar == g_hAutoBhopConVar)
-	{
-		g_bAutoBhop = view_as<bool>(StringToInt(newValue[0]));
-	}
 	else if (convar == g_hCountry)
 	{
 		if (GetConVarBool(g_hCountry))
@@ -1738,8 +1724,6 @@ public void OnPluginStart()
 	HookConVarChange(g_hPlayerModel, OnSettingChanged);
 	g_hArmModel = CreateConVar("ck_player_arm_skin", "models/weapons/ct_arms_sas.mdl", "Player arm skin", FCVAR_NOTIFY);
 	HookConVarChange(g_hArmModel, OnSettingChanged);
-	g_hAutoBhopConVar = CreateConVar("ck_auto_bhop", "1", "on/off - AutoBhop on surf_ maps", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	HookConVarChange(g_hAutoBhopConVar, OnSettingChanged);
 	g_hCleanWeapons = CreateConVar("ck_clean_weapons", "1", "on/off - Removes all weapons on the ground", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	HookConVarChange(g_hCleanWeapons, OnSettingChanged);
 	g_hCountry = CreateConVar("ck_country_tag", "1", "on/off - Country clan tag", FCVAR_NOTIFY, true, 0.0, true, 1.0);
@@ -1887,7 +1871,6 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_goto", Client_GoTo, "[ckSurf] teleports you to a selected player");
 	RegConsoleCmd("sm_sound", Client_QuakeSounds, "[ckSurf] on/off quake sounds");
 	RegConsoleCmd("sm_surrender", Client_Surrender, "[ckSurf] surrender your current challenge");
-	RegConsoleCmd("sm_bhop", Client_AutoBhop, "[ckSurf] on/off autobhop");
 	RegConsoleCmd("sm_help2", Client_RankingSystem, "[ckSurf] Explanation of the ckSurf ranking system");
 	RegConsoleCmd("sm_flashlight", Client_Flashlight, "[ckSurf] on/off flashlight");
 	RegConsoleCmd("sm_maptop", Client_MapTop, "[ckSurf] displays local map top for a given map");

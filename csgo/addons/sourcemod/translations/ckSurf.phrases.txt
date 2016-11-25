@@ -712,21 +712,6 @@
 		"#format"   "{1:c},{2:c}"
 		"en"        "[{1}CK{2}] Spectator list disabled."
 	}
-	"AutoBhop1"
-	{
-		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}CK{2}] AutoBhop enabled."
-	}
-	"AutoBhop2"
-	{
-		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}CK{2}] AutoBhop disabled."
-	}
-	"AutoBhop3"
-	{
-		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}CK{2}] AutoBhop disabled. (server-sided)"
-	}
 	"Usp1"
 	{
 		"#format"   "{1:c},{2:c}"

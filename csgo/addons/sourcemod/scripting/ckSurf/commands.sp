@@ -1844,26 +1844,6 @@ public int ProfileSelectMenuHandler(Menu menu, MenuAction action, int param1, in
 	}
 }
 
-public Action Client_AutoBhop(int client, int args)
-{
-	AutoBhop(client);
-	if (g_bAutoBhop)
-	{
-		if (!g_bAutoBhopClient[client])
-			PrintToChat(client, "%t", "AutoBhop2", MOSSGREEN, WHITE);
-		else
-			PrintToChat(client, "%t", "AutoBhop1", MOSSGREEN, WHITE);
-	}
-	return Plugin_Handled;
-}
-
-public void AutoBhop(int client)
-{
-	if (!g_bAutoBhop)
-		PrintToChat(client, "%t", "AutoBhop3", MOSSGREEN, WHITE);
-
-	g_bAutoBhopClient[client] = !g_bAutoBhopClient[client];
-}
 
 public Action Client_Hide(int client, int args)
 {
@@ -2495,7 +2475,6 @@ public void ShowSrvSettings(int client)
 	PrintToConsole(client, "-----------------");
 	PrintToConsole(client, "ck_admin_clantag %b", GetConVarBool(g_hAdminClantag));
 	PrintToConsole(client, "ck_attack_spam_protection %b", GetConVarBool(g_hAttackSpamProtection));
-	PrintToConsole(client, "ck_auto_bhop %i (bhop_ & surf_ maps)", GetConVarBool(g_hAutoBhopConVar));
 	//PrintToConsole(client, "ck_auto_timer %i", GetConVarBool(g_hAutoTimer));
 	PrintToConsole(client, "ck_autoheal %i (requires ck_godmode 0)", GetConVarInt(g_hAutohealing_Hp));
 	PrintToConsole(client, "ck_autorespawn %b", GetConVarBool(g_hAutoRespawn));
@@ -2532,6 +2511,8 @@ public void ShowSrvSettings(int client)
 	float flGravity = GetConVarFloat(hTmp);
 	hTmp = FindConVar("sv_enablebunnyhopping");
 	int iBhop = GetConVarInt(hTmp);
+	hTmp = FindConVar("sv_autobunnyhopping");
+	int iAutoBhop = GetConVarInt(hTmp);
 	hTmp = FindConVar("sv_maxspeed");
 	float flMaxSpeed = GetConVarFloat(hTmp);
 	hTmp = FindConVar("sv_maxvelocity");
@@ -2549,6 +2530,7 @@ public void ShowSrvSettings(int client)
 	PrintToConsole(client, "sv_friction %.1f", flFriction);
 	PrintToConsole(client, "sv_gravity %.1f", flGravity);
 	PrintToConsole(client, "sv_enablebunnyhopping %i", iBhop);
+	PrintToConsole(client, "sv_autobunnyhopping %i", iAutoBhop);
 	PrintToConsole(client, "sv_maxspeed %.1f", flMaxSpeed);
 	PrintToConsole(client, "sv_maxvelocity %.1f", flMaxVel);
 	PrintToConsole(client, "sv_staminalandcost %.2f", flStamLand);
@@ -2598,22 +2580,6 @@ public void OptionMenu(int client)
 	else
 		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");
 
-	if (g_bAutoBhop)
-	{
-		// #7
-		if (g_bAutoBhopClient[client])
-			AddMenuItem(optionmenu, "AutoBhop  -  Enabled", "AutoBhop  -  Enabled");
-		else
-			AddMenuItem(optionmenu, "AutoBhop  -  Disabled", "AutoBhop  -  Disabled");
-	}
-	else
-	{
-		// #7
-		if (g_bAutoBhopClient[client])
-			AddMenuItem(optionmenu, "AutoBhop  -  Enabled", "AutoBhop  -  Enabled", ITEMDRAW_DISABLED);
-		else
-			AddMenuItem(optionmenu, "AutoBhop  -  Disabled", "AutoBhop  -  Disabled", ITEMDRAW_DISABLED);
-	}
 	// #8
 	if (g_bHideChat[client])
 		AddMenuItem(optionmenu, "Hide Chat - Hidden", "Hide Chat - Hidden");
@@ -2655,10 +2621,9 @@ public int OptionMenuHandler(Menu menu, MenuAction action, int param1, int param
 			case 4:InfoPanel(param1);
 			case 5:SwitchStartWeapon(param1);
 			case 6:DisableGoTo(param1);
-			case 7:AutoBhop(param1);
-			case 8:HideChat(param1);
-			case 9:HideViewModel(param1);
-			case 10:ToggleCheckpoints(param1, 1);
+			case 7:HideChat(param1);
+			case 8:HideViewModel(param1);
+			case 9:ToggleCheckpoints(param1, 1);
 		}
 		g_OptionsMenuLastPage[param1] = param2;
 		OptionMenu(param1);
