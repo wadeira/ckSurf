@@ -2684,6 +2684,12 @@ public Action Command_saveLoc(int client, int args)
 {
 	int id = g_SavedLocationsCount++;
 
+	// Check if we reached the limit of savelocs
+	if (id >= MAX_SAVELOCS) {
+		PrintToChat(client, "[%cCK%c] We reached the limit of saved locations for this map.", MOSSGREEN, WHITE);
+		return
+	}
+
 	int target = client;
 
 	// Check if the player is spectating
@@ -2743,7 +2749,7 @@ public Action Command_loadLoc(int client, int args)
 	}
 	else {
 		// Get the argument given
-		char arg1[3];
+		char arg1[5];
 		GetCmdArg(1, arg1, sizeof(arg1));
 		id = StringToInt(arg1);
 	}
