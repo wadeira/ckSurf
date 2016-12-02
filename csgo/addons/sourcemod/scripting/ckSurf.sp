@@ -940,6 +940,7 @@ public void OnMapStart()
 
 	int resetArray[MAXPLAYERS+1] = {-1, ...};
 	Array_Copy(resetArray, g_LastSaveLocUsed, MAXPLAYERS+1);
+	Array_Copy(resetArray, g_fLastTimePauseUsed, MAXPLAYERS+1);
 }
 
 public void OnMapEnd()
