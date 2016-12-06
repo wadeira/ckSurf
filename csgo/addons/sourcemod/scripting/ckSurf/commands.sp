@@ -2687,7 +2687,7 @@ public Action Command_saveLoc(int client, int args)
 	// Check if we reached the limit of savelocs
 	if (id >= MAX_SAVELOCS) {
 		PrintToChat(client, "[%cCK%c] We reached the limit of saved locations for this map.", MOSSGREEN, WHITE);
-		return
+		return Plugin_Handled;
 	}
 
 	int target = client;
