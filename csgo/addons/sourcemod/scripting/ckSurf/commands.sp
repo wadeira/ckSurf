@@ -1945,11 +1945,6 @@ public void PauseMethod(int client)
 			return;
 		}
 		g_bPause[client] = true;
-		float fVel[3];
-		fVel[0] = 0.000000;
-		fVel[1] = 0.000000;
-		fVel[2] = 0.000000;
-		SetEntPropVector(client, Prop_Data, "m_vecVelocity", fVel);
 		SetEntityMoveType(client, MOVETYPE_NONE);
 		//Timer enabled?
 		if (g_bTimeractivated[client] == true)
@@ -1976,8 +1971,6 @@ public void PauseMethod(int client)
 			SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 		else
 			SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 5, true);
-
-		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, view_as<float>( { 0.0, 0.0, -100.0 } ));
 	}
 }
 
