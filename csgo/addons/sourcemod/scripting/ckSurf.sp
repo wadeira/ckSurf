@@ -472,6 +472,7 @@ int g_iServerHibernationValue;
 /*----------  User Commands  ----------*/
 float g_flastClientKnife[MAXPLAYERS + 1];						// Throttle !knife command
 float g_flastClientUsp[MAXPLAYERS + 1]; 						// Throttle !usp command
+float g_flastClientDecoy[MAXPLAYERS + 1];						// Throttle !decoy command
 float g_fLastCommandBack[MAXPLAYERS + 1];						// Throttle !back to prevent desync on record bots
 bool g_insertingInformation; 									// Used to check if a admin is inserting zone or maptier information, don't allow many at the same time
 bool g_bNoClip[MAXPLAYERS + 1]; 								// Client is noclipping
@@ -941,6 +942,9 @@ public void OnMapStart()
 	int resetArray[MAXPLAYERS+1] = {-1, ...};
 	Array_Copy(resetArray, g_LastSaveLocUsed, MAXPLAYERS+1);
 	Array_Copy(resetArray, g_fLastTimePauseUsed, MAXPLAYERS+1);
+	Array_Copy(resetArray, g_flastClientKnife, MAXPLAYERS+1);
+	Array_Copy(resetArray, g_flastClientUsp, MAXPLAYERS+1);
+	Array_Copy(resetArray, g_flastClientDecoy, MAXPLAYERS+1);
 }
 
 public void OnMapEnd()
@@ -1864,6 +1868,7 @@ public void OnPluginStart()
 	//client commands
 	RegConsoleCmd("sm_knife", Client_Knife, "[ckSurf] spawns a knife");
 	RegConsoleCmd("sm_usp", Client_Usp, "[ckSurf] spawns a usp silencer");
+	RegConsoleCmd("sm_decoy", Client_Decoy, "[ckSurf] spawns a decoy");
 	RegConsoleCmd("sm_avg", Client_Avg, "[ckSurf] prints in chat the average time of the current map");
 	RegConsoleCmd("sm_accept", Client_Accept, "[ckSurf] allows you to accept a challenge request");
 	RegConsoleCmd("sm_hidechat", Client_HideChat, "[ckSurf] hides your ingame chat");

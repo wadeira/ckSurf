@@ -1205,6 +1205,28 @@ public Action Client_Usp(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action Client_Decoy(int client, int args)
+{
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
+		return Plugin_Handled;
+
+	if ((GetGameTime() - g_flastClientDecoy[client]) < 10.0)
+		return Plugin_Handled;
+
+	g_flastClientDecoy[client] = GetGameTime();
+
+	if(Client_HasWeapon(client, "weapon_decoy"))
+	{
+		int weapon = Client_GetWeapon(client, "weapon_decoy");
+		FakeClientCommand(client, "use %s", weapon);
+		InstantSwitch(client, weapon);
+	}
+	else
+		GivePlayerItem(client, "weapon_decoy");
+
+	return Plugin_Handled;
+}
+
 void InstantSwitch(int client, int weapon, int timer = 0)
 {
 	if (weapon == -1)
