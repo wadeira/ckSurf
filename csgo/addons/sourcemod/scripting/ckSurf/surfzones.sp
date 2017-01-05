@@ -158,12 +158,12 @@ public void StartTouch(int client, int action[3])
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
 
-		if (action[0] == 0) // Stop Zone
+		if (action[0] == view_as<int>(ST_Stop)) // Stop Zone
 		{
 			Client_Stop(client, 1);
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
 		}
-		else if (action[0] == 1 || action[0] == 5) // Start Zone or Speed Start
+		else if (action[0] == view_as<int>(ST_Start) || action[0] == view_as<int>(ST_Speed)) // Start Zone or Speed Start
 		{
 			if (g_Stage[g_iClientInZone[client][2]][client] == 1 && g_bPracticeMode[client]) // If practice mode is on
 				Command_goToPlayerCheckpoint(client, 1);
@@ -174,16 +174,38 @@ public void StartTouch(int client, int action[3])
 				Client_Stop(client, 1);
 				// Resetting last checkpoint
 				lastCheckpoint[g_iClientInZone[client][2]][client] = 1;
+
+
+				// Start recording
+				if ((!IsFakeClient(client) && GetConVarBool(g_hReplayBot)))
+				{
+					if (!IsPlayerAlive(client) || GetClientTeam(client) == 1)
+					{
+						if (g_hRecording[client] != null)
+							StopRecording(client);
+					}
+					else
+					{
+						if (g_hRecording[client] != null)
+							StopRecording(client);
+						StartRecording(client);
+					}
+				}
 			}
 		}
-		else if (action[0] == 2) // End Zone
+		else if (action[0] == view_as<int>(ST_End)) // End Zone
 		{
-			if (g_iClientInZone[client][2] == action[2]) //  Cant end bonus timer in this zone && in the having the same timer on
+			if (g_iClientInZone[client][2] == action[2]) { //  Cant end bonus timer in this zone && in the having the same timer on
+				if (g_bStageTimerRunning[client])
+					EndStageTimer(client);
+
 				CL_OnEndTimerPress(client);
+			}
 			else
 			{
 				Client_Stop(client, 1);
 			}
+
 			if (g_bPracticeMode[client]) // Go back to normal mode if checkpoint mode is on
 			{
 				Command_normalMode(client, 1);
@@ -192,7 +214,7 @@ public void StartTouch(int client, int action[3])
 			// Resetting checkpoints
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
 		}
-		else if (action[0] == 3) // Stage Zone
+		else if (action[0] == view_as<int>(ST_Stage)) // Stage Zone
 		{
 			if (g_bPracticeMode[client]) // If practice mode is on
 			{
@@ -210,13 +232,22 @@ public void StartTouch(int client, int action[3])
 				// Announcing checkpoint
 				if (action[1] != lastCheckpoint[g_iClientInZone[client][2]][client] && g_iClientInZone[client][2] == action[2])
 				{
+					if (g_bStageTimerRunning[client] && g_iClientInZone[client][2] == 0 && g_Stage[0][client] == action[1] + 1) {
+							EndStageTimer(client);
+					}
+
+
 					g_Stage[g_iClientInZone[client][2]][client] = (action[1] + 2);
 					Checkpoint(client, action[1], g_iClientInZone[client][2]);
 					lastCheckpoint[g_iClientInZone[client][2]][client] = action[1];
 				}
+				else {
+					g_bStageTimerRunning[client] = false;
+				}
+
 			}
 		}
-		else if (action[0] == 4) // Checkpoint Zone
+		else if (action[0] == view_as<int>(ST_Checkpoint)) // Checkpoint Zone
 		{
 			if (action[1] != lastCheckpoint[g_iClientInZone[client][2]][client] && g_iClientInZone[client][2] == action[2])
 			{
@@ -225,15 +256,15 @@ public void StartTouch(int client, int action[3])
 				lastCheckpoint[g_iClientInZone[client][2]][client] = action[1];
 			}
 		}
-		else if (action[0] == 6) // TeleToStart Zone
+		else if (action[0] == view_as<int>(ST_TeleToStart)) // TeleToStart Zone
 		{
 			teleportClient(client, g_iClientInZone[client][2], 1, true);
 		}
-		else if (action[0] == 7) // Validator Zone
+		else if (action[0] == view_as<int>(ST_Validator)) // Validator Zone
 		{
 			g_bValidRun[client] = true;
 		}
-		else if (action[0] == 8) // Checker Zone
+		else if (action[0] == view_as<int>(ST_Checker)) // Checker Zone
 		{
 			if (!g_bValidRun[client])
 				Command_Teleport(client, 1);
@@ -246,7 +277,7 @@ public void EndTouch(int client, int action[3])
 	if (IsValidClient(client))
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		if (action[0] == 1 || action[0] == 5)
+		if (action[0] == view_as<int>(ST_Start) || action[0] == view_as<int>(ST_Speed))
 		{
 			if (g_bPracticeMode[client] && !g_bTimeractivated[client]) // If on practice mode, but timer isn't on - start timer
 			{
@@ -264,19 +295,32 @@ public void EndTouch(int client, int action[3])
 					// NoClip check
 					if (g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
 					{
-						PrintToChat(client, "[%cCK%c] %cYou are noclipping or have noclipped recently%c, timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
 					else if (pauseDelay < 5.0) {
-						PrintToChat(client, "[%cCK%c] %cYou used the !pause command recently%c, please wait %c%d %cseconds.", MOSSGREEN, WHITE, LIGHTRED, WHITE, GREEN, RoundToCeil(5.0 - pauseDelay), WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] %cYou used the !pause command recently%c, please wait %c%d %cseconds.", MOSSGREEN, WHITE, LIGHTRED, WHITE, GREEN, RoundToCeil(5.0 - pauseDelay), WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
-					else
+					else {
 						CL_OnStartTimerPress(client);
+						StartStageTimer(client);
+					}
 
 					g_bValidRun[client] = false;
+
+
 				}
 			}
+
+			// Print vertical velocity when leaving start zone
+			/*float CurVelVec[3];
+			GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
+			PrintToChat(client, "%f", CurVelVec[2]);*/
+		}
+		else if (action[0] == view_as<int>(ST_Stage))
+		{
+			StartStageTimer(client);
 		}
 
 		// Set client location
@@ -634,7 +678,7 @@ public void ZoneMenu(int client)
 
 	if (!(GetUserFlagBits(client) & g_ZoneMenuFlag) && !(GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
-		PrintToChat(client, "[%cCK%c] You don't have access to the zones menu.", MOSSGREEN, WHITE);
+		PrintToChat(client, "[%cSurf Timer%c] You don't have access to the zones menu.", MOSSGREEN, WHITE);
 		return;
 	}
 
@@ -650,7 +694,6 @@ public void ZoneMenu(int client)
 	ckZoneMenu.ExitButton = true;
 	ckZoneMenu.Display(client, MENU_TIME_FOREVER);
 }
-
 
 
 public int Handle_ZoneMenu(Handle tMenu, MenuAction action, int client, int item)
@@ -704,6 +747,8 @@ public int Handle_ZoneMenu(Handle tMenu, MenuAction action, int client, int item
 		}
 	}
 }
+
+
 public void EditZoneGroup(int client)
 {
 	Menu editZoneGroupMenu = new Menu(h_editZoneGroupMenu);
@@ -751,6 +796,7 @@ public int h_editZoneGroupMenu(Handle tMenu, MenuAction action, int client, int 
 	}
 }
 
+
 public void ListBonusGroups(int client)
 {
 	Menu h_bonusGroupListing = new Menu(Handler_bonusGroupListing);
@@ -775,6 +821,7 @@ public void ListBonusGroups(int client)
 	h_bonusGroupListing.Display(client, MENU_TIME_FOREVER);
 }
 
+
 public int Handler_bonusGroupListing(Handle tMenu, MenuAction action, int client, int item)
 {
 	switch (action)
@@ -798,6 +845,7 @@ public int Handler_bonusGroupListing(Handle tMenu, MenuAction action, int client
 	}
 }
 
+
 public void ListBonusSettings(int client)
 {
 	Menu h_ListBonusSettings = new Menu(Handler_ListBonusSettings);
@@ -811,6 +859,7 @@ public void ListBonusSettings(int client)
 	h_ListBonusSettings.ExitButton = true;
 	h_ListBonusSettings.Display(client, MENU_TIME_FOREVER);
 }
+
 
 public int Handler_ListBonusSettings(Handle tMenu, MenuAction action, int client, int item)
 {
@@ -838,6 +887,7 @@ public int Handler_ListBonusSettings(Handle tMenu, MenuAction action, int client
 	}
 }
 
+
 public void checkForMissclick(int client)
 {
 	Menu h_checkForMissclick = new Menu(Handle_checkForMissclick);
@@ -852,6 +902,7 @@ public void checkForMissclick(int client)
 	h_checkForMissclick.ExitButton = true;
 	h_checkForMissclick.Display(client, MENU_TIME_FOREVER);
 }
+
 
 public int Handle_checkForMissclick(Handle tMenu, MenuAction action, int client, int item)
 {
@@ -878,6 +929,7 @@ public int Handle_checkForMissclick(Handle tMenu, MenuAction action, int client,
 	}
 }
 
+
 public void listZonesInGroup(int client)
 {
 	Menu h_listBonusZones = new Menu(Handler_listBonusZones);
@@ -902,6 +954,7 @@ public void listZonesInGroup(int client)
 	h_listBonusZones.ExitButton = true;
 	h_listBonusZones.Display(client, MENU_TIME_FOREVER);
 }
+
 
 public int Handler_listBonusZones(Handle tMenu, MenuAction action, int client, int item)
 {
@@ -938,7 +991,7 @@ public void renameBonusGroup(int client)
 	if (!IsValidClient(client))
 		return;
 
-	PrintToChat(client, "[%cCK%c] Please write the bonus name in chat or use %c!cancel%c to stop.", MOSSGREEN, WHITE, MOSSGREEN, WHITE);
+	PrintToChat(client, "[%cSurf Timer%c] Please write the bonus name in chat or use %c!cancel%c to stop.", MOSSGREEN, WHITE, MOSSGREEN, WHITE);
 	g_ClientRenamingZone[client] = true;
 }
 // Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
@@ -1075,7 +1128,7 @@ public int H_CreateBonusFirst(Handle tMenu, MenuAction action, int client, int i
 						return;
 
 					g_Editing[client] = 2;
-					PrintToChat(client, "[%cCK%c] Bonus Start Zone Created", MOSSGREEN, WHITE);
+					PrintToChat(client, "[%cSurf Timer%c] Bonus Start Zone Created", MOSSGREEN, WHITE);
 					EndBonusZoneCreation(client);
 				}
 			}
@@ -1153,10 +1206,10 @@ public void SaveBonusZones(int client)
 		int id2 = g_mapZonesCount + 1;
 		db_insertZone(g_mapZonesCount, 1, 0, g_fBonusStartPos[client][0][0], g_fBonusStartPos[client][0][1], g_fBonusStartPos[client][0][2], g_fBonusStartPos[client][1][0], g_fBonusStartPos[client][1][1], g_fBonusStartPos[client][1][2], 0, 0, g_mapZoneGroupCount);
 		db_insertZone(id2, 2, 0, g_fBonusEndPos[client][0][0], g_fBonusEndPos[client][0][1], g_fBonusEndPos[client][0][2], g_fBonusEndPos[client][1][0], g_fBonusEndPos[client][1][1], g_fBonusEndPos[client][1][2], 0, 0, g_mapZoneGroupCount);
-		PrintToChat(client, "[%cCK%c] Bonus Saved!", MOSSGREEN, WHITE);
+		PrintToChat(client, "[%cSurf Timer%c] Bonus Saved!", MOSSGREEN, WHITE);
 	}
 	else
-		PrintToChat(client, "[%cCK%c] Failed to Save Bonus, error in coordinates", MOSSGREEN, WHITE);
+		PrintToChat(client, "[%cSurf Timer%c] Failed to Save Bonus, error in coordinates", MOSSGREEN, WHITE);
 
 	resetSelection(client);
 	ZoneMenu(client);

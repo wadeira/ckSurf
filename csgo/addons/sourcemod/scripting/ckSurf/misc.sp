@@ -32,17 +32,12 @@ void setBotQuota()
 
 	// Check how many bots are needed
 	int count = 0;
-	if (g_bMapReplay)
+	if (g_bMapReplay || g_BonusBotCount > 0)
 		count++;
 	if (GetConVarBool(g_hInfoBot))
 		count++;
-	if (g_BonusBotCount > 0)
-		count++;
 
-	if (count == 0)
-		SetConVarInt(hBotQuota, 0, false, false);
-	else
-		SetConVarInt(hBotQuota, count, false, false);
+	SetConVarInt(hBotQuota, count, false, false);
 
 	CloseHandle(hBotQuota);
 
@@ -126,7 +121,7 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 		return;
 	if (!IsValidZonegroup(zonegroup))
 	{
-		PrintToChat(client, "[%cCK%c] Zonegroup not found.", MOSSGREEN, WHITE);
+		PrintToChat(client, "[%cSurf Timer%c] Zonegroup not found.", MOSSGREEN, WHITE);
 		return;
 	}
 
@@ -199,10 +194,10 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 				}
 			}
 			else
-				PrintToChat(client, "[%cCK%c] Destination zone not found!", MOSSGREEN, WHITE);
+				PrintToChat(client, "[%cSurf Timer%c] Destination zone not found!", MOSSGREEN, WHITE);
 		}
 		else
-			PrintToChat(client, "[%cCK%c] No zones found in the map.", MOSSGREEN, WHITE);
+			PrintToChat(client, "[%cSurf Timer%c] No zones found in the map.", MOSSGREEN, WHITE);
 	}
 	return;
 }
@@ -771,36 +766,36 @@ public void checkChangesInTitle(int client)
 				{
 					g_bflagTitles_orig[client][i] = g_bflagTitles[client][i];
 					if (g_bflagTitles[client][i])
-						PrintToChat(client, "[%cCK%c] Congratulations! You have gained the VIP privileges!", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] Congratulations! You have gained the VIP privileges!", MOSSGREEN, WHITE);
 					else
-						PrintToChat(client, "[%cCK%c] You have lost your VIP privileges!", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] You have lost your VIP privileges!", MOSSGREEN, WHITE);
 					break;
 				}
 				case 1:
 				{
 					g_bflagTitles_orig[client][i] = g_bflagTitles[client][i];
 					if (g_bflagTitles[client][i])
-						PrintToChat(client, "[%cCK%c] Congratulations! You have gained the Mapper title!", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] Congratulations! You have gained the Mapper title!", MOSSGREEN, WHITE);
 					else
-						PrintToChat(client, "[%cCK%c] You have lost your Mapper title!", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] You have lost your Mapper title!", MOSSGREEN, WHITE);
 					break;
 				}
 				case 2:
 				{
 					g_bflagTitles_orig[client][i] = g_bflagTitles[client][i];
 					if (g_bflagTitles[client][i])
-						PrintToChat(client, "[%cCK%c] Congratulations! You have gained the Teacher title!", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] Congratulations! You have gained the Teacher title!", MOSSGREEN, WHITE);
 					else
-						PrintToChat(client, "[%cCK%c] You have lost your Teacher title!", MOSSGREEN, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] You have lost your Teacher title!", MOSSGREEN, WHITE);
 					break;
 				}
 				default:
 				{
 					g_bflagTitles_orig[client][i] = g_bflagTitles[client][i];
 					if (g_bflagTitles[client][i])
-						PrintToChat(client, "[%cCK%c] Congratulations! You have gained the custom title \"%s\"!", MOSSGREEN, WHITE, g_szflagTitle_Colored[i]);
+						PrintToChat(client, "[%cSurf Timer%c] Congratulations! You have gained the custom title \"%s\"!", MOSSGREEN, WHITE, g_szflagTitle_Colored[i]);
 					else
-						PrintToChat(client, "[%cCK%c] You have lost your custom title \"%s\"!", MOSSGREEN, WHITE, g_szflagTitle_Colored[i]);
+						PrintToChat(client, "[%cSurf Timer%c] You have lost your custom title \"%s\"!", MOSSGREEN, WHITE, g_szflagTitle_Colored[i]);
 					break;
 				}
 			}
@@ -982,7 +977,7 @@ public bool checkSpam(int client)
 
 
 	if (4 < g_messages[client] < 8)
-		PrintToChat(client, "[%cCK%c] %cStop spamming or you will get kicked!", MOSSGREEN, WHITE, RED);
+		PrintToChat(client, "[%cSurf Timer%c] %cStop spamming or you will get kicked!", MOSSGREEN, WHITE, RED);
 	else
 		if (g_messages[client] >= 8)
 	{
@@ -1273,7 +1268,15 @@ public void LimitSpeed(int client)
 
 	float currentspeed = SquareRoot(Pow(CurVelVec[0], 2.0) + Pow(CurVelVec[1], 2.0));
 
-	if (currentspeed > speedCap)
+	// Limit the player velocity
+	bool limitZVel = false;
+	if (CurVelVec[2] < -300.0) {
+		limitZVel = true;
+		CurVelVec[2] = -300.0;
+		//PrintToChat(client, "[%cSurf Timer%c] %cYou have too much vertical velocity.", MOSSGREEN, WHITE, LIGHTRED);
+	}
+
+	if (currentspeed > speedCap || limitZVel)
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, speedCap);
@@ -1353,25 +1356,7 @@ void refreshTrailBot(int bot)
 	if (!IsValidEntity(ent))
 		ent = bot;
 
-	if ((GetConVarBool(g_hBonusBotTrail) && GetConVarBool(g_hBonusBot)) && bot == g_BonusBot)
-	{
-		for (int i = 1; i < MAXPLAYERS+1; i++)
-		{
-			if (IsValidClient(i) && ((g_iClientInZone[i][2] == g_iClientInZone[bot][2] && g_Stage[g_iClientInZone[i][2]][i] == g_Stage[g_iClientInZone[bot][2]][bot]) || g_bSpectate[i]))
-			{
-				TE_SetupBeamFollow(ent,
-					g_BeamSprite,
-					0,
-					BEAMLIFE,
-					4.0,
-					1.0,
-					1,
-					g_BonusBotTrailColor);
-   				TE_SendToClient(i);
-			}
-		}
-	}
-	else if ((GetConVarBool(g_hRecordBotTrail) && GetConVarBool(g_hReplayBot)) && bot == g_RecordBot)
+	if ((GetConVarBool(g_hRecordBotTrail) && GetConVarBool(g_hReplayBot)) && bot == g_RecordBot)
 	{
 		for (int i = 1; i < MAXPLAYERS+1; i++)
 		{
@@ -1398,7 +1383,7 @@ public void toggleTrail(int client)
 
 	if (!g_bTrailOn[client])
 	{
-		PrintToChat(client, "[%cCK%c] Player trail %cenabled", MOSSGREEN, WHITE, MOSSGREEN);
+		PrintToChat(client, "[%cSurf Timer%c] Player trail %cenabled", MOSSGREEN, WHITE, MOSSGREEN);
 		g_bTrailOn[client] = true;
 
 		if (!g_bTrailApplied[client])
@@ -1406,7 +1391,7 @@ public void toggleTrail(int client)
 	}
 	else
 	{
-		PrintToChat(client, "[%cCK%c] Player trail %cdisabled", MOSSGREEN, WHITE, RED);
+		PrintToChat(client, "[%cSurf Timer%c] Player trail %cdisabled", MOSSGREEN, WHITE, RED);
 		g_bTrailOn[client] = false;
 	}
 }
@@ -1571,9 +1556,17 @@ public void SetClientDefaults(int client)
 	g_bStartWithUsp[client] = false;
 	g_bShowSpecs[client] = true;
 	g_bHideChat[client] = false;
+	g_bHideLeftHud[client] = false;
 	g_bViewModel[client] = true;
 	g_bCheckpointsEnabled[client] = true;
 	g_bEnableQuakeSounds[client] = true;
+
+
+	g_fStageStartTime[client] = 0.0;
+	g_bStageTimerRunning[client] = false;
+
+	for (int i = 0; i < 64; i++)
+		g_fStagePlayerRecord[client][i] = 9999999.0;
 }
 
 public void clearPlayerCheckPoints(int client)
@@ -1822,7 +1815,7 @@ stock void MapFinishedMsgs(int client, int rankThisRun = 0)
 		}
 
 		if (g_MapRank[client] == 99999 && IsValidClient(client))
-			PrintToChat(client, "[%cCK%c] %cFailed to save your data correctly! Please contact an admin.", MOSSGREEN, WHITE, DARKRED, RED, DARKRED);
+			PrintToChat(client, "[%cSurf Timer%c] %cFailed to save your data correctly! Please contact an admin.", MOSSGREEN, WHITE, DARKRED, RED, DARKRED);
 
 		CreateTimer(0.0, UpdatePlayerProfile, client, TIMER_FLAG_NO_MAPCHANGE);
 
@@ -1960,7 +1953,7 @@ stock void PrintChatBonus (int client, int zGroup, int rank = 0)
 	db_CalcAvgRunTimeBonus();
 
 	if (rank == 9999999 && IsValidClient(client))
-		PrintToChat(client, "[%cCK%c] %cFailed to save your data correctly! Please contact an admin.", MOSSGREEN, WHITE, DARKRED, RED, DARKRED);
+		PrintToChat(client, "[%cSurf Timer%c] %cFailed to save your data correctly! Please contact an admin.", MOSSGREEN, WHITE, DARKRED, RED, DARKRED);
 
 	return;
 }
@@ -2462,19 +2455,9 @@ public void GetRGBColor(int bot, char color[256])
 		g_ReplayBotColor[1] = StringToInt(sPart[1]);
 		g_ReplayBotColor[2] = StringToInt(sPart[2]);
 	}
-	else
-		if (bot == 1)
-	{
-		g_BonusBotColor[0] = StringToInt(sPart[0]);
-		g_BonusBotColor[1] = StringToInt(sPart[1]);
-		g_BonusBotColor[2] = StringToInt(sPart[2]);
-	}
 
 	if (bot == 0 && g_RecordBot != -1 && IsValidClient(g_RecordBot))
 		SetEntityRenderColor(g_RecordBot, g_ReplayBotColor[0], g_ReplayBotColor[1], g_ReplayBotColor[2], 50);
-	else
-		if (bot == 1 && g_BonusBot != -1 && IsValidClient(g_BonusBot))
-		SetEntityRenderColor(g_BonusBot, g_BonusBotColor[0], g_BonusBotColor[1], g_BonusBotColor[2], 50);
 
 }
 
@@ -2565,7 +2548,7 @@ public void CheckRun(int client)
 				if (g_fPersonalRecordBonus[g_iClientInZone[client][2]][client] > 0.0)
 				{
 					g_bMissedBonusBest[client] = true;
-					PrintToChat(client, "[%cCK%c] %cYou have missed your best bonus time of (%c%s%c)", MOSSGREEN, WHITE, GRAY, YELLOW, g_szPersonalRecordBonus[g_iClientInZone[client][2]][client], GRAY);
+					PrintToChat(client, "[%cSurf Timer%c] %cYou have missed your best bonus time of (%c%s%c)", MOSSGREEN, WHITE, GRAY, YELLOW, g_szPersonalRecordBonus[g_iClientInZone[client][2]][client], GRAY);
 					EmitSoundToClient(client, "buttons/button18.wav", client);
 				}
 			}
@@ -2689,21 +2672,22 @@ public void SpecListMenuDead(int client) // What Spectators see
 						}
 						else
 						{
-							if (ObservedUser == g_RecordBot)
-								Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
-							else
-								if (ObservedUser == g_BonusBot)
-									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", g_szZoneGroupName[g_iClientInZone[g_BonusBot][2]], szTime, szTick, count, szStage);
-
+							if (ObservedUser == g_RecordBot) {
+								if (g_CurrentReplay == 0)
+									Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
+								else if (g_CurrentReplay > 0)
+									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTime, szTick, count, szStage);
+							}
 						}
 					}
 					else
 					{
-						if (ObservedUser == g_RecordBot)
-							Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTick, count, szStage);
-						else
-							if (ObservedUser == g_BonusBot)
-								Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: Bonus\n", g_szZoneGroupName[g_iClientInZone[g_BonusBot][2]], szTick, count);
+						if (ObservedUser == g_RecordBot) {
+							if (g_CurrentReplay == 0)
+								Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTick, count, szStage);
+							else if (g_CurrentReplay > 0)
+									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: Bonus\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTick, count);
+						}
 					}
 				}
 				else
@@ -2718,14 +2702,14 @@ public void SpecListMenuDead(int client) // What Spectators see
 
 				if (!g_bShowTime[client] && g_bShowSpecs[client])
 				{
-					if (ObservedUser != g_RecordBot && ObservedUser != g_BonusBot)
+					if (ObservedUser != g_RecordBot)
 						Format(g_szPlayerPanelText[client], 512, "%Specs (%i):\n%s\n \n%s\nRecord: %s\n\nStage: %s\n", count, sSpecs, szPlayerRank, szProBest, szStage);
 					else
 					{
-						if (ObservedUser == g_RecordBot)
+						if (g_CurrentReplay == 0)
 							Format(g_szPlayerPanelText[client], 512, "Record replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: %s\n", g_szReplayName, szTick, count, sSpecs, szStage);
 						else
-							if (ObservedUser == g_BonusBot)
+							if (g_CurrentReplay > 0)
 							Format(g_szPlayerPanelText[client], 512, "Bonus replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: Bonus\n", g_szBonusName, szTick, count, sSpecs);
 
 					}
@@ -2736,10 +2720,10 @@ public void SpecListMenuDead(int client) // What Spectators see
 						Format(g_szPlayerPanelText[client], 512, "%s\nRecord: %s\n\nStage: %s\n", szPlayerRank, szProBest, szStage);
 					else
 					{
-						if (ObservedUser == g_RecordBot)
+						if (g_CurrentReplay == 0)
 							Format(g_szPlayerPanelText[client], 512, "Record replay of\n%s\n \nTickrate: %s\n\nStage: %s\n", g_szReplayName, szTick, szStage);
 						else
-							if (ObservedUser == g_BonusBot)
+							if (g_CurrentReplay > 0)
 							Format(g_szPlayerPanelText[client], 512, "Bonus replay of\n%s\n \nTickrate: %s\n\nStage: Bonus\n", g_szBonusName, szTick, szStage);
 
 					}
@@ -2805,7 +2789,7 @@ public void LoadInfoBot()
 	g_InfoBot = -1;
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (!IsValidClient(i) || !IsFakeClient(i) || i == g_RecordBot || i == g_BonusBot)
+		if (!IsValidClient(i) || !IsFakeClient(i) || i == g_RecordBot)
 			continue;
 		g_InfoBot = i;
 		break;
@@ -2985,8 +2969,8 @@ public void CenterHudAlive(int client)
 	 *************/
 
 	// Check if timer is disabled
-	if (!g_bTimeractivated[client])
-		Format(sTime, sizeof(sTime), "Stopped");
+	if (!g_bTimeractivated[client] && !g_bStageTimerRunning[client])
+			Format(sTime, sizeof(sTime), "Stopped");
 
 	// Check if timer is paused
 	else if (g_bPause[client])
@@ -3008,6 +2992,20 @@ public void CenterHudAlive(int client)
 
 	else
 		Format(sTime, sizeof(sTime), "<font color='#00CC00'>%s</font>", sTime);
+
+
+	// If the timer isnt running but the stage timer is
+	if (!g_bTimeractivated[client] && g_bStageTimerRunning[client]) {
+
+		// Get current stage time
+		float stage_time = GetGameTime() - g_fStageStartTime[client];
+
+		// Format time to the buffer
+		FormatTimeFloat(client, stage_time, 3, sTime, sizeof(sTime));
+
+		// Add color
+		Format(sTime, sizeof(sTime), "<font color='#3D87FF'>%s</font>", sTime);
+	}
 
 
 	/********************
@@ -3085,6 +3083,91 @@ public void CenterHudAlive(int client)
 	// Verify that the user is valid to send the message
 	if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
 		PrintHintText(client, "<font face=''>%s\t\tRank: %s\nPB: %s\tSR: %s\nStage: %sSpeed: %i u/s</font>", sTime, sRank, sPBest, sSRec, sStage, RoundToNearest(g_fLastSpeed[client]));
+}
+
+public void LeftHudAlive(int client)
+{
+
+	if (g_bHideLeftHud[client])
+		return;
+
+	char buffer[256];
+
+	int zgroup = g_iClientInZone[client][2];
+	int stage = g_Stage[zgroup][client];
+	int timeleft; GetMapTimeLeft(timeleft);
+
+	Format(buffer, sizeof(buffer), "> %s\n", g_szMapName);
+
+	if (g_fPersonalRecord[client] > 0.0)
+		//Format(buffer, sizeof(buffer), "%sRank: %d/%d\nPB: %s\n", buffer, g_MapRank[client], g_MapTimesCount, g_szPersonalRecord[client]);
+		Format(buffer, sizeof(buffer), "%sPB: %s\n", buffer, g_szPersonalRecord[client]);
+	//else
+		//Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_MapTimesCount);
+
+	if (g_MapTimesCount > 0)
+		Format(buffer, sizeof(buffer), "%sSR: %s\n    by %s\n", buffer, g_szRecordMapTime, g_szRecordPlayer);
+	else
+		Format(buffer, sizeof(buffer), "%sSR: N/A\n", buffer);
+
+
+	if (zgroup > 0) {
+		Format(buffer, sizeof(buffer), "%s--------------------------\n", buffer);
+
+		Format(buffer, sizeof(buffer), "%s%s\n", buffer, g_szZoneGroupName[zgroup]);
+
+		if (g_fPersonalRecordBonus[zgroup][client] > 0.0)
+			//Format(buffer, sizeof(buffer), "%sRank: %d/%d\nPB: %s\n", buffer, g_MapRankBonus[zgroup][client], g_iBonusCount[zgroup], g_szPersonalRecordBonus[zgroup][client]);
+			Format(buffer, sizeof(buffer), "%sPB: %s\n", buffer, g_szPersonalRecordBonus[zgroup][client]);
+		//else
+		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_iBonusCount[zgroup]);
+
+		if (g_iBonusCount[zgroup] > 0)
+			Format(buffer, sizeof(buffer), "%sSR: %s\n    by %s\n", buffer, g_szBonusFastestTime[zgroup], g_szBonusFastest[zgroup]);
+		//else
+		//	Format(buffer, sizeof(buffer), "%sSR: N/A\n", buffer);
+
+
+	}	else if (g_bhasStages) {
+
+		Format(buffer, sizeof(buffer), "%s--------------------------\n", buffer);
+
+		Format(buffer, sizeof(buffer), "%sStage: %d/%d\n", buffer, stage, (g_mapZonesTypeCount[zgroup][3] + 1));
+
+		// player rank
+		//if (g_StagePlayerRank[client][stage] > 0)
+			//Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
+		//else
+		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage][srCompletions]);
+
+		// stage player record
+		if (g_fStagePlayerRecord[client][stage] != 9999999.0) {
+			char srcp[16];
+			FormatTimeFloat(client, g_fStagePlayerRecord[client][stage], 5, srcp, sizeof(srcp));
+			Format(buffer, sizeof(buffer), "%sPB: %s\n", buffer, srcp);
+		}
+		//else
+		//	Format(buffer, sizeof(buffer), "%sPB: N/A\n", buffer);
+
+		// stage server record
+		if (g_StageRecords[stage][srLoaded]) {
+			char srcp[16];
+			FormatTimeFloat(client, g_StageRecords[stage][srRunTime], 5, srcp, sizeof(srcp));
+			Format(buffer, sizeof(buffer), "%sSR: %s\n    by %s\n", buffer, srcp, g_StageRecords[stage][srPlayerName]);
+		}
+		//else
+		//	Format(buffer, sizeof(buffer), "%sSR: N/A\n", buffer);
+	}
+
+	Format(buffer, sizeof(buffer), "%s--------------------------\n", buffer);
+
+	//Format(buffer, sizeof(buffer), "%sTime left: %dm\n", buffer, timeleft/60);
+
+	Format(buffer, sizeof(buffer), "%sSpectators: %d", buffer, CountSpectators(client));
+
+
+	strcopy(g_szPlayerPanelText[client], sizeof(g_szPlayerPanelText[]), buffer);
+	SpecList(client);
 }
 
 public void Checkpoint(int client, int zone, int zonegroup)
@@ -3173,13 +3256,13 @@ public void Checkpoint(int client, int zone, int zonegroup)
 		{
 			Format(szDiff_colorless, 32, "-%s", szDiff);
 			Format(szDiff, sizeof(szDiff), " %c-%s", GREEN, szDiff);
-			Format(g_szLastPBDifference[client], 64, "<font color='#00CC00'>%s</font>\t", szDiff_colorless);
+			Format(g_szLastPBDifference[client], 64, "<font color='#00CC00'>%s</font>", szDiff_colorless);
 		}
 		else
 		{
 			Format(szDiff_colorless, 32, "+%s", szDiff);
 			Format(szDiff, sizeof(szDiff), " %c+%s", RED, szDiff);
-			Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>\t", szDiff_colorless);
+			Format(g_szLastPBDifference[client], 64, "<font color='#FF0000'>%s</font>", szDiff_colorless);
 		}
 
 		g_fLastDifferenceTime[client] = GetGameTime();
@@ -3284,4 +3367,23 @@ public void CheckpointToSpec(int client, char[] buffer)
 			}
 		}
 	}
+}
+
+public int CountSpectators(int client) {
+	int specCount = 0;
+	for (int x = 1; x <= MaxClients; x++)
+	{
+		if (IsValidClient(x) && !IsFakeClient(client) && !IsPlayerAlive(x) && GetClientTeam(x) >= 1 && GetClientTeam(x) <= 3) {
+			int SpecMode = GetEntProp(x, Prop_Send, "m_iObserverMode");
+
+			if (SpecMode == 4 || SpecMode == 5) {
+				int ObservedUser = GetEntPropEnt(x, Prop_Send, "m_hObserverTarget");
+
+				if (ObservedUser == client)
+					specCount++;
+			}
+		}
+	}
+
+	return specCount;
 }

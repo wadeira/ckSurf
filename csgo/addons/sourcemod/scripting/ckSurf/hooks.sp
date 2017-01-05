@@ -88,9 +88,8 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 			if (client == g_InfoBot)
 				CS_SetClientClanTag(client, "");
 			else if (client == g_RecordBot)
-				CS_SetClientClanTag(client, "MAP REPLAY");
-			else if (client == g_BonusBot)
-				CS_SetClientClanTag(client, "BONUS REPLAY");
+				CS_SetClientClanTag(client, "REPLAY");
+
 			return Plugin_Continue;
 		}
 
@@ -639,13 +638,13 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		if (newVelocity[0] == 0.0 && newVelocity[1] == 0.0 && newVelocity[2] == 0.0)
 		{
 			RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
-			if (IsFakeClient(client))
+			if (IsFakeClient(client) && g_bIsPlayingReplay)
 				PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		}
 		else
 		{
 			RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, newVelocity);
-			if (IsFakeClient(client))
+			if (IsFakeClient(client) && g_bIsPlayingReplay)
 				PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, newVelocity);
 		}
 
@@ -660,7 +659,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 		//menu refreshing
 		CheckRun(client);
-		
+
 		NoClipCheck(client);
 		AttackProtection(client, buttons);
 
@@ -671,6 +670,19 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		g_LastButton[client] = buttons;
 
 		BeamBox_OnPlayerRunCmd(client);
+
+		// Check if player is jumping
+		if (!g_bPlayerIsJumping[client] && !(GetEntityFlags(client) & FL_ONGROUND)) {
+			g_PlayerJumpsInStage[client] += 1;
+			g_bPlayerIsJumping[client] = true;
+		} else if (GetEntityFlags(client) & FL_ONGROUND) {
+
+			// Reset jump count if player is not bhoping
+			if (!(buttons & IN_JUMP))
+				g_PlayerJumpsInStage[client] = 0;
+
+			g_bPlayerIsJumping[client] = false;
+		}
 	}
 
 	return Plugin_Continue;

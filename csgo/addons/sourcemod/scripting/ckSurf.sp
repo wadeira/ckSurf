@@ -1,5 +1,5 @@
 /*=============================================
-=            ckSurf - CS:GO surf Timer 		   *
+=            Surf Timer - CS:GO surf Timer 		   *
 *					By Elzi 			       =
 =============================================*/
 
@@ -35,8 +35,8 @@
 #pragma semicolon 1
 
 // Plugin info
-#define VERSION "1.18"
-#define PLUGIN_VERSION 118
+#define VERSION "1.19"
+#define PLUGIN_VERSION 119
 
 // Database definitions
 #define MYSQL 0
@@ -202,6 +202,34 @@ enum SaveLoc
 	Float:slRunTime
 }
 
+enum StageType
+{
+	ST_Stop = 0,
+	ST_Start = 1,
+	ST_End = 2,
+	ST_Stage = 3,
+	ST_Checkpoint = 4,
+	ST_Speed = 5,
+	ST_TeleToStart = 6,
+	ST_Validator = 7,
+	ST_Checker = 8
+}
+
+enum StageRecord
+{
+	String:srPlayerName[45],
+	Float:srRunTime[16],
+	srCompletions,
+	bool:srLoaded
+}
+
+
+enum RecordType
+{
+	RT_MAP,
+	RT_STAGE,
+	RT_BONUS
+}
 
 
 /*===================================
@@ -210,9 +238,9 @@ enum SaveLoc
 
 public Plugin myinfo =
 {
-	name = "ckSurf",
-	author = "Elzi",
-	description = "#clan.kikkeli's Surf Plugin",
+	name = "Surf Timer",
+	author = "marcowmadeira",
+	description = "Nightimate's Surf Plugin",
 	version = VERSION,
 	url = ""
 };
@@ -402,7 +430,6 @@ ConVar g_hReplaceReplayTime = null;								// Replace replay times, even if not 
 ConVar g_hAllowVipMute = null;									// Allow VIP's to mute?
 ConVar g_hTeleToStartWhenSettingsLoaded = null;
 bool g_bMapReplay; // Why two bools?
-ConVar g_hBonusBot = null; 										// Bonus bot?
 bool g_bMapBonusReplay[MAXZONEGROUPS];
 ConVar g_hColoredNames = null; 									// Colored names in chat?
 ConVar g_hPauseServerside = null; 								// Allow !pause?
@@ -434,14 +461,9 @@ ConVar g_hExtraPoints2 = null; 									// How many extra points for finishing a
 // Bot Colors & effects:
 ConVar g_hReplayBotColor = null; 								// Replay bot color
 int g_ReplayBotColor[3];
-ConVar g_hBonusBotColor = null; 								// Bonus bot color
-int g_BonusBotColor[3];
-ConVar g_hBonusBotTrail = null; 								// Bonus bot trail?
 ConVar g_hRecordBotTrail = null; 								// Record bot trail?
 ConVar g_hReplayBotTrailColor = null; 							// Replay bot trail color
 int g_ReplayBotTrailColor[4];
-ConVar g_hBonusBotTrailColor = null; 							// Bonus bot trail color
-int g_BonusBotTrailColor[4];
 ConVar g_hDoubleRestartCommand;									// Double !r restart
 ConVar g_hStartPreSpeed = null; 								// Start zone speed cap
 ConVar g_hSpeedPreSpeed = null; 								// Speed Start zone speed cap
@@ -480,6 +502,7 @@ bool g_bNoClip[MAXPLAYERS + 1]; 								// Client is noclipping
 /*----------  User Options  ----------*/
 // org variables track the original setting status, on disconnect, check if changed, if so, update new settings to database
 bool g_bHideChat[MAXPLAYERS + 1];								// Hides chat
+bool g_bHideLeftHud[MAXPLAYERS + 1];
 bool g_borg_HideChat[MAXPLAYERS + 1];
 bool g_bViewModel[MAXPLAYERS + 1]; 								// Hides viewmodel
 bool g_borg_ViewModel[MAXPLAYERS + 1];
@@ -538,7 +561,6 @@ char g_szRecordPlayer[MAX_NAME_LENGTH];							// Current map's record player's n
 
 /*----------  Replay Variables  ----------*/
 bool g_bNewRecordBot; 											// Checks if the bot is new, if so, set weapon
-bool g_bNewBonusBot; 											// Checks if the bot is new, if so, set weapon
 Handle g_hTeleport = null; 										// Used to track teleportations
 Handle g_hRecording[MAXPLAYERS + 1]; 							// Client is beign recorded
 Handle g_hLoadedRecordsAdditionalTeleport = null;
@@ -558,7 +580,6 @@ int g_RecordPreviousWeapon[MAXPLAYERS + 1];
 int g_OriginSnapshotInterval[MAXPLAYERS + 1];
 int g_BotMimicTick[MAXPLAYERS + 1] =  { 0, ... };
 int g_RecordBot = -1; 											// Record bot client ID
-int g_BonusBot = -1; 											// Bonus bot client ID
 int g_InfoBot = -1; 											// Info bot client ID
 bool g_bReplayAtEnd[MAXPLAYERS + 1]; 							// Replay is at the end
 float g_fReplayRestarted[MAXPLAYERS + 1]; 						// Make replay stand still for long enough for trail to die
@@ -696,6 +717,31 @@ bool g_bPracticeMode[MAXPLAYERS + 1]; 							// Client is in the practice mode
 float g_SavedLocations[1024][SaveLoc];
 int g_SavedLocationsCount = 0;
 int g_LastSaveLocUsed[MAXPLAYERS+1];
+
+
+
+/*-------- Stage Timers -------------*/
+bool g_bStageTimerRunning[MAXPLAYERS + 1];
+float g_fStageStartTime[MAXPLAYERS + 1];
+float g_fStagePlayerRecord[MAXPLAYERS + 1][64];
+bool g_bLoadingStages;
+int g_StageRecords[CPLIMIT][StageRecord];
+int g_StagePlayerRank[MAXPLAYERS+1][CPLIMIT];
+
+int g_PlayerJumpsInStage[MAXPLAYERS+1];
+bool g_bPlayerIsJumping[MAXPLAYERS+1];
+
+
+
+/*---------- Replay Bot ---------------*/
+bool g_bIsPlayingReplay = false;
+int g_CurrentReplay = -1;
+int g_ReplayRequester;
+char g_sReplayRequester[MAX_NAME_LENGTH];
+float g_fLastReplayRequested[MAXPLAYERS+1];
+
+
+
 
 
 /*=========================================
@@ -865,7 +911,7 @@ public void OnMapStart()
 	//get map tag
 	ExplodeString(g_szMapName, "_", g_szMapPrefix, 2, 32);
 
-	//sv_pure 1 could lead to problems with the ckSurf models
+	//sv_pure 1 could lead to problems with the Surf Timer models
 	ServerCommand("sv_pure 0");
 
 	//reload language files
@@ -954,7 +1000,6 @@ public void OnMapEnd()
 		Format(g_sTierString[i], 512, "");
 
 	g_RecordBot = -1;
-	g_BonusBot = -1;
 	db_Cleanup();
 
 	if (g_hSkillGroups != null)
@@ -995,7 +1040,7 @@ public void OnConfigsExecuted()
 	else
 		ServerCommand("mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0");
 
-	ServerCommand("sv_infinite_ammo 2;mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;	bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1");
+	ServerCommand("sv_infinite_ammo 2;mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 1;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;	bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1");
 }
 
 
@@ -1019,7 +1064,7 @@ public void OnAutoConfigsBuffered()
 	if (FileExists(szPath2))
 		ServerCommand("exec %s", szPath);
 	else
-		SetFailState("<ckSurf> %s not found.", szPath2);
+		SetFailState("<Surf Timer> %s not found.", szPath2);
 
 	SetServerTags();
 }
@@ -1171,12 +1216,6 @@ public void OnClientDisconnect(int client)
 		g_RecordBot = -1;
 		return;
 	}
-	if (client == g_BonusBot)
-	{
-		StopPlayerMimic(client);
-		g_BonusBot = -1;
-		return;
-	}
 
 	// Stop trail
 	g_bTrailOn[client] = false;
@@ -1214,62 +1253,16 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 						KickClient(i);
 						g_bTrailOn[i] = false;
 					}
-					else
-					{
-						if (!GetConVarBool(g_hBonusBot)) // if both bots are off, no need to record
-							if (g_hRecording[i] != null)
-								StopRecording(i);
-					}
 				}
 			}
-			if (GetConVarBool(g_hInfoBot) && GetConVarBool(g_hBonusBot))
-				ServerCommand("bot_quota 2");
+			if (GetConVarBool(g_hInfoBot))
+				ServerCommand("bot_quota 1");
 			else
-				if (GetConVarBool(g_hInfoBot) || GetConVarBool(g_hBonusBot))
-					ServerCommand("bot_quota 1");
-				else
-					ServerCommand("bot_quota 0");
+				ServerCommand("bot_quota 0");
 
 			if (g_hBotTrail[0] != null)
 				CloseHandle(g_hBotTrail[0]);
 			g_hBotTrail[0] = null;
-		}
-	}
-	else if (convar == g_hBonusBot)
-	{
-		if (GetConVarBool(g_hBonusBot))
-			LoadReplays();
-		else
-		{
-			for (int i = 1; i <= MaxClients; i++)
-			{
-				if (IsValidClient(i))
-				{
-					if (i == g_BonusBot)
-					{
-						StopPlayerMimic(i);
-						KickClient(i);
-						g_bTrailOn[i] = false;
-					}
-					else
-					{
-						if (!GetConVarBool(g_hReplayBot)) // if both bots are off
-							if (g_hRecording[i] != null)
-								StopRecording(i);
-					}
-				}
-			}
-			if (GetConVarBool(g_hInfoBot) && GetConVarBool(g_hReplayBot))
-				ServerCommand("bot_quota 2");
-			else
-				if (GetConVarBool(g_hInfoBot) || GetConVarBool(g_hReplayBot))
-					ServerCommand("bot_quota 1");
-				else
-					ServerCommand("bot_quota 0");
-
-			if (g_hBotTrail[1] != null)
-				CloseHandle(g_hBotTrail[1]);
-			g_hBotTrail[1] = null;
 		}
 	}
 	else if (convar == g_hAdminClantag)
@@ -1306,7 +1299,7 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 			for (int i = 1; i <= MaxClients; i++)
 				if (IsValidClient(i))
 				{
-					if (i == g_RecordBot || i == g_BonusBot)
+					if (i == g_RecordBot)
 					{
 						// Player Model
 						GetConVarString(g_hReplayBotPlayerModel, szBuffer, 256);
@@ -1444,8 +1437,6 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		AddFileToDownloadsTable(szBuffer);
 		if (IsValidClient(g_RecordBot))
 			SetEntityModel(g_RecordBot, szBuffer);
-		if (IsValidClient(g_BonusBot))
-			SetEntityModel(g_BonusBot, szBuffer);
 	}
 	else if (convar == g_hReplayBotArmModel)
 	{
@@ -1454,8 +1445,6 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		PrecacheModel(szBuffer, true);
 		AddFileToDownloadsTable(szBuffer);
 		if (IsValidClient(g_RecordBot))
-			SetEntPropString(g_RecordBot, Prop_Send, "m_szArmsModel", szBuffer);
-		if (IsValidClient(g_BonusBot))
 			SetEntPropString(g_RecordBot, Prop_Send, "m_szArmsModel", szBuffer);
 
 	}
@@ -1471,8 +1460,6 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		for (int i = 1; i <= MaxClients; i++)
 			if (IsValidClient(i) && i != g_RecordBot)
 				SetEntityModel(i, szBuffer);
-			else if (IsValidClient(i) && i != g_BonusBot)
-				SetEntityModel(i, szBuffer);
 	}
 	else if (convar == g_hArmModel)
 	{
@@ -1486,8 +1473,6 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		for (int i = 1; i <= MaxClients; i++)
 			if (IsValidClient(i) && i != g_RecordBot)
 				SetEntPropString(i, Prop_Send, "m_szArmsModel", szBuffer);
-			else if (IsValidClient(i) && i != g_BonusBot)
-				SetEntPropString(i, Prop_Send, "m_szArmsModel", szBuffer);
 	}
 	else if (convar == g_hReplayBotColor)
 	{
@@ -1495,23 +1480,11 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		Format(color, 256, "%s", newValue[0]);
 		GetRGBColor(0, color);
 	}
-	else if (convar == g_hBonusBotColor)
-	{
-		char color[256];
-		Format(color, 256, "%s", newValue[0]);
-		GetRGBColor(1, color);
-	}
 	else if (convar == g_hReplayBotTrailColor)
 	{
 		char color[24];
 		Format(color, 24, "%s", newValue);
 		StringRGBtoInt(color, g_ReplayBotTrailColor);
-	}
-	else if (convar == g_hBonusBotTrailColor)
-	{
-		char color[24];
-		Format(color, 24, "%s", newValue);
-		StringRGBtoInt(color, g_BonusBotTrailColor);
 	}
 	else if (convar == g_hzoneStartColor)
 	{
@@ -1591,24 +1564,12 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 			g_hBotTrail[0] = null;
 		}
 	}
-	else if (convar == g_hBonusBotTrail) {
-		if (GetConVarBool(g_hBonusBotTrail) && IsValidClient(g_BonusBot) && g_hBotTrail[1] == null)
-		{
-			g_hBotTrail[1] = CreateTimer(5.0 , ReplayTrailRefresh, g_BonusBot, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-		}
-		else
-		{
-			if (g_hBotTrail[1] != null)
-				CloseHandle(g_hBotTrail[1]);
-			g_hBotTrail[1] = null;
-		}
-	}
 	else if (convar == g_hAutoVIPFlag) {
 		AdminFlag flag;
 		g_bAutoVIPFlag = FindFlagByChar(newValue[0], flag);
 		g_AutoVIPFlag = FlagToBit(flag);
 		if (!g_bAutoVIPFlag)
-			PrintToServer("[ckSurf] Invalid flag for ck_autovip_flag");
+			PrintToServer("[Surf Timer] Invalid flag for ck_autovip_flag");
 	}
 	else if (convar == g_hZoneMenuFlag) {
 		AdminFlag flag;
@@ -1617,7 +1578,7 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 
 		if (!validFlag)
 		{
-			PrintToServer("[ckSurf] Invalid flag for ck_zonemenu_flag");
+			PrintToServer("[Surf Timer] Invalid flag for ck_zonemenu_flag");
 			g_ZoneMenuFlag = ADMFLAG_ROOT;
 		}
 		else
@@ -1630,7 +1591,7 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 
 		if (!validFlag)
 		{
-			PrintToServer("[ckSurf] Invalid flag for ck_adminmenu_flag");
+			PrintToServer("[Surf Timer] Invalid flag for ck_adminmenu_flag");
 			g_AdminMenuFlag = ADMFLAG_GENERIC;
 		}
 		else
@@ -1665,7 +1626,7 @@ public void OnPluginStart()
 	//language file
 	LoadTranslations("ckSurf.phrases");
 
-	CreateConVar("ckSurf_version", VERSION, "ckSurf Version.", FCVAR_DONTRECORD | FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);
+	CreateConVar("surftimer_version", VERSION, "Surf Timer Version.", FCVAR_DONTRECORD | FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);
 
 	g_hConnectMsg = CreateConVar("ck_connect_msg", "1", "on/off - Enables a player connect message with country", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hAllowRoundEndCvar = CreateConVar("ck_round_end", "0", "on/off - Allows to end the current round", FCVAR_NOTIFY, true, 0.0, true, 1.0);
@@ -1686,7 +1647,7 @@ public void OnPluginStart()
 	g_hDynamicTimelimit = CreateConVar("ck_dynamic_timelimit", "0", "on/off - Sets a suitable timelimit by calculating the average run time (This method requires ck_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hExtraPoints = CreateConVar("ck_ranking_extra_points_improvements", "15.0", "Gives players x extra points for improving their time.", FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_hExtraPoints2 = CreateConVar("ck_ranking_extra_points_firsttime", "50.0", "Gives players x extra points for finishing a map for the first time.", FCVAR_NOTIFY, true, 0.0, true, 100.0);
-	g_hWelcomeMsg = CreateConVar("ck_welcome_msg", " {yellow}>>{default} {grey}Welcome! This server is using {lime}ckSurf", "Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_NOTIFY);
+	g_hWelcomeMsg = CreateConVar("ck_welcome_msg", " {yellow}>>{default} {grey}Welcome! This server is using {lime}Surf Timer", "Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_NOTIFY);
 	g_hChecker = CreateConVar("ck_zone_checker", "5.0", "The duration in seconds when the beams around zones are refreshed.", FCVAR_NOTIFY);
 	g_hZoneDisplayType = CreateConVar("ck_zone_drawstyle", "1", "0 = Do not display zones, 1 = display the lower edges of zones, 2 = display whole zones", FCVAR_NOTIFY);
 	g_hZonesToDisplay = CreateConVar("ck_zone_drawzones", "1", "Which zones are visible for players. 1 = draw start & end zones, 2 = draw start, end, stage and bonus zones, 3 = draw all zones.", FCVAR_NOTIFY);
@@ -1700,7 +1661,7 @@ public void OnPluginStart()
 	g_hAnnounceRecord = CreateConVar("ck_chat_record_type", "0", "0: Announce all times to chat, 1: Only announce PB's to chat, 2: Only announce SR's to chat", FCVAR_NOTIFY, true, 0.0, true, 2.0);
 	g_hForceCT = CreateConVar("ck_force_players_ct", "0", "Forces all players to join the CT team.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hChatSpamFilter = CreateConVar("ck_chat_spamprotection_time", "1.0", "The frequency in seconds that players are allowed to send chat messages. 0.0 = No chat cap.", FCVAR_NOTIFY, true, 0.0);
-	g_henableChatProcessing = CreateConVar("ck_chat_enable", "1", "(1 / 0) Enable or disable ckSurfs chat processing.", FCVAR_NOTIFY);
+	g_henableChatProcessing = CreateConVar("ck_chat_enable", "1", "(1 / 0) Enable or disable Surf Timers chat processing.", FCVAR_NOTIFY);
 	g_hMultiServerMapcycle = CreateConVar("ck_multi_server_mapcycle", "0", "0 = Use mapcycle.txt to load servers maps, 1 = use configs/ckSurf/multi_server_mapcycle.txt to load maps", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTriggerPushFixEnable = CreateConVar("ck_triggerpushfix_enable", "1", "Enables trigger push fix.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSlopeFixEnable = CreateConVar("ck_slopefix_enable", "1", "Enables slope fix.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
@@ -1713,13 +1674,11 @@ public void OnPluginStart()
 	g_hAllowVipMute = CreateConVar("ck_vip_mute", "1", "(1 / 0) Allows VIP's to mute players", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTeleToStartWhenSettingsLoaded = CreateConVar("ck_teleportclientstostart", "1", "(1 / 0) Teleport players automatically back to the start zone, when their settings have been loaded.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 
-	g_hBonusBotTrail = CreateConVar("ck_bonus_bot_trail", "1", "(1 / 0) Enables a trail on the bonus bot.", FCVAR_NOTIFY);
-	HookConVarChange(g_hBonusBotTrail, OnSettingChanged);
 	g_hRecordBotTrail = CreateConVar("ck_record_bot_trail", "1", "(1 / 0) Enables a trail on the record bot.", FCVAR_NOTIFY);
 	HookConVarChange(g_hRecordBotTrail, OnSettingChanged);
 	g_hPointSystem = CreateConVar("ck_point_system", "1", "on/off - Player point system", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	HookConVarChange(g_hPointSystem, OnSettingChanged);
-	g_hPlayerSkinChange = CreateConVar("ck_custom_models", "1", "on/off - Allows ckSurf to change the models of players and bots", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hPlayerSkinChange = CreateConVar("ck_custom_models", "1", "on/off - Allows Surf Timer to change the models of players and bots", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	HookConVarChange(g_hPlayerSkinChange, OnSettingChanged);
 	g_hReplayBotPlayerModel = CreateConVar("ck_replay_bot_skin", "models/player/tm_professional_var1.mdl", "Replay pro bot skin", FCVAR_NOTIFY);
 	HookConVarChange(g_hReplayBotPlayerModel, OnSettingChanged);
@@ -1741,8 +1700,6 @@ public void OnPluginStart()
 	HookConVarChange(g_hAdminClantag, OnSettingChanged);
 	g_hReplayBot = CreateConVar("ck_replay_bot", "1", "on/off - Bots mimic the local map record", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);
-	g_hBonusBot = CreateConVar("ck_bonus_bot", "1", "on/off - Bots mimic the local bonus record", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	HookConVarChange(g_hBonusBot, OnSettingChanged);
 	g_hInfoBot = CreateConVar("ck_info_bot", "0", "on/off - provides information about nextmap and timeleft in his player name", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	HookConVarChange(g_hInfoBot, OnSettingChanged);
 
@@ -1753,23 +1710,11 @@ public void OnPluginStart()
 	GetConVarString(g_hReplayBotColor, szRBotColor, 256);
 	GetRGBColor(0, szRBotColor);
 
-	g_hBonusBotColor = CreateConVar("ck_bonus_bot_color", "255 255 20", "The bonus replay bot color - Format: \"red green blue\" from 0 - 255.", FCVAR_NOTIFY);
-	HookConVarChange(g_hBonusBotColor, OnSettingChanged);
-	szRBotColor = "";
-	GetConVarString(g_hBonusBotColor, szRBotColor, 256);
-	GetRGBColor(1, szRBotColor);
-
 	g_hReplayBotTrailColor = CreateConVar("ck_replay_bot_trail_color", "52 91 248", "The trail color for the replay bot - Format: \"red green blue\" from 0 - 255.", FCVAR_NOTIFY);
 	HookConVarChange(g_hReplayBotTrailColor, OnSettingChanged);
 	char szTrailColor[24];
 	GetConVarString(g_hReplayBotTrailColor, szTrailColor, 24);
 	StringRGBtoInt(szTrailColor, g_ReplayBotTrailColor);
-
-	g_hBonusBotTrailColor = CreateConVar("ck_bonus_bot_trail_color", "255 255 20", "The trail color for the bonus bot - Format: \"red green blue\" from 0 - 255.", FCVAR_NOTIFY);
-	HookConVarChange(g_hBonusBotTrailColor, OnSettingChanged);
-	szTrailColor = "";
-	GetConVarString(g_hBonusBotTrailColor, szTrailColor, 24);
-	StringRGBtoInt(szTrailColor, g_BonusBotTrailColor);
 
 	g_hzoneStartColor = CreateConVar("ck_zone_startcolor", "000 255 000", "The color of START zones \"red green blue\" from 0 - 255", FCVAR_NOTIFY);
 	GetConVarString(g_hzoneStartColor, g_szZoneColors[1], 24);
@@ -1842,7 +1787,7 @@ public void OnPluginStart()
 	validFlag = FindFlagByChar(szFlag[0], bufferFlag);
 	if (!validFlag)
 	{
-		PrintToServer("[ckSurf] Invalid flag for ck_adminmenu_flag.");
+		PrintToServer("[Surf Timer] Invalid flag for ck_adminmenu_flag.");
 		g_AdminMenuFlag = ADMFLAG_GENERIC;
 	}
 	else
@@ -1854,7 +1799,7 @@ public void OnPluginStart()
 	validFlag = FindFlagByChar(szFlag[0], bufferFlag);
 	if (!validFlag)
 	{
-		PrintToServer("[ckSurf] Invalid flag for ck_zonemenu_flag.");
+		PrintToServer("[Surf Timer] Invalid flag for ck_zonemenu_flag.");
 		g_ZoneMenuFlag = ADMFLAG_ROOT;
 	}
 	else
@@ -1863,139 +1808,148 @@ public void OnPluginStart()
 
 	db_setupDatabase();
 
-	//RegConsoleCmd("sm_rtimes", Command_rTimes, "[ckSurf] spawns a usp silencer");
+	//RegConsoleCmd("sm_rtimes", Command_rTimes, "[Surf Timer] spawns a usp silencer");
 
 	//client commands
-	RegConsoleCmd("sm_knife", Client_Knife, "[ckSurf] spawns a knife");
-	RegConsoleCmd("sm_usp", Client_Usp, "[ckSurf] spawns a usp silencer");
-	RegConsoleCmd("sm_decoy", Client_Decoy, "[ckSurf] spawns a decoy");
-	RegConsoleCmd("sm_avg", Client_Avg, "[ckSurf] prints in chat the average time of the current map");
-	RegConsoleCmd("sm_accept", Client_Accept, "[ckSurf] allows you to accept a challenge request");
-	RegConsoleCmd("sm_hidechat", Client_HideChat, "[ckSurf] hides your ingame chat");
-	RegConsoleCmd("sm_hideweapon", Client_HideWeapon, "[ckSurf] hides your weapon model");
-	RegConsoleCmd("sm_disarm", Client_HideWeapon, "[ckSurf] hides your weapon model");
-	RegConsoleCmd("sm_goto", Client_GoTo, "[ckSurf] teleports you to a selected player");
-	RegConsoleCmd("sm_sound", Client_QuakeSounds, "[ckSurf] on/off quake sounds");
-	RegConsoleCmd("sm_surrender", Client_Surrender, "[ckSurf] surrender your current challenge");
-	RegConsoleCmd("sm_help2", Client_RankingSystem, "[ckSurf] Explanation of the ckSurf ranking system");
-	RegConsoleCmd("sm_flashlight", Client_Flashlight, "[ckSurf] on/off flashlight");
-	RegConsoleCmd("sm_maptop", Client_MapTop, "[ckSurf] displays local map top for a given map");
-	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[ckSurf] hides spectators from menu/panel");
-	RegConsoleCmd("sm_compare", Client_Compare, "[ckSurf] compare your challenge results");
-	RegConsoleCmd("sm_wr", Client_Wr, "[ckSurf] prints records in chat");
-	RegConsoleCmd("sm_abort", Client_Abort, "[ckSurf] abort your current challenge");
-	RegConsoleCmd("sm_spec", Client_Spec, "[ckSurf] chooses a player who you want to spectate and switch you to spectators");
-	RegConsoleCmd("sm_watch", Client_Spec, "[ckSurf] chooses a player who you want to spectate and switch you to spectators");
-	RegConsoleCmd("sm_spectate", Client_Spec, "[ckSurf] chooses a player who you want to spectate and switch you to spectators");
-	RegConsoleCmd("sm_challenge", Client_Challenge, "[ckSurf] allows you to start a race against others");
-	RegConsoleCmd("sm_helpmenu", Client_Help, "[ckSurf] help menu which displays all ckSurf commands");
-	RegConsoleCmd("sm_help", Client_Help, "[ckSurf] help menu which displays all ckSurf commands");
-	RegConsoleCmd("sm_profile", Client_Profile, "[ckSurf] opens a player profile");
-	RegConsoleCmd("sm_p", Client_Profile, "[ckSurf] opens a player profile");
-	RegConsoleCmd("sm_rank", Client_Profile, "[ckSurf] opens a player profile");
-	RegConsoleCmd("sm_options", Client_OptionMenu, "[ckSurf] opens options menu");
-	RegConsoleCmd("sm_top", Client_Top, "[ckSurf] displays top rankings (Top 100 Players, Top 50 overall)");
-	RegConsoleCmd("sm_topSurfers", Client_Top, "[ckSurf] displays top rankings (Top 100 Players, Top 50 overall)");
-	RegConsoleCmd("sm_bonustop", Client_BonusTop, "[ckSurf] displays top rankings of the bonus");
-	RegConsoleCmd("sm_btop", Client_BonusTop, "[ckSurf] displays top rankings of the bonus");
-	RegConsoleCmd("sm_stop", Client_Stop, "[ckSurf] stops your timer");
-	RegConsoleCmd("sm_ranks", Client_Ranks, "[ckSurf] prints in chat the available player ranks");
-	RegConsoleCmd("sm_pause", Client_Pause, "[ckSurf] on/off pause (timer on hold and movement frozen)");
-	RegConsoleCmd("sm_showsettings", Client_Showsettings, "[ckSurf] shows ckSurf server settings");
-	RegConsoleCmd("sm_latest", Client_Latest, "[ckSurf] shows latest map records");
-	RegConsoleCmd("sm_showtime", Client_Showtime, "[ckSurf] on/off - timer text in panel/menu");
-	RegConsoleCmd("sm_hide", Client_Hide, "[ckSurf] on/off - hides other players");
-	RegConsoleCmd("sm_togglecheckpoints", ToggleCheckpoints, "[ckSurf] on/off - Enable player checkpoints");
-	RegConsoleCmd("+noclip", NoClip, "[ckSurf] Player noclip on");
-	RegConsoleCmd("-noclip", UnNoClip, "[ckSurf] Player noclip off");
-	RegConsoleCmd("sm_nc", Command_ckNoClip, "[ckSurf] Player noclip on/off");
+	RegConsoleCmd("sm_knife", Client_Knife, "[Surf Timer] spawns a knife");
+	RegConsoleCmd("sm_usp", Client_Usp, "[Surf Timer] spawns a usp silencer");
+	RegConsoleCmd("sm_decoy", Client_Decoy, "[Surf Timer] spawns a decoy");
+	RegConsoleCmd("sm_avg", Client_Avg, "[Surf Timer] prints in chat the average time of the current map");
+	RegConsoleCmd("sm_accept", Client_Accept, "[Surf Timer] allows you to accept a challenge request");
+	RegConsoleCmd("sm_hidechat", Client_HideChat, "[Surf Timer] hides your ingame chat");
+	RegConsoleCmd("sm_hideweapon", Client_HideWeapon, "[Surf Timer] hides your weapon model");
+	RegConsoleCmd("sm_disarm", Client_HideWeapon, "[Surf Timer] hides your weapon model");
+	RegConsoleCmd("sm_goto", Client_GoTo, "[Surf Timer] teleports you to a selected player");
+	RegConsoleCmd("sm_sound", Client_QuakeSounds, "[Surf Timer] on/off quake sounds");
+	RegConsoleCmd("sm_surrender", Client_Surrender, "[Surf Timer] surrender your current challenge");
+	RegConsoleCmd("sm_help2", Client_RankingSystem, "[Surf Timer] Explanation of the Surf Timer ranking system");
+	RegConsoleCmd("sm_flashlight", Client_Flashlight, "[Surf Timer] on/off flashlight");
+	RegConsoleCmd("sm_maptop", Client_MapTop, "[Surf Timer] displays local map top for a given map");
+	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[Surf Timer] hides spectators from menu/panel");
+	RegConsoleCmd("sm_compare", Client_Compare, "[Surf Timer] compare your challenge results");
+	RegConsoleCmd("sm_wr", Client_Wr, "[Surf Timer] prints records in chat");
+	RegConsoleCmd("sm_abort", Client_Abort, "[Surf Timer] abort your current challenge");
+	RegConsoleCmd("sm_spec", Client_Spec, "[Surf Timer] chooses a player who you want to spectate and switch you to spectators");
+	RegConsoleCmd("sm_watch", Client_Spec, "[Surf Timer] chooses a player who you want to spectate and switch you to spectators");
+	RegConsoleCmd("sm_spectate", Client_Spec, "[Surf Timer] chooses a player who you want to spectate and switch you to spectators");
+	RegConsoleCmd("sm_challenge", Client_Challenge, "[Surf Timer] allows you to start a race against others");
+	RegConsoleCmd("sm_helpmenu", Client_Help, "[Surf Timer] help menu which displays all Surf Timer commands");
+	RegConsoleCmd("sm_help", Client_Help, "[Surf Timer] help menu which displays all Surf Timer commands");
+	RegConsoleCmd("sm_profile", Client_Profile, "[Surf Timer] opens a player profile");
+	RegConsoleCmd("sm_p", Client_Profile, "[Surf Timer] opens a player profile");
+	RegConsoleCmd("sm_rank", Client_Profile, "[Surf Timer] opens a player profile");
+	RegConsoleCmd("sm_options", Client_OptionMenu, "[Surf Timer] opens options menu");
+	RegConsoleCmd("sm_top", Client_Top, "[Surf Timer] displays top rankings (Top 100 Players, Top 50 overall)");
+	RegConsoleCmd("sm_topSurfers", Client_Top, "[Surf Timer] displays top rankings (Top 100 Players, Top 50 overall)");
+	RegConsoleCmd("sm_bonustop", Client_BonusTop, "[Surf Timer] displays top rankings of the bonus");
+	RegConsoleCmd("sm_stagestop", Client_StageTop, "[Surf Timer] displays top rankings of the stages");
+	RegConsoleCmd("sm_btop", Client_BonusTop, "[Surf Timer] displays top rankings of the bonus");
+	RegConsoleCmd("sm_stop", Client_Stop, "[Surf Timer] stops your timer");
+	RegConsoleCmd("sm_ranks", Client_Ranks, "[Surf Timer] prints in chat the available player ranks");
+	RegConsoleCmd("sm_pause", Client_Pause, "[Surf Timer] on/off pause (timer on hold and movement frozen)");
+	RegConsoleCmd("sm_showsettings", Client_Showsettings, "[Surf Timer] shows Surf Timer server settings");
+	RegConsoleCmd("sm_latest", Client_Latest, "[Surf Timer] shows latest map records");
+	RegConsoleCmd("sm_showtime", Client_Showtime, "[Surf Timer] on/off - timer text in panel/menu");
+	RegConsoleCmd("sm_hide", Client_Hide, "[Surf Timer] on/off - hides other players");
+	RegConsoleCmd("sm_togglecheckpoints", ToggleCheckpoints, "[Surf Timer] on/off - Enable player checkpoints");
+	RegConsoleCmd("+noclip", NoClip, "[Surf Timer] Player noclip on");
+	RegConsoleCmd("-noclip", UnNoClip, "[Surf Timer] Player noclip off");
+	RegConsoleCmd("sm_nc", Command_ckNoClip, "[Surf Timer] Player noclip on/off");
 
 	// Teleportation commands
-	RegConsoleCmd("sm_stages", Command_SelectStage, "[ckSurf] Opens up the stage selector");
-	RegConsoleCmd("sm_r", Command_Restart, "[ckSurf] Teleports player back to the start");
-	RegConsoleCmd("sm_restart", Command_Restart, "[ckSurf] Teleports player back to the start");
-	RegConsoleCmd("sm_start", Command_Restart, "[ckSurf] Teleports player back to the start");
-	RegConsoleCmd("sm_b", Command_ToBonus, "[ckSurf] Teleports player back to the start");
-	RegConsoleCmd("sm_bonus", Command_ToBonus, "[ckSurf] Teleports player back to the start");
-	RegConsoleCmd("sm_bonuses", Command_ListBonuses, "[ckSurf] Displays a list of bonuses in current map");
-	RegConsoleCmd("sm_s", Command_ToStage, "[ckSurf] Teleports player to the selected stage");
-	RegConsoleCmd("sm_stage", Command_ToStage, "[ckSurf] Teleports player to the selected stage");
-	RegConsoleCmd("sm_end", Command_ToEnd, "[ckSurf] Teleports player to the end zone");
+	RegConsoleCmd("sm_stages", Command_SelectStage, "[Surf Timer] Opens up the stage selector");
+	RegConsoleCmd("sm_r", Command_Restart, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_restart", Command_Restart, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_start", Command_Restart, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_b", Command_ToBonus, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_bonus", Command_ToBonus, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_bonuses", Command_ListBonuses, "[Surf Timer] Displays a list of bonuses in current map");
+	RegConsoleCmd("sm_s", Command_ToStage, "[Surf Timer] Teleports player to the selected stage");
+	RegConsoleCmd("sm_stage", Command_ToStage, "[Surf Timer] Teleports player to the selected stage");
+	RegConsoleCmd("sm_end", Command_ToEnd, "[Surf Timer] Teleports player to the end zone");
 
 	// Titles
-	RegConsoleCmd("sm_title", Command_SetTitle, "[ckSurf] Displays player's titles");
-	RegConsoleCmd("sm_titles", Command_SetTitle, "[ckSurf] Displays player's titles");
+	RegConsoleCmd("sm_title", Command_SetTitle, "[Surf Timer] Displays player's titles");
+	RegConsoleCmd("sm_titles", Command_SetTitle, "[Surf Timer] Displays player's titles");
 
 	if(GetConVarBool(g_hServerVipCommand))
 	{
-		RegConsoleCmd("sm_vip", Command_Vip, "[ckSurf] VIP's commands and effects.");
-		RegConsoleCmd("sm_effects", Command_Vip, "[ckSurf] VIP's commands and effects.");
-		RegConsoleCmd("sm_effect", Command_Vip, "[ckSurf] VIP's commands and effects.");
+		RegConsoleCmd("sm_vip", Command_Vip, "[Surf Timer] VIP's commands and effects.");
+		RegConsoleCmd("sm_effects", Command_Vip, "[Surf Timer] VIP's commands and effects.");
+		RegConsoleCmd("sm_effect", Command_Vip, "[Surf Timer] VIP's commands and effects.");
 	}
 
 	// MISC
-	RegConsoleCmd("sm_tier", Command_Tier, "[ckSurf] Prints information on the current map");
-	RegConsoleCmd("sm_maptier", Command_Tier, "[ckSurf] Prints information on the current map");
-	RegConsoleCmd("sm_mapinfo", Command_Tier, "[ckSurf] Prints information on the current map");
-	RegConsoleCmd("sm_mi", Command_Tier, "[ckSurf] Prints information on the current map");
-	RegConsoleCmd("sm_m", Command_Tier, "[ckSurf] Prints information on the current map");
-	RegConsoleCmd("sm_difficulty", Command_Tier, "[ckSurf] Prints information on the current map");
-	RegConsoleCmd("sm_btier", Command_bTier, "[ckSurf] Prints tier information on current map's bonuses");
-	RegConsoleCmd("sm_bonusinfo", Command_bTier, "[ckSurf] Prints tier information on current map's bonuses");
-	RegConsoleCmd("sm_bi", Command_bTier, "[ckSurf] Prints tier information on current map's bonuses");
-	RegConsoleCmd("sm_howto", Command_HowTo, "[ckSurf] Displays a youtube video on how to surf");
-	RegConsoleCmd("sm_ve", Command_VoteExtend, "[ckSurf] Vote to extend the map");
-	RegConsoleCmd("sm_vmute", Command_MutePlayer, "[ckSurf] Mute a player");
-	RegConsoleCmd("sm_stats", Command_ViewStats, "[ckSurf] View surf statistics");
+	RegConsoleCmd("sm_tier", Command_Tier, "[Surf Timer] Prints information on the current map");
+	RegConsoleCmd("sm_maptier", Command_Tier, "[Surf Timer] Prints information on the current map");
+	RegConsoleCmd("sm_mapinfo", Command_Tier, "[Surf Timer] Prints information on the current map");
+	RegConsoleCmd("sm_mi", Command_Tier, "[Surf Timer] Prints information on the current map");
+	RegConsoleCmd("sm_m", Command_Tier, "[Surf Timer] Prints information on the current map");
+	RegConsoleCmd("sm_difficulty", Command_Tier, "[Surf Timer] Prints information on the current map");
+	RegConsoleCmd("sm_btier", Command_bTier, "[Surf Timer] Prints tier information on current map's bonuses");
+	RegConsoleCmd("sm_bonusinfo", Command_bTier, "[Surf Timer] Prints tier information on current map's bonuses");
+	RegConsoleCmd("sm_bi", Command_bTier, "[Surf Timer] Prints tier information on current map's bonuses");
+	RegConsoleCmd("sm_howto", Command_HowTo, "[Surf Timer] Displays a youtube video on how to surf");
+	RegConsoleCmd("sm_ve", Command_VoteExtend, "[Surf Timer] Vote to extend the map");
+	RegConsoleCmd("sm_vmute", Command_MutePlayer, "[Surf Timer] Mute a player");
+	RegConsoleCmd("sm_stats", Command_ViewStats, "[Surf Timer] View surf statistics");
 
 
 	// Teleport to the start of the stage
-	RegConsoleCmd("sm_stuck", Command_Teleport, "[ckSurf] Teleports player back to the start of the stage");
-	RegConsoleCmd("sm_back", Command_Teleport, "[ckSurf] Teleports player back to the start of the stage");
-	RegConsoleCmd("sm_rs", Command_Teleport, "[ckSurf] Teleports player back to the start of the stage");
-	RegConsoleCmd("sm_play", Command_Teleport, "[ckSurf] Teleports player back to the start");
-	RegConsoleCmd("sm_spawn", Command_Teleport, "[ckSurf] Teleports player back to the start");
+	RegConsoleCmd("sm_stuck", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
+	RegConsoleCmd("sm_back", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
+	RegConsoleCmd("sm_goback", Command_GoBack, "[Surf Timer] Teleports player to one stage before the current one");
+	RegConsoleCmd("sm_rs", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
+	RegConsoleCmd("sm_play", Command_Teleport, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_spawn", Command_Teleport, "[Surf Timer] Teleports player back to the start");
 
 	// Player Checkpoints
-	RegConsoleCmd("sm_teleport", Command_goToPlayerCheckpoint, "[ckSurf] Teleports player to his last checkpoint");
-	RegConsoleCmd("sm_tele", Command_goToPlayerCheckpoint, "[ckSurf] Teleports player to his last checkpoint");
-	RegConsoleCmd("sm_prac", Command_goToPlayerCheckpoint, "[ckSurf] Teleports player to his last checkpoint");
-	RegConsoleCmd("sm_practice", Command_goToPlayerCheckpoint, "[ckSurf] Teleports player to his last checkpoint");
+	RegConsoleCmd("sm_teleport", Command_goToPlayerCheckpoint, "[Surf Timer] Teleports player to his last checkpoint");
+	RegConsoleCmd("sm_tele", Command_goToPlayerCheckpoint, "[Surf Timer] Teleports player to his last checkpoint");
+	RegConsoleCmd("sm_prac", Command_goToPlayerCheckpoint, "[Surf Timer] Teleports player to his last checkpoint");
+	RegConsoleCmd("sm_practice", Command_goToPlayerCheckpoint, "[Surf Timer] Teleports player to his last checkpoint");
 
-	RegConsoleCmd("sm_cp", Command_createPlayerCheckpoint, "[ckSurf] Creates a checkpoint, where the player can teleport back to");
-	RegConsoleCmd("sm_checkpoint", Command_createPlayerCheckpoint, "[ckSurf] Creates a eckpoint, where the player can teleport back to");
-	RegConsoleCmd("sm_undo", Command_undoPlayerCheckpoint, "[ckSurf] Undoes the players lchast checkpoint.");
-	RegConsoleCmd("sm_normal", Command_normalMode, "[ckSurf] Switches player back to normal mode.");
-	RegConsoleCmd("sm_n", Command_normalMode, "[ckSurf] Switches player back to normal mode.");
-	RegConsoleCmd("sm_saveloc", Command_saveLoc, "[ckSurf] Saves current location.");
-	RegConsoleCmd("sm_loadloc", Command_loadLoc, "[ckSurf] Loads a saved location.");
+	RegConsoleCmd("sm_cp", Command_createPlayerCheckpoint, "[Surf Timer] Creates a checkpoint, where the player can teleport back to");
+	RegConsoleCmd("sm_checkpoint", Command_createPlayerCheckpoint, "[Surf Timer] Creates a eckpoint, where the player can teleport back to");
+	RegConsoleCmd("sm_undo", Command_undoPlayerCheckpoint, "[Surf Timer] Undoes the players lchast checkpoint.");
+	RegConsoleCmd("sm_normal", Command_normalMode, "[Surf Timer] Switches player back to normal mode.");
+	RegConsoleCmd("sm_n", Command_normalMode, "[Surf Timer] Switches player back to normal mode.");
+	RegConsoleCmd("sm_saveloc", Command_saveLoc, "[Surf Timer] Saves current location.");
+	RegConsoleCmd("sm_loadloc", Command_loadLoc, "[Surf Timer] Loads a saved location.");
 
-	RegAdminCmd("sm_ckadmin", Admin_ckPanel, g_AdminMenuFlag, "[ckSurf] Displays the ckSurf menu panel");
-	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, g_AdminMenuFlag, "[ckSurf] Recalculates player profile for given steam id");
-	RegAdminCmd("sm_resetchallenges", Admin_DropChallenges, ADMFLAG_ROOT, "[ckSurf] Resets all player challenges (drops table challenges) - requires z flag");
-	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMFLAG_ROOT, "[ckSurf] Resets all player times (drops table playertimes) - requires z flag");
-	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMFLAG_ROOT, "[ckSurf] Resets the all player points  (drops table playerrank - requires z flag)");
-	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMFLAG_ROOT, "[ckSurf] Resets player times for given map - requires z flag");
-	RegAdminCmd("sm_resetplayerchallenges", Admin_ResetChallenges, ADMFLAG_ROOT, "[ckSurf] Resets (won) challenges for given steamid - requires z flag");
-	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMFLAG_ROOT, "[ckSurf] Resets pro map times (+extrapoints) for given steamid with or without given map - requires z flag");
-	RegAdminCmd("sm_resetplayermaptime", Admin_ResetMapRecord, ADMFLAG_ROOT, "[ckSurf] Resets pro map time for given steamid and map - requires z flag");
-	RegAdminCmd("sm_deleteproreplay", Admin_DeleteMapReplay, ADMFLAG_ROOT, "[ckSurf] Deletes pro replay for a given map - requires z flag");
-	RegAdminCmd("sm_resetextrapoints", Admin_ResetExtraPoints, ADMFLAG_ROOT, "[ckSurf] Resets given extra points for all players with or without given steamid");
-	RegAdminCmd("sm_deletecheckpoints", Admin_DeleteCheckpoints, ADMFLAG_ROOT, "[ckSurf] Reset checkpoints on the current map");
-	RegAdminCmd("sm_insertmaptiers", Admin_InsertMapTiers, ADMFLAG_ROOT, "[ckSurf] Insert premade maptier information into the database (ONLY RUN THIS ONCE)");
-	RegAdminCmd("sm_insertmapzones", Admin_InsertMapZones, ADMFLAG_ROOT, "[ckSurf] Insert premade map zones into the database (ONLY RUN THIS ONCE)");
-	RegAdminCmd("sm_zones", Command_Zones, g_ZoneMenuFlag, "[ckSurf] Opens up the zone creation menu.");
-	RegAdminCmd("sm_admintitles", Admin_giveTitle, ADMFLAG_ROOT, "[ckSurf] Gives a player a title");
-	RegAdminCmd("sm_admintitle", Admin_giveTitle, ADMFLAG_ROOT, "[ckSurf] Gives a player a title");
-	RegAdminCmd("sm_givetitle", Admin_giveTitle, ADMFLAG_ROOT, "[ckSurf] Gives a player a title");
-	RegAdminCmd("sm_removetitles", Admin_deleteTitles, ADMFLAG_ROOT, "[ckSurf] Removes player's all titles");
-	RegAdminCmd("sm_removetitle", Admin_deleteTitle, ADMFLAG_ROOT, "[ckSurf] Removes specific title from a player");
 
-	RegAdminCmd("sm_addmaptier", Admin_insertMapTier, g_AdminMenuFlag, "[ckSurf] Changes maps tier");
-	RegAdminCmd("sm_amt", Admin_insertMapTier, g_AdminMenuFlag, "[ckSurf] Changes maps tier");
-	RegAdminCmd("sm_addspawn", Admin_insertSpawnLocation, g_AdminMenuFlag, "[ckSurf] Changes the position !r takes players to");
-	RegAdminCmd("sm_delspawn", Admin_deleteSpawnLocation, g_AdminMenuFlag, "[ckSurf] Removes custom !r position");
-	RegAdminCmd("sm_clearassists", Admin_ClearAssists, g_AdminMenuFlag, "[ckSurf] Clears assist points (map progress) from all players");
+	RegConsoleCmd("sm_specbot", Command_Replay, "[Surf Timer] Shows the replay menu.");
+	RegConsoleCmd("sm_replay", Command_Replay, "[Surf Timer] Shows the replay menu.");
+
+	RegAdminCmd("sm_ckadmin", Admin_ckPanel, g_AdminMenuFlag, "[Surf Timer] Displays the Surf Timer menu panel");
+	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, g_AdminMenuFlag, "[Surf Timer] Recalculates player profile for given steam id");
+	RegAdminCmd("sm_resetchallenges", Admin_DropChallenges, ADMFLAG_ROOT, "[Surf Timer] Resets all player challenges (drops table challenges) - requires z flag");
+	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMFLAG_ROOT, "[Surf Timer] Resets all player times (drops table playertimes) - requires z flag");
+	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMFLAG_ROOT, "[Surf Timer] Resets the all player points  (drops table playerrank - requires z flag)");
+	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMFLAG_ROOT, "[Surf Timer] Resets player times for given map - requires z flag");
+	RegAdminCmd("sm_resetplayerchallenges", Admin_ResetChallenges, ADMFLAG_ROOT, "[Surf Timer] Resets (won) challenges for given steamid - requires z flag");
+	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMFLAG_ROOT, "[Surf Timer] Resets pro map times (+extrapoints) for given steamid with or without given map - requires z flag");
+	RegAdminCmd("sm_resetplayermaptime", Admin_ResetMapRecord, ADMFLAG_ROOT, "[Surf Timer] Resets pro map time for given steamid and map - requires z flag");
+	RegAdminCmd("sm_deleteproreplay", Admin_DeleteMapReplay, ADMFLAG_ROOT, "[Surf Timer] Deletes pro replay for a given map - requires z flag");
+	RegAdminCmd("sm_resetextrapoints", Admin_ResetExtraPoints, ADMFLAG_ROOT, "[Surf Timer] Resets given extra points for all players with or without given steamid");
+	RegAdminCmd("sm_deletecheckpoints", Admin_DeleteCheckpoints, ADMFLAG_ROOT, "[Surf Timer] Reset checkpoints on the current map");
+	RegAdminCmd("sm_insertmaptiers", Admin_InsertMapTiers, ADMFLAG_ROOT, "[Surf Timer] Insert premade maptier information into the database (ONLY RUN THIS ONCE)");
+	RegAdminCmd("sm_insertmapzones", Admin_InsertMapZones, ADMFLAG_ROOT, "[Surf Timer] Insert premade map zones into the database (ONLY RUN THIS ONCE)");
+	RegAdminCmd("sm_zones", Command_Zones, g_ZoneMenuFlag, "[Surf Timer] Opens up the zone creation menu.");
+	RegAdminCmd("sm_admintitles", Admin_giveTitle, ADMFLAG_ROOT, "[Surf Timer] Gives a player a title");
+	RegAdminCmd("sm_admintitle", Admin_giveTitle, ADMFLAG_ROOT, "[Surf Timer] Gives a player a title");
+	RegAdminCmd("sm_givetitle", Admin_giveTitle, ADMFLAG_ROOT, "[Surf Timer] Gives a player a title");
+	RegAdminCmd("sm_removetitles", Admin_deleteTitles, ADMFLAG_ROOT, "[Surf Timer] Removes player's all titles");
+	RegAdminCmd("sm_removetitle", Admin_deleteTitle, ADMFLAG_ROOT, "[Surf Timer] Removes specific title from a player");
+
+	RegAdminCmd("sm_addmaptier", Admin_insertMapTier, g_AdminMenuFlag, "[Surf Timer] Changes maps tier");
+	RegAdminCmd("sm_amt", Admin_insertMapTier, g_AdminMenuFlag, "[Surf Timer] Changes maps tier");
+	RegAdminCmd("sm_addspawn", Admin_insertSpawnLocation, g_AdminMenuFlag, "[Surf Timer] Changes the position !r takes players to");
+	RegAdminCmd("sm_delspawn", Admin_deleteSpawnLocation, g_AdminMenuFlag, "[Surf Timer] Removes custom !r position");
+	RegAdminCmd("sm_clearassists", Admin_ClearAssists, g_AdminMenuFlag, "[Surf Timer] Clears assist points (map progress) from all players");
+
+
+
 
 
 	//chat command listener
