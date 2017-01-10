@@ -546,7 +546,7 @@ public void StartStageTimer(int client)
 
 	if (g_PlayerJumpsInStage[client] > 1)
 	{
-		PrintToChat(client, "[%cSurf Timer%c] %cPrehoping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
+		PrintToChat(client, "[%cSurf Timer%c] %cPrehopping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
 		return;
 	}
 
