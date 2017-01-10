@@ -163,7 +163,7 @@ public void db_setupDatabase()
 
 	if (g_hDb == null)
 	{
-		SetFailState("[ckSurf] Unable to connect to database (%s)", szError);
+		SetFailState("[Surf Timer] Unable to connect to database (%s)", szError);
 		return;
 	}
 
@@ -179,7 +179,7 @@ public void db_setupDatabase()
 			g_DbType = SQLITE;
 		else
 		{
-			LogError("[ckSurf] Invalid Database-Type");
+			LogError("[Surf Timer] Invalid Database-Type");
 			return;
 		}
 
@@ -248,9 +248,9 @@ void txn_addExtraCheckpoints()
 	{
 		PrintToServer("---------------------------------------------------------------------------");
 		disableServerHibernate();
-		PrintToServer("[ckSurf] Started to make changes to database. Updating from 1.17 -> 1.18.");
-		PrintToServer("[ckSurf] WARNING: DO NOT CONNECT TO THE SERVER, OR CHANGE MAP!");
-		PrintToServer("[ckSurf] Adding extra checkpoints... (1 / 6)");
+		PrintToServer("[Surf Timer] Started to make changes to database. Updating from 1.17 -> 1.18.");
+		PrintToServer("[Surf Timer] WARNING: DO NOT CONNECT TO THE SERVER, OR CHANGE MAP!");
+		PrintToServer("[Surf Timer] Adding extra checkpoints... (1 / 6)");
 
 		g_bInTransactionChain = true;
 		Transaction h_checkpoint = SQL_CreateTransaction();
@@ -264,7 +264,7 @@ void txn_addExtraCheckpoints()
 	}
 	else
 	{
-		PrintToServer("[ckSurf] No database update needed!");
+		PrintToServer("[Surf Timer] No database update needed!");
 		return;
 	}
 }
@@ -286,7 +286,7 @@ void txn_addZoneGroups()
 	}
 	else
 	{
-		PrintToServer("[ckSurf] Zonegroup changes were already done! Skipping to recreating playertemp!");
+		PrintToServer("[Surf Timer] Zonegroup changes were already done! Skipping to recreating playertemp!");
 		txn_recreatePlayerTemp();
 	}
 }
@@ -304,7 +304,7 @@ void txn_recreatePlayerTemp()
 	}
 	else
 	{
-		PrintToServer("[ckSurf] Playertemp was already recreated! Skipping to bonus tiers");
+		PrintToServer("[Surf Timer] Playertemp was already recreated! Skipping to bonus tiers");
 		txn_addBonusTiers();
 	}
 }
@@ -325,7 +325,7 @@ void txn_addBonusTiers()
 	}
 	else
 	{
-		PrintToServer("[ckSurf] Bonus tiers were already added. Skipping to spawn points");
+		PrintToServer("[Surf Timer] Bonus tiers were already added. Skipping to spawn points");
 		txn_addSpawnPoints();
 	}
 }
@@ -342,7 +342,7 @@ void txn_addSpawnPoints()
 	}
 	else
 	{
-		PrintToServer("[ckSurf] Spawnpoints were already added! Skipping to changes in zones");
+		PrintToServer("[Surf Timer] Spawnpoints were already added! Skipping to changes in zones");
 		txn_changesToZones();
 	}
 }
@@ -368,32 +368,38 @@ public void SQLTxn_Success(Handle db, any data, int numQueries, Handle[] results
 {
 	switch (data)
 	{
-		case 1: {
-			PrintToServer("[ckSurf] Checkpoints added succesfully! Next up: adding zonegroups to ck_bonus (2 / 6)");
+		case 1:
+		{
+			PrintToServer("[Surf Timer] Checkpoints added succesfully! Next up: adding zonegroups to ck_bonus (2 / 6)");
 			txn_addZoneGroups();
 		}
-		case 2: {
-			PrintToServer("[ckSurf] Bonus zonegroups succesfully added! Next up: recreating playertemp (3 / 6)");
+		case 2:
+		{
+			PrintToServer("[Surf Timer] Bonus zonegroups succesfully added! Next up: recreating playertemp (3 / 6)");
 			txn_recreatePlayerTemp();
 		}
-		case 3: {
-			PrintToServer("[ckSurf] Playertemp succesfully recreated! Next up: adding bonus tiers (4 / 6)");
+		case 3:
+		{
+			PrintToServer("[Surf Timer] Playertemp succesfully recreated! Next up: adding bonus tiers (4 / 6)");
 			txn_addBonusTiers();
 		}
-		case 4: {
-			PrintToServer("[ckSurf] Bonus tiers added succesfully! Next up: adding spawn points (5 / 6)");
+		case 4:
+		{
+			PrintToServer("[Surf Timer] Bonus tiers added succesfully! Next up: adding spawn points (5 / 6)");
 			txn_addSpawnPoints();
 		}
-		case 5: {
-			PrintToServer("[ckSurf] Spawnpoints added succesfully! Next up: making changes to zones, to make them match the new database (6 / 6)");
+		case 5:
+		{
+			PrintToServer("[Surf Timer] Spawnpoints added succesfully! Next up: making changes to zones, to make them match the new database (6 / 6)");
 			txn_changesToZones();
 		}
-		case 6: {
+		case 6:
+		{
 			g_bInTransactionChain = false;
 
 			revertServerHibernateSettings();
-			PrintToServer("[ckSurf] All changes succesfully done! Changing map!");
-			ForceChangeLevel(g_szMapName, "[ckSurf] Changing level after changes to the database have been done");
+			PrintToServer("[Surf Timer] All changes succesfully done! Changing map!");
+			ForceChangeLevel(g_szMapName, "[Surf Timer] Changing level after changes to the database have been done");
 		}
 	}
 }
@@ -404,28 +410,34 @@ public void SQLTxn_TXNFailed(Handle db, any data, int numQueries, const char[] e
 	{
 		switch (data)
 		{
-			case 1: {
-				PrintToServer("[ckSurf] Error in adding extra checkpoints! Retrying.. (%s)", error);
+			case 1:
+			{
+				PrintToServer("[Surf Timer] Error in adding extra checkpoints! Retrying.. (%s)", error);
 				txn_addExtraCheckpoints();
 			}
-			case 2: {
-				PrintToServer("[ckSurf] Error in addin zonegroups! Retrying... (%s)", error);
+			case 2:
+			{
+				PrintToServer("[Surf Timer] Error in addin zonegroups! Retrying... (%s)", error);
 				txn_addZoneGroups();
 			}
-			case 3: {
-				PrintToServer("[ckSurf] Error in recreating playertemp! Retrying... (%s)", error);
+			case 3:
+			{
+				PrintToServer("[Surf Timer] Error in recreating playertemp! Retrying... (%s)", error);
 				txn_recreatePlayerTemp();
 			}
-			case 4: {
-				PrintToServer("[ckSurf] Error in adding bonus tiers! Retrying... (%s)", error);
+			case 4:
+			{
+				PrintToServer("[Surf Timer] Error in adding bonus tiers! Retrying... (%s)", error);
 				txn_addBonusTiers();
 			}
-			case 5: {
-				PrintToServer("[ckSurf] Error in adding spawn points! Retrying... (%s)", error);
+			case 5:
+			{
+				PrintToServer("[Surf Timer] Error in adding spawn points! Retrying... (%s)", error);
 				txn_addSpawnPoints();
 			}
-			case 6: {
-				PrintToServer("[ckSurf] Error in making changes to zones! Retrying... (%s)", error);
+			case 6:
+			{
+				PrintToServer("[Surf Timer] Error in making changes to zones! Retrying... (%s)", error);
 				txn_changesToZones();
 			}
 		}
@@ -433,9 +445,9 @@ public void SQLTxn_TXNFailed(Handle db, any data, int numQueries, const char[] e
 	else
 	{
 		revertServerHibernateSettings();
-		PrintToServer("[ckSurf]: Couldn't make changes into the database. Transaction: %i, error: %s", data, error);
-		PrintToServer("[ckSurf]: Revert back to database backup.");
-		LogError("[ckSurf]: Couldn't make changes into the database. Transaction: %i, error: %s", data, error);
+		PrintToServer("[Surf Timer]: Couldn't make changes into the database. Transaction: %i, error: %s", data, error);
+		PrintToServer("[Surf Timer]: Revert back to database backup.");
+		LogError("[Surf Timer]: Couldn't make changes into the database. Transaction: %i, error: %s", data, error);
 		return;
 	}
 	g_failedTransactions[data]++;
@@ -467,11 +479,11 @@ public void db_createTables()
 
 public void SQLTxn_CreateDatabaseSuccess(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
 {
-	PrintToServer("[ckSurf] Database tables succesfully created!");
+	PrintToServer("[Surf Timer] Database tables succesfully created!");
 }
 public void SQLTxn_CreateDatabaseFailed(Handle db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-	SetFailState("[ckSurf] Database tables could not be created! Error: %s", error);
+	SetFailState("[Surf Timer] Database tables could not be created! Error: %s", error);
 }
 
 
@@ -562,7 +574,7 @@ public void SQLTxn_RenameFailed(Handle db, any data, int numQueries, const char[
 {
 	g_bRenaming = false;
 	revertServerHibernateSettings();
-	SetFailState("[ckSurf] Database changes failed! (Renaming) Error: %s", error);
+	SetFailState("[Surf Timer] Database changes failed! (Renaming) Error: %s", error);
 }
 
 
@@ -589,7 +601,7 @@ public void SQL_checkPlayerFlagsCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_checkPlayerFlagsCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (SQL_checkPlayerFlagsCallback): %s ", error);
 		return;
 	}
 
@@ -653,7 +665,7 @@ public void SQL_checkPlayerFlagsCallback2(Handle owner, Handle hndl, const char[
 
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_checkPlayerFlagsCallback2): %s ", error);
+		LogError("[Surf Timer] SQL Error (SQL_checkPlayerFlagsCallback2): %s ", error);
 		return;
 	}
 
@@ -758,7 +770,7 @@ public void SQL_PersonalFlagCallback(Handle owner, Handle hndl, const char[] err
 
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_PersonalFlagCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (SQL_PersonalFlagCallback): %s ", error);
 		if (!g_bSettingsLoaded[client])
 			db_viewCheckpoints(client, szSteamID, g_szMapName);
 		return;
@@ -822,7 +834,7 @@ public void db_updateVIPAdminCallback(Handle owner, Handle hndl, const char[] er
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_updateVIPAdminCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (db_updateVIPAdminCallback): %s ", error);
 		return;
 	}
 
@@ -854,7 +866,7 @@ public void db_checkChangesInTitleCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_checkChangesInTitleCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (db_checkChangesInTitleCallback): %s ", error);
 		return;
 	}
 
@@ -952,7 +964,7 @@ public void SQL_insertFlagCallback(Handle owner, Handle hndl, const char[] error
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_insertFlagCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (SQL_insertFlagCallback): %s ", error);
 		return;
 	}
 
@@ -973,7 +985,7 @@ public void SQL_updatePlayerFlagsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_updatePlayerFlagsCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (SQL_updatePlayerFlagsCallback): %s ", error);
 		return;
 	}
 
@@ -1009,7 +1021,7 @@ public void SQL_deletePlayerTitlesCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_deletePlayerTitlesCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (SQL_deletePlayerTitlesCallback): %s ", error);
 		return;
 	}
 
@@ -1048,7 +1060,7 @@ public void db_editSpawnLocationsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_editSpawnLocationsCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (db_editSpawnLocationsCallback): %s ", error);
 		return;
 	}
 	db_selectSpawnLocations();
@@ -1068,7 +1080,7 @@ public void db_selectSpawnLocationsCallback(Handle owner, Handle hndl, const cha
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_selectSpawnLocationsCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (db_selectSpawnLocationsCallback): %s ", error);
 		if (!g_bServerDataLoaded)
 			db_ClearLatestRecords();
 		return;
@@ -1110,7 +1122,7 @@ public void sql_selectPlayerProCountCallback(Handle owner, Handle hndl, const ch
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectPlayerProCountCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectPlayerProCountCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_viewFastestBonus();
 		return;
@@ -1145,7 +1157,7 @@ public void db_viewMapRankProCallback(Handle owner, Handle hndl, const char[] er
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_viewMapRankProCallback): %s ", error);
+		LogError("[Surf Timer] SQL Error (db_viewMapRankProCallback): %s ", error);
 	}
 
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
@@ -1173,7 +1185,7 @@ public void SQL_UpdateStatCallback(Handle owner, Handle hndl, const char[] error
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_UpdateStatCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_UpdateStatCallback): %s", error);
 		return;
 	}
 
@@ -1231,7 +1243,7 @@ public void sql_selectRankedPlayerCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectRankedPlayerCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectRankedPlayerCallback): %s", error);
 		return;
 	}
 
@@ -1300,7 +1312,7 @@ public void sql_selectChallengesCallbackCalc(Handle owner, Handle hndl, const ch
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectChallengesCallbackCalc): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectChallengesCallbackCalc): %s", error);
 		return;
 	}
 
@@ -1351,7 +1363,7 @@ public void sql_CountFinishedBonusCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_CountFinishedBonusCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_CountFinishedBonusCallback): %s", error);
 		return;
 	}
 
@@ -1420,7 +1432,7 @@ public void sql_CountFinishedMapsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_CountFinishedMapsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_CountFinishedMapsCallback): %s", error);
 		return;
 	}
 
@@ -1520,7 +1532,7 @@ public void sql_updatePlayerRankPointsCallback(Handle owner, Handle hndl, const 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_updatePlayerRankPointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_updatePlayerRankPointsCallback): %s", error);
 		return;
 	}
 
@@ -1618,7 +1630,7 @@ public void db_viewPlayerPointsCallback(Handle owner, Handle hndl, const char[] 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_viewPlayerPointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_viewPlayerPointsCallback): %s", error);
 		if (!g_bSettingsLoaded[client])
 			db_viewPlayerOptions(client, g_szSteamID[client]);
 		return;
@@ -1675,7 +1687,7 @@ public void sql_selectRankedPlayersRankCallback(Handle owner, Handle hndl, const
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectRankedPlayersRankCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectRankedPlayersRankCallback): %s", error);
 		if (!g_bSettingsLoaded[client])
 			db_viewPlayerOptions(client, g_szSteamID[client]);
 		return;
@@ -1763,7 +1775,7 @@ public void SQL_ViewRankedPlayerCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRankedPlayerCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRankedPlayerCallback): %s", error);
 		return;
 	}
 
@@ -1805,7 +1817,7 @@ public void SQL_ViewRankedPlayerCallback2(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRankedPlayerCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRankedPlayerCallback2): %s", error);
 		return;
 	}
 
@@ -1829,7 +1841,7 @@ public void SQL_ViewRankedPlayerCallback4(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRankedPlayerCallback4): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRankedPlayerCallback4): %s", error);
 		return;
 	}
 
@@ -1851,7 +1863,7 @@ public void SQL_ViewRankedPlayerCallback5(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRankedPlayerCallback5): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRankedPlayerCallback5): %s", error);
 		return;
 	}
 
@@ -2019,7 +2031,7 @@ public void SQL_ViewRankedPlayer2Callback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRankedPlayer2Callback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRankedPlayer2Callback): %s", error);
 		return;
 	}
 
@@ -2059,7 +2071,7 @@ public void SQL_ViewPlayerAll2Callback(Handle owner, Handle hndl, const char[] e
 
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewPlayerAll2Callback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewPlayerAll2Callback): %s", error);
 		return;
 	}
 
@@ -2101,7 +2113,7 @@ public void SQL_ViewPlayerAllCallback(Handle owner, Handle hndl, const char[] er
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewPlayerAllCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewPlayerAllCallback): %s", error);
 		return;
 	}
 
@@ -2165,7 +2177,7 @@ public void sql_selectTopChallengersCallback(Handle owner, Handle hndl, const ch
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectTopChallengersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectTopChallengersCallback): %s", error);
 		return;
 	}
 	char szValue[128];
@@ -2349,7 +2361,7 @@ public void sql_selectChallengesCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectChallengesCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectChallengesCallback): %s", error);
 		return;
 	}
 
@@ -2433,7 +2445,7 @@ public void sql_selectChallengesCallback2(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectChallengesCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectChallengesCallback2): %s", error);
 		return;
 	}
 
@@ -2491,7 +2503,7 @@ public void sql_selectChallengesCompareCallback(Handle owner, Handle hndl, const
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectChallengesCompareCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectChallengesCompareCallback): %s", error);
 		return;
 	}
 
@@ -2594,7 +2606,7 @@ public void sql_insertChallengesCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_insertChallengesCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_insertChallengesCallback): %s", error);
 		return;
 	}
 }
@@ -2696,7 +2708,7 @@ public void sql_selectMapRecordCallback(Handle owner, Handle hndl, const char[] 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectMapRecordCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectMapRecordCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_viewMapProRankCount();
 		return;
@@ -2733,7 +2745,7 @@ public void sql_selectProSurfersCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectProSurfersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectProSurfersCallback): %s", error);
 		return;
 	}
 
@@ -2809,7 +2821,7 @@ public void db_selectBonusesInMapCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_selectBonusesInMapCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_selectBonusesInMapCallback): %s", error);
 		return;
 	}
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
@@ -2901,7 +2913,7 @@ public void sql_selectTopBonusSurfersCallback(Handle owner, Handle hndl, const c
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectTopBonusSurfersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectTopBonusSurfersCallback): %s", error);
 		return;
 	}
 
@@ -2982,7 +2994,7 @@ public void sql_selectTopSurfersCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectTopSurfersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectTopSurfersCallback): %s", error);
 		return;
 	}
 
@@ -3081,7 +3093,7 @@ public void SQL_CurrentRunRankCallback(Handle owner, Handle hndl, const char[] e
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_CurrentRunRankCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_CurrentRunRankCallback): %s", error);
 		return;
 	}
 	// Get players rank, 9999999 = error
@@ -3112,7 +3124,7 @@ public void sql_selectRecordCallback(Handle owner, Handle hndl, const char[] err
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectRecordCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectRecordCallback): %s", error);
 		return;
 	}
 
@@ -3184,7 +3196,7 @@ public void SQL_UpdateRecordProCallback(Handle owner, Handle hndl, const char[] 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_UpdateRecordProCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_UpdateRecordProCallback): %s", error);
 		return;
 	}
 
@@ -3207,7 +3219,7 @@ public void SQL_UpdateRecordProCallback2(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_UpdateRecordProCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_UpdateRecordProCallback2): %s", error);
 		return;
 	}
 	// Get players rank, 9999999 = error
@@ -3239,7 +3251,7 @@ public void SQL_ViewRecordCallback(Handle owner, Handle hndl, const char[] error
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRecordCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRecordCallback): %s", error);
 		return;
 	}
 
@@ -3286,7 +3298,7 @@ public void SQL_ViewRecordCallback2(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRecordCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRecordCallback2): %s", error);
 		return;
 	}
 
@@ -3314,7 +3326,7 @@ public void SQL_ViewRecordCallback3(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRecordCallback3): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRecordCallback3): %s", error);
 		return;
 	}
 
@@ -3371,7 +3383,7 @@ public void SQL_ViewRecordCallback4(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRecordCallback4): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRecordCallback4): %s", error);
 		return;
 	}
 
@@ -3395,7 +3407,7 @@ public void SQL_ViewRecordCallback5(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewRecordCallback5): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewRecordCallback5): %s", error);
 		return;
 	}
 
@@ -3467,7 +3479,7 @@ public void SQL_ViewAllRecordsCallback(Handle owner, Handle hndl, const char[] e
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewAllRecordsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewAllRecordsCallback): %s", error);
 		return;
 	}
 
@@ -3567,7 +3579,7 @@ public void SQL_ViewAllRecordsCallback2(Handle owner, Handle hndl, const char[] 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewAllRecordsCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewAllRecordsCallback2): %s", error);
 		return;
 	}
 
@@ -3594,7 +3606,7 @@ public void SQL_ViewAllRecordsCallback3(Handle owner, Handle hndl, const char[] 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewAllRecordsCallback3): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewAllRecordsCallback3): %s", error);
 		return;
 	}
 
@@ -3636,7 +3648,7 @@ public void SQL_SelectPlayerCallback(Handle owner, Handle hndl, const char[] err
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_SelectPlayerCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_SelectPlayerCallback): %s", error);
 		return;
 	}
 
@@ -3675,7 +3687,7 @@ public void SQL_selectPersonalRecordsCallback(Handle owner, Handle hndl, const c
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectPersonalRecordsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectPersonalRecordsCallback): %s", error);
 		if (!g_bSettingsLoaded[client])
 			db_viewPersonalBonusRecords(client, g_szSteamID[client]);
 		return;
@@ -3741,7 +3753,7 @@ public void SQL_LastRunCallback(Handle owner, Handle hndl, const char[] error, a
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_LastRunCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_LastRunCallback): %s", error);
 		return;
 	}
 
@@ -3840,7 +3852,7 @@ public void sql_selectRecordCheckpointsCallback(Handle owner, Handle hndl, const
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectRecordCheckpointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectRecordCheckpointsCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_CalcAvgRunTime();
 		return;
@@ -3879,7 +3891,7 @@ public void SQL_selectCheckpointsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectCheckpointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectCheckpointsCallback): %s", error);
 		return;
 	}
 
@@ -3923,7 +3935,7 @@ public void db_viewCheckpointsinZoneGroupCallback(Handle owner, Handle hndl, con
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectCheckpointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectCheckpointsCallback): %s", error);
 		return;
 	}
 
@@ -3974,7 +3986,7 @@ public void SQL_updateCheckpointsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_updateCheckpointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_updateCheckpointsCallback): %s", error);
 		return;
 	}
 	ResetPack(data);
@@ -3996,7 +4008,7 @@ public void SQL_deleteCheckpointsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_deleteCheckpointsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_deleteCheckpointsCallback): %s", error);
 		return;
 	}
 }
@@ -4052,7 +4064,7 @@ public void db_insertMapTierCallback(Handle owner, Handle hndl, const char[] err
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_insertMapTierCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_insertMapTierCallback): %s", error);
 		return;
 	}
 
@@ -4072,7 +4084,7 @@ public void SQL_selectMapTierCallback(Handle owner, Handle hndl, const char[] er
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectMapTierCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectMapTierCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_viewRecordCheckpointInMap();
 		return;
@@ -4150,7 +4162,7 @@ public void SQL_deleteAllMapTiersCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_deleteAllMapTiersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_deleteAllMapTiersCallback): %s", error);
 		return;
 	}
 
@@ -4191,7 +4203,7 @@ public void db_viewBonusRunRank(Handle owner, Handle hndl, const char[] error, a
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_viewBonusRunRank): %s", error);
+		LogError("[Surf Timer] SQL Error (db_viewBonusRunRank): %s", error);
 		return;
 	}
 
@@ -4224,7 +4236,7 @@ public void db_viewMapRankBonusCallback(Handle owner, Handle hndl, const char[] 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_viewMapRankBonusCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_viewMapRankBonusCallback): %s", error);
 		return;
 	}
 
@@ -4245,11 +4257,13 @@ public void db_viewMapRankBonusCallback(Handle owner, Handle hndl, const char[] 
 
 	switch (type)
 	{
-		case 1: {
+		case 1:
+		{
 			g_iBonusCount[zgroup]++;
 			PrintChatBonus(client, zgroup);
 		}
-		case 2: {
+		case 2:
+		{
 			PrintChatBonus(client, zgroup);
 		}
 	}
@@ -4270,7 +4284,7 @@ public void SQL_selectPersonalBonusRecordsCallback(Handle owner, Handle hndl, co
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectPersonalBonusRecordsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectPersonalBonusRecordsCallback): %s", error);
 		if (!g_bSettingsLoaded[client])
 			db_viewPlayerPoints(client);
 		return;
@@ -4320,7 +4334,7 @@ public void SQL_selectFastestBonusCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectFastestBonusCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectFastestBonusCallback): %s", error);
 
 		if (!g_bServerDataLoaded)
 			db_viewBonusTotalCount();
@@ -4376,7 +4390,7 @@ public void SQL_selectBonusTotalCountCallback(Handle owner, Handle hndl, const c
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectBonusTotalCountCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectBonusTotalCountCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_selectMapTier();
 		return;
@@ -4418,7 +4432,7 @@ public void SQL_insertBonusCallback(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_insertBonusCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_insertBonusCallback): %s", error);
 		return;
 	}
 
@@ -4449,7 +4463,7 @@ public void SQL_updateBonusCallback(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_updateBonusCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_updateBonusCallback): %s", error);
 		return;
 	}
 
@@ -4467,7 +4481,7 @@ public void SQL_deleteBonusCallback(Handle owner, Handle hndl, const char[] erro
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_deleteBonusCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_deleteBonusCallback): %s", error);
 		return;
 	}
 }
@@ -4483,7 +4497,7 @@ public void SQL_selectBonusCountCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectBonusCountCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectBonusCountCallback): %s", error);
 		return;
 	}
 
@@ -4544,7 +4558,7 @@ public void sql_setZoneNamesCallback(Handle owner, Handle hndl, const char[] err
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_setZoneNamesCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_setZoneNamesCallback): %s", error);
 		CloseHandle(data);
 		return;
 	}
@@ -4585,7 +4599,7 @@ public void db_checkAndFixZoneIdsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_checkAndFixZoneIdsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_checkAndFixZoneIdsCallback): %s", error);
 		return;
 	}
 
@@ -4644,7 +4658,7 @@ public void SQL_deleteAllZonesCallback(Handle owner, Handle hndl, const char[] e
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_deleteAllZonesCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_deleteAllZonesCallback): %s", error);
 		return;
 	}
 
@@ -4723,7 +4737,7 @@ public void SQL_saveZonesCallBack(Handle owner, Handle hndl, const char[] error,
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_saveZonesCallBack): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_saveZonesCallBack): %s", error);
 		return;
 	}
 	char szzone[128];
@@ -4746,7 +4760,7 @@ public void SQL_updateZoneCallback(Handle owner, Handle hndl, const char[] error
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_updateZoneCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_updateZoneCallback): %s", error);
 		return;
 	}
 
@@ -4760,9 +4774,9 @@ public int db_deleteZonesInGroup(int client)
 	if (g_CurrentSelectedZoneGroup[client] < 1)
 	{
 		if(IsValidClient(client))
-			PrintToChat(client, "[%cCKc%] Invalid zonegroup index selected, aborting. (%i)", MOSSGREEN, WHITE, g_CurrentSelectedZoneGroup[client]);
+			PrintToChat(client, "[%cSurf Timerc%] Invalid zonegroup index selected, aborting. (%i)", MOSSGREEN, WHITE, g_CurrentSelectedZoneGroup[client]);
 
-		PrintToServer("[CK] Invalid zonegroup index selected, aborting. (%i)", g_CurrentSelectedZoneGroup[client]);
+		PrintToServer("[Surf Timer] Invalid zonegroup index selected, aborting. (%i)", g_CurrentSelectedZoneGroup[client]);
 	}
 
 	Transaction h_DeleteZoneGroup = SQL_CreateTransaction();
@@ -4785,7 +4799,7 @@ public int db_deleteZonesInGroup(int client)
 
 public void SQLTxn_ZoneGroupRemovalSuccess(Handle db, any client, int numQueries, Handle[] results, any[] queryData)
 {
-	PrintToServer("[CK] Zonegroup removal was successful");
+	PrintToServer("[Surf Timer] Zonegroup removal was successful");
 
 	db_selectMapZones();
 	db_viewFastestBonus();
@@ -4805,7 +4819,7 @@ public void SQLTxn_ZoneGroupRemovalFailed(Handle db, any client, int numQueries,
 	if(IsValidClient(client))
 		PrintToChat(client, "[%cSurf Timer%c] Zonegroup removal failed! (Error: %s)", MOSSGREEN, WHITE, error);
 
-	PrintToServer("[CK] Zonegroup removal failed (Error: %s)", error);
+	PrintToServer("[Surf Timer] Zonegroup removal failed (Error: %s)", error);
 	return;
 }
 
@@ -4820,7 +4834,7 @@ public void SQL_selectzoneTypeIdsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectzoneTypeIdsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectzoneTypeIdsCallback): %s", error);
 		return;
 	}
 
@@ -4837,11 +4851,13 @@ public void SQL_selectzoneTypeIdsCallback(Handle owner, Handle hndl, const char[
 		char MenuNum[24], MenuInfo[6], MenuItemName[24];
 		int x = 0;
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		switch (g_CurrentZoneType[data]) {
+		switch (g_CurrentZoneType[data])
+		{
 			case 0:Format(MenuItemName, 24, "Stop");
 			case 1:Format(MenuItemName, 24, "Start");
 			case 2:Format(MenuItemName, 24, "End");
-			case 3: {
+			case 3:
+			{
 				Format(MenuItemName, 24, "Stage");
 				x = 2;
 			}
@@ -4880,7 +4896,7 @@ public checkZoneTypeIdsCallback(Handle owner, Handle hndl, const char[] error, a
 {
 	if(hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (checkZoneTypeIds): %s", error);
+		LogError("[Surf Timer] SQL Error (checkZoneTypeIds): %s", error);
 		return;
 	}
 	if(SQL_HasResultSet(hndl))
@@ -4904,7 +4920,7 @@ public checkZoneTypeIdsCallback(Handle owner, Handle hndl, const char[] error, a
 						continue;
 					else
 					{
-						PrintToServer("[ckSurf] Error on zonetype: %i, zonetypeid: %i", i, idChecker[i][k]);
+						PrintToServer("[Surf Timer] Error on zonetype: %i, zonetypeid: %i", i, idChecker[i][k]);
 						Format(szQuery, 258, "UPDATE `ck_zones` SET zonetypeid = zonetypeid-1 WHERE mapname = '%s' AND zonetype = %i AND zonetypeid > %i AND zonegroup = %i;", g_szMapName, j, k, i);
 						SQL_LockDatabase(g_hDb);
 						SQL_FastQuery(g_hDb, szQuery);
@@ -4923,7 +4939,7 @@ public checkZoneIdsCallback(Handle owner, Handle hndl, const char[] error, any:d
 {
 	if(hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (checkZoneIdsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (checkZoneIdsCallback): %s", error);
 		return;
 	}
 
@@ -4940,7 +4956,7 @@ public checkZoneIdsCallback(Handle owner, Handle hndl, const char[] error, any:d
 			}
 			else
 			{
-				PrintToServer("[ckSurf] Found an error in ZoneID's. Fixing...");
+				PrintToServer("[Surf Timer] Found an error in ZoneID's. Fixing...");
 				Format(szQuery, 258, "UPDATE `ck_zones` SET zoneid = %i WHERE mapname = '%s' AND zoneid = %i", i, g_szMapName, SQL_FetchInt(hndl, 0));
 				SQL_LockDatabase(g_hDb);
 				SQL_FastQuery(g_hDb, szQuery);
@@ -4959,7 +4975,7 @@ public checkZoneGroupIds(Handle owner, Handle hndl, const char[] error, any:data
 {
 	if(hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (checkZoneGroupIds): %s", error);
+		LogError("[Surf Timer] SQL Error (checkZoneGroupIds): %s", error);
 		return;
 	}
 
@@ -4976,7 +4992,7 @@ public checkZoneGroupIds(Handle owner, Handle hndl, const char[] error, any:data
 			else
 			{
 				i++;
-				PrintToServer("[ckSurf] Found an error in zoneGroupID's. Fixing...");
+				PrintToServer("[Surf Timer] Found an error in zoneGroupID's. Fixing...");
 				Format(szQuery, 258, "UPDATE `ck_zones` SET `zonegroup` = %i WHERE `mapname` = '%s' AND `zonegroup` = %i", i, g_szMapName, SQL_FetchInt(hndl, 0));
 				SQL_LockDatabase(g_hDb);
 				SQL_FastQuery(g_hDb, szQuery);
@@ -4998,7 +5014,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_selectMapZonesCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_selectMapZonesCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_GetMapRecord_Pro();
 		return;
@@ -5079,10 +5095,12 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			{
 				switch (g_mapZones[g_mapZonesCount][zoneType])
 				{
-					case 0: {
+					case 0:
+					{
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Stop-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 1: {
+					case 1:
+					{
 						if (g_mapZones[g_mapZonesCount][zoneGroup] > 0)
 						{
 							g_bhasBonus = true;
@@ -5092,29 +5110,36 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 						else
 							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Start-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 2: {
+					case 2:
+					{
 						if (g_mapZones[g_mapZonesCount][zoneGroup] > 0)
 							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "BonusEnd-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 						else
 							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "End-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 3: {
+					case 3:
+					{
 						g_bhasStages = true;
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Stage-%i", (g_mapZones[g_mapZonesCount][zoneTypeId] + 2));
 					}
-					case 4: {
+					case 4:
+					{
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Checkpoint-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 5: {
+					case 5:
+					{
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Speed-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 6: {
+					case 6:
+					{
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "TeleToStart-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 7: {
+					case 7:
+					{
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Validator-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
-					case 8: {
+					case 8:
+					{
 						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Checker-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
 					}
 				}
@@ -5179,7 +5204,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		for (int i = 0; i < g_mapZonesCount; i++)
 			if (zoneIdChecker[i] == 0)
 			{
-				PrintToServer("[ckSurf] Found an error in zoneid : %i", i);
+				PrintToServer("[Surf Timer] Found an error in zoneid : %i", i);
 				Format(szQuery, 258, "UPDATE `ck_zones` SET zoneid = zoneid-1 WHERE mapname = '%s' AND zoneid > %i", g_szMapName, i);
 				PrintToServer("Query: %s", szQuery);
 				SQL_TQuery(g_hDb, sql_zoneFixCallback, szQuery, -1, DBPrio_Low);
@@ -5190,7 +5215,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		for (int i = 0; i < g_mapZoneGroupCount; i++)
 			if (zoneGroupChecker[i] == 0)
 			{
-				PrintToServer("[ckSurf] Found an error in zonegroup %i (ZoneGroups total: %i)", i, g_mapZoneGroupCount);
+				PrintToServer("[Surf Timer] Found an error in zonegroup %i (ZoneGroups total: %i)", i, g_mapZoneGroupCount);
 				Format(szQuery, 258, "UPDATE `ck_zones` SET `zonegroup` = zonegroup-1 WHERE `mapname` = '%s' AND `zonegroup` > %i", g_szMapName, i);
 				SQL_TQuery(g_hDb, sql_zoneFixCallback, szQuery, zoneGroupChecker[i], DBPrio_Low);
 				return;
@@ -5204,7 +5229,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 					{
 						if (zoneTypeIdChecker[i][k][x] == 0)
 						{
-							PrintToServer("[ckSurf] ZoneTypeID missing! [ZoneGroup: %i ZoneType: %i, ZonetypeId: %i]", i, k, x);
+							PrintToServer("[Surf Timer] ZoneTypeID missing! [ZoneGroup: %i ZoneType: %i, ZonetypeId: %i]", i, k, x);
 							Format(szQuery, 258, "UPDATE `ck_zones` SET zonetypeid = zonetypeid-1 WHERE mapname = '%s' AND zonetype = %i AND zonetypeid > %i AND zonegroup = %i;", g_szMapName, k, x, i);
 							SQL_TQuery(g_hDb, sql_zoneFixCallback, szQuery, -1, DBPrio_Low);
 							return;
@@ -5212,7 +5237,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 						else if (zoneTypeIdChecker[i][k][x] > 1)
 						{
 							char szerror[258];
-							Format(szerror, 258, "[ckSurf] Duplicate Stage Zone ID's on %s [ZoneGroup: %i, ZoneType: 3, ZoneTypeId: %i]", g_szMapName, k, x);
+							Format(szerror, 258, "[Surf Timer] Duplicate Stage Zone ID's on %s [ZoneGroup: %i, ZoneType: 3, ZoneTypeId: %i]", g_szMapName, k, x);
 							LogError(szerror);
 						}
 					}
@@ -5229,7 +5254,8 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			db_GetMapRecord_Pro();
 
 		// Clear old stage records
-		for (int i = 0; i < CPLIMIT; i++) {
+		for (int i = 0; i < CPLIMIT; i++)
+		{
 			g_StageRecords[i][srRunTime] = 999999.0;
 			g_StageRecords[i][srLoaded] = false;
 		}
@@ -5246,7 +5272,7 @@ public void sql_zoneFixCallback(Handle owner, Handle hndl, const char[] error, a
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_zoneFixCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_zoneFixCallback): %s", error);
 		return;
 	}
 	if (zongeroup == -1)
@@ -5265,7 +5291,7 @@ public void sql_zoneFixCallback2(Handle owner, Handle hndl, const char[] error, 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_zoneFixCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_zoneFixCallback2): %s", error);
 		return;
 	}
 
@@ -5285,7 +5311,7 @@ public void SQL_deleteMapZonesCallback(Handle owner, Handle hndl, const char[] e
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_deleteMapZonesCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_deleteMapZonesCallback): %s", error);
 		return;
 	}
 }
@@ -5308,14 +5334,14 @@ public void SQLTxn_ZoneRemovalSuccess(Handle db, any client, int numQueries, Han
 {
 	if (IsValidClient(client))
 		PrintToChat(client, "[%cSurf Timer%c] Zone Removed Succesfully", MOSSGREEN, WHITE);
-	PrintToServer("[ckSurf] Zone Removed Succesfully");
+	PrintToServer("[Surf Timer] Zone Removed Succesfully");
 }
 
 public void SQLTxn_ZoneRemovalFailed(Handle db, any client, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
 	if (IsValidClient(client))
 		PrintToChat(client, "[%cSurf Timer%c] %cZone Removal Failed! Error:%c %s", MOSSGREEN, WHITE, RED, WHITE, error);
-	PrintToServer("[ckSurf] Zone Removal Failed. Error: %s", error);
+	PrintToServer("[Surf Timer] Zone Removal Failed. Error: %s", error);
 	return;
 }
 
@@ -5355,7 +5381,7 @@ public void db_insertLastPositionCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_insertLastPositionCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_insertLastPositionCallback): %s", error);
 		return;
 	}
 
@@ -5405,7 +5431,7 @@ public void sql_selectLatestRecordsCallback(Handle owner, Handle hndl, const cha
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectLatestRecordsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectLatestRecordsCallback): %s", error);
 		return;
 	}
 
@@ -5457,7 +5483,7 @@ public void GetDBNameCallback(Handle owner, Handle hndl, const char[] error, any
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (GetDBNameCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (GetDBNameCallback): %s", error);
 		return;
 	}
 
@@ -5479,7 +5505,7 @@ public void SQL_db_CalcAvgRunTimeCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_db_CalcAvgRunTimeCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_db_CalcAvgRunTimeCallback): %s", error);
 
 		if (!g_bServerDataLoaded && g_bhasBonus)
 			db_CalcAvgRunTimeBonus();
@@ -5527,7 +5553,7 @@ public void SQL_db_CalcAvgRunBonusTimeCallback(Handle owner, Handle hndl, const 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_db_CalcAvgRunTimeCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_db_CalcAvgRunTimeCallback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_CalculatePlayerCount();
 		return;
@@ -5579,7 +5605,7 @@ public void SQL_db_GetDynamicTimelimitCallback(Handle owner, Handle hndl, const 
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_db_GetDynamicTimelimitCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_db_GetDynamicTimelimitCallback): %s", error);
 		loadAllClientSettings();
 		return;
 	}
@@ -5660,7 +5686,7 @@ public void sql_CountRankedPlayersCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_CountRankedPlayersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_CountRankedPlayersCallback): %s", error);
 		db_CalculatePlayersCountGreater0();
 		return;
 	}
@@ -5681,7 +5707,7 @@ public void sql_CountRankedPlayers2Callback(Handle owner, Handle hndl, const cha
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_CountRankedPlayers2Callback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_CountRankedPlayers2Callback): %s", error);
 		if (!g_bServerDataLoaded)
 			db_selectSpawnLocations();
 		return;
@@ -5732,7 +5758,7 @@ public void db_viewUnfinishedMapsCallback(Handle owner, Handle hndl, const char[
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_viewUnfinishedMapsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_viewUnfinishedMapsCallback): %s", error);
 		return;
 	}
 
@@ -5880,7 +5906,7 @@ public void SQL_ViewPlayerProfile1Callback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewPlayerProfile1Callback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewPlayerProfile1Callback): %s", error);
 		return;
 	}
 	char szPlayerName[MAX_NAME_LENGTH];
@@ -5910,7 +5936,7 @@ public void sql_selectPlayerNameCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectPlayerNameCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectPlayerNameCallback): %s", error);
 		return;
 	}
 
@@ -5949,7 +5975,7 @@ public void sql_selectRankedPlayersCallback(Handle owner, Handle hndl, const cha
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (sql_selectRankedPlayersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (sql_selectRankedPlayersCallback): %s", error);
 		return;
 	}
 
@@ -6047,7 +6073,7 @@ public void SQL_InsertPlayerCallBack(Handle owner, Handle hndl, const char[] err
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_InsertPlayerCallBack): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_InsertPlayerCallBack): %s", error);
 		return;
 	}
 
@@ -6079,7 +6105,7 @@ public void SQL_CheckCallback(Handle owner, Handle hndl, const char[] error, any
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_CheckCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_CheckCallback): %s", error);
 		return;
 	}
 }
@@ -6089,7 +6115,7 @@ public void SQL_CheckCallback2(Handle owner, Handle hndl, const char[] error, an
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_CheckCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_CheckCallback2): %s", error);
 		return;
 	}
 
@@ -6101,7 +6127,7 @@ public void SQL_CheckCallback3(Handle owner, Handle hndl, const char[] error, an
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_CheckCallback3): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_CheckCallback3): %s", error);
 		return;
 	}
 
@@ -6121,7 +6147,7 @@ public void SQL_CheckCallback4(Handle owner, Handle hndl, const char[] error, an
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_CheckCallback4): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_CheckCallback4): %s", error);
 		return;
 	}
 	char steamid[128];
@@ -6162,7 +6188,7 @@ public void db_viewPlayerOptionsCallback(Handle owner, Handle hndl, const char[]
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_viewPlayerOptionsCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_viewPlayerOptionsCallback): %s", error);
 		if (!g_bSettingsLoaded[client])
 			db_viewPersonalFlags(client, g_szSteamID[client]);
 		return;
@@ -6267,7 +6293,7 @@ public void db_sql_selectMapRecordHoldersCallback(Handle owner, Handle hndl, con
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_sql_selectMapRecordHoldersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_sql_selectMapRecordHoldersCallback): %s", error);
 		return;
 	}
 
@@ -6316,7 +6342,7 @@ public void db_sql_selectMapRecordHoldersCallback2(Handle owner, Handle hndl, co
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_sql_selectMapRecordHoldersCallback2): %s", error);
+		LogError("[Surf Timer] SQL Error (db_sql_selectMapRecordHoldersCallback2): %s", error);
 		return;
 	}
 
@@ -6356,7 +6382,7 @@ public void db_selectTop100PlayersCallback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (db_selectTop100PlayersCallback): %s", error);
+		LogError("[Surf Timer] SQL Error (db_selectTop100PlayersCallback): %s", error);
 		return;
 	}
 
@@ -6440,7 +6466,7 @@ public void SQL_ViewPlayerProfile2Callback(Handle owner, Handle hndl, const char
 {
 	if (hndl == null)
 	{
-		LogError("[ckSurf] SQL Error (SQL_ViewPlayerProfile2Callback): %s", error);
+		LogError("[Surf Timer] SQL Error (SQL_ViewPlayerProfile2Callback): %s", error);
 		return;
 	}
 
@@ -6629,7 +6655,8 @@ public void RecordPanelHandler2(Handle menu, MenuAction action, int param1, int 
 	}
 }
 
-public void db_insertStageRecord(int client, int stage, float runtime) {
+public void db_insertStageRecord(int client, int stage, float runtime)
+{
 		char query[256];
 		Format(query, sizeof(query), sql_insertStageRecord, g_szSteamID[client], g_szMapName, stage, runtime);
 		SQL_TQuery(g_hDb, sql_insertStageRecordCallback, query, client, DBPrio_High);
@@ -6637,22 +6664,26 @@ public void db_insertStageRecord(int client, int stage, float runtime) {
 
 public void sql_insertStageRecordCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-	if (hndl == null) {
-		LogError("[ckSurf] SQL Error (sql_insertStageRecordCallback): %s", error);
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (sql_insertStageRecordCallback): %s", error);
 		return;
 	}
 }
 
 
-public void db_updateStageRecord(int client, int stage, float runtime) {
+public void db_updateStageRecord(int client, int stage, float runtime)
+{
 	char query[256];
 	Format(query, sizeof(query), sql_updateStageRecord, runtime, g_szMapName, g_szSteamID[client], stage);
 	SQL_TQuery(g_hDb, sql_updateStageRecordCallback, query, client, DBPrio_High);
 }
 
-public void sql_updateStageRecordCallback(Handle owner, Handle hndl, const char[] error, any data) {
-	if (hndl == null) {
-		LogError("[ckSurf] SQL Error (sql_updateStageRecordCallback): %s", error);
+public void sql_updateStageRecordCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (sql_updateStageRecordCallback): %s", error);
 		return;
 	}
 }
@@ -6667,14 +6698,14 @@ public void db_loadStageServerRecords(int stage)
 
 public void sql_loadStageServerRecordsCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-	if (hndl == null) {
-		LogError("[ckSurf] SQL Error (sql_loadStageServerRecordsCallback): %s", error);
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (sql_loadStageServerRecordsCallback): %s", error);
 		return;
 	}
 
-	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) {
-
-
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
 		int stage = SQL_FetchInt(hndl, 0);
 		float runtime = SQL_FetchFloat(hndl, 1);
 		char name[45];
@@ -6710,14 +6741,16 @@ public void db_loadStagePlayerRecords(int client)
 
 public void sql_selectStagePlayerRecordsCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-	if (hndl == null) {
-		LogError("[ckSurf] SQL Error (sql_selectStagePlayerRecordsCallback): %s", error);
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (sql_selectStagePlayerRecordsCallback): %s", error);
 		return;
 	}
 
 	int client = data;
 
-	if (SQL_HasResultSet(hndl)) {
+	if (SQL_HasResultSet(hndl))
+	{
 		while(SQL_FetchRow(hndl))
 		{
 			int stage = SQL_FetchInt(hndl, 0);
@@ -6729,9 +6762,8 @@ public void sql_selectStagePlayerRecordsCallback(Handle owner, Handle hndl, cons
 		}
 	}
 
-
-
-	if (!g_bSettingsLoaded[client]) {
+	if (!g_bSettingsLoaded[client])
+	{
 		g_bSettingsLoaded[client] = true;
 		g_bLoadingSettings[client] = false;
 		if (GetConVarBool(g_hTeleToStartWhenSettingsLoaded))
@@ -6763,19 +6795,19 @@ public void db_viewStageRecords(int client, int stage)
 public void sql_viewStageRecordsCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
 
-	if (hndl == null) {
-		LogError("[ckSurf] SQL Error (sql_viewStageRecordsCallback): %s", error);
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (sql_viewStageRecordsCallback): %s", error);
 		return;
 	}
 
 	int client = data;
 
-	if (SQL_HasResultSet(hndl)) {
-
+	if (SQL_HasResultSet(hndl))
+	{
 		Menu menu = new Menu(ViewStageRecordsMenuCallback);
 		menu.SetTitle("Stage records:\n    Rank   Time              Player");
 		int rank = 1;
-
 
 		while(SQL_FetchRow(hndl))
 		{
@@ -6803,7 +6835,8 @@ public void sql_viewStageRecordsCallback(Handle owner, Handle hndl, const char[]
 	}
 }
 
-public int ViewStageRecordsMenuCallback(Menu menu, MenuAction action, int param1, int param2) {
+public int ViewStageRecordsMenuCallback(Menu menu, MenuAction action, int param1, int param2)
+{
 	if (action == MenuAction_Select)
 	{
 		char info[32];
@@ -6814,7 +6847,8 @@ public int ViewStageRecordsMenuCallback(Menu menu, MenuAction action, int param1
 }
 
 
-int db_getStageRank(int client, int stage, float runtime = -1.0) {
+int db_getStageRank(int client, int stage, float runtime = -1.0)
+{
 	char query[256];
 	Format(query, sizeof(query), "SELECT COUNT(runtime)+1 FROM ck_stages WHERE map = '%s' AND stage = '%d'", g_szMapName, stage);
 
@@ -6829,7 +6863,8 @@ int db_getStageRank(int client, int stage, float runtime = -1.0) {
 
 	int rank = -1;
 
-	if (hQuery != null && SQL_HasResultSet(hQuery) && SQL_FetchRow(hQuery)) {
+	if (hQuery != null && SQL_HasResultSet(hQuery) && SQL_FetchRow(hQuery))
+	{
 			rank = SQL_FetchInt(hQuery, 0);
 	}
 

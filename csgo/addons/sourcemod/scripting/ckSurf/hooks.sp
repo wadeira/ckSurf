@@ -672,12 +672,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		BeamBox_OnPlayerRunCmd(client);
 
 		// Check if player is jumping
-		if (!g_bPlayerIsJumping[client] && !(GetEntityFlags(client) & FL_ONGROUND)) {
+		if (!g_bPlayerIsJumping[client] && !(GetEntityFlags(client) & FL_ONGROUND))
+		{
 			g_PlayerJumpsInStage[client] += 1;
 			g_bPlayerIsJumping[client] = true;
-		} else if (GetEntityFlags(client) & FL_ONGROUND) {
-
-			// Reset jump count if player is not bhoping
+		}
+		else if (GetEntityFlags(client) & FL_ONGROUND)
+		{
+			// Reset jump count if player is not bhopping
 			if (!(buttons & IN_JUMP))
 				g_PlayerJumpsInStage[client] = 0;
 

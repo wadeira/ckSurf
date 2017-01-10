@@ -15,7 +15,8 @@ public void CreateZoneEntity(int zoneIndex)
 
 	int iEnt = CreateEntityByName("trigger_multiple");
 
-	if (iEnt > 0 && IsValidEntity(iEnt)) {
+	if (iEnt > 0 && IsValidEntity(iEnt))
+	{
 		SetEntityModel(iEnt, ZONE_MODEL);
 		// Spawnflags:	1 - only a player can trigger this by touch, makes it so a NPC cannot fire a trigger_multiple
 		// 2 - Won't fire unless triggering ent's view angles are within 45 degrees of trigger's angles (in addition to any other conditions), so if you want the player to only be able to fire the entity at a 90 degree angle you would do ",angles,0 90 0," into your spawnstring.
@@ -195,7 +196,8 @@ public void StartTouch(int client, int action[3])
 		}
 		else if (action[0] == view_as<int>(ST_End)) // End Zone
 		{
-			if (g_iClientInZone[client][2] == action[2]) { //  Cant end bonus timer in this zone && in the having the same timer on
+			if (g_iClientInZone[client][2] == action[2])
+			{ //  Cant end bonus timer in this zone && in the having the same timer on
 				if (g_bStageTimerRunning[client])
 					EndStageTimer(client);
 
@@ -232,8 +234,9 @@ public void StartTouch(int client, int action[3])
 				// Announcing checkpoint
 				if (action[1] != lastCheckpoint[g_iClientInZone[client][2]][client] && g_iClientInZone[client][2] == action[2])
 				{
-					if (g_bStageTimerRunning[client] && g_iClientInZone[client][2] == 0 && g_Stage[0][client] == action[1] + 1) {
-							EndStageTimer(client);
+					if (g_bStageTimerRunning[client] && g_iClientInZone[client][2] == 0 && g_Stage[0][client] == action[1] + 1)
+					{
+						EndStageTimer(client);
 					}
 
 
@@ -241,7 +244,8 @@ public void StartTouch(int client, int action[3])
 					Checkpoint(client, action[1], g_iClientInZone[client][2]);
 					lastCheckpoint[g_iClientInZone[client][2]][client] = action[1];
 				}
-				else {
+				else
+				{
 					g_bStageTimerRunning[client] = false;
 				}
 
@@ -298,11 +302,13 @@ public void EndTouch(int client, int action[3])
 						PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
-					else if (pauseDelay < 5.0) {
+					else if (pauseDelay < 5.0)
+					{
 						PrintToChat(client, "[%cSurf Timer%c] %cYou used the !pause command recently%c, please wait %c%d %cseconds.", MOSSGREEN, WHITE, LIGHTRED, WHITE, GREEN, RoundToCeil(5.0 - pauseDelay), WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
-					else {
+					else
+					{
 						CL_OnStartTimerPress(client);
 						StartStageTimer(client);
 					}
@@ -479,38 +485,47 @@ public void getZoneDisplayColor(int type, int zColor[4], int zGrp)
 	// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
 	switch (type)
 	{
-		case 1: {
+		case 1:
+		{
 
 			if (zGrp > 0)
 				zColor = g_iZoneColors[3];
 			else
 				zColor = g_iZoneColors[1];
 		}
-		case 2: {
+		case 2:
+		{
 			if (zGrp > 0)
 				zColor = g_iZoneColors[4];
 			else
 				zColor = g_iZoneColors[2];
 		}
-		case 3: {
+		case 3:
+		{
 			zColor = g_iZoneColors[5];
 		}
-		case 4: {
+		case 4:
+		{
 			zColor = g_iZoneColors[6];
 		}
-		case 5: {
+		case 5:
+		{
 			zColor = g_iZoneColors[7];
 		}
-		case 6: {
+		case 6:
+		{
 			zColor = g_iZoneColors[8];
 		}
-		case 7: {
+		case 7:
+		{
 			zColor = g_iZoneColors[9];
 		}
-		case 8: {
+		case 8:
+		{
 			zColor = g_iZoneColors[10];
 		}
-		case 0: {
+		case 0:
+		{
 			zColor = g_iZoneColors[0];
 		}
 		default:zColor = beamColorT;
@@ -587,11 +602,11 @@ stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottom
 		// Send beams to client
 		// https://forums.alliedmods.net/showpost.php?p=2006539&postcount=8
 		for (int i = 0, i2 = 3; i2 >= 0; i+=i2--)
-	    {
-	        for(int j = 1; j <= 7; j += (j / 2) + 1)
-	        {
-	            if(j != 7-i)
-	            {
+		{
+			for(int j = 1; j <= 7; j += (j / 2) + 1)
+			{
+				if(j != 7-i)
+				{
 					TE_SetupBeamPoints(corners[i], corners[j], ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
 					TE_SendToClient(client);
 				}
@@ -1018,7 +1033,8 @@ public int Handler_selectBonusZoneType(Handle tMenu, MenuAction action, int clie
 			char aID[12];
 			GetMenuItem(tMenu, item, aID, sizeof(aID));
 			g_CurrentZoneType[client] = StringToInt(aID);
-			if (g_bEditZoneType[client]) {
+			if (g_bEditZoneType[client])
+			{
 				db_selectzoneTypeIds(g_CurrentZoneType[client], client, g_CurrentSelectedZoneGroup[client]);
 			}
 			else
@@ -1249,7 +1265,8 @@ public int Handle_SelectNormalZoneType(Handle tMenu, MenuAction action, int clie
 			char aID[12];
 			GetMenuItem(tMenu, item, aID, sizeof(aID));
 			g_CurrentZoneType[client] = StringToInt(aID);
-			if (g_bEditZoneType[client]) {
+			if (g_bEditZoneType[client])
+			{
 				db_selectzoneTypeIds(g_CurrentZoneType[client], client, 0);
 			}
 			else
@@ -1359,7 +1376,8 @@ public int Handle_SelectMiscZoneType(Handle tMenu, MenuAction action, int client
 			char aID[12];
 			GetMenuItem(tMenu, item, aID, sizeof(aID));
 			g_CurrentZoneType[client] = StringToInt(aID);
-			if (g_bEditZoneType[client]) {
+			if (g_bEditZoneType[client])
+			{
 				db_selectzoneTypeIds(g_CurrentZoneType[client], client, 0);
 			}
 			else
@@ -1602,7 +1620,8 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					if (g_Editing[client] == 2)
 					{
 						g_Editing[client] = 1;
-					} else {
+					} else
+					{
 						DrawBeamBox(client);
 						g_Editing[client] = 2;
 					}

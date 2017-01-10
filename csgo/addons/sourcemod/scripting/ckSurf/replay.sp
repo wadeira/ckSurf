@@ -215,7 +215,7 @@ public void LoadReplays()
 		{
 			BuildPath(Path_SM, newPath, sizeof(newPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, g_mapZones[zId][zoneGroup]);
 			if (RenameFile(newPath, sPath))
-				PrintToServer("[ckSurf] Succesfully renamed bonus record file to: %s", newPath);
+				PrintToServer("[Surf Timer] Succesfully renamed bonus record file to: %s", newPath);
 		}
 		CloseHandle(hFilex);
 	}
@@ -268,7 +268,8 @@ public void PlayRecord(int client, int type)
 	int iFileHeader[FILE_HEADER_LENGTH];
 	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", sPath);
 
-	if (!FileExists(sPath)) {
+	if (!FileExists(sPath))
+	{
 		PrintToChat(g_ReplayRequester, "[%cSurf Timer%c] %cReplay not found.", MOSSGREEN, WHITE, YELLOW);
 		g_ReplayRequester = -1;
 		return;
