@@ -538,13 +538,15 @@ public void StartStageTimer(int client)
 		return;
 	}
 
-	if (g_fLastSpeed[client] > 360) {
+	if (g_fLastSpeed[client] > 360)
+	{
 		PrintToChat(client, "[%cSurf Timer%c] %cMax velocity exceeded to start stage %d.", MOSSGREEN, WHITE, LIGHTRED, g_Stage[0][client]);
 		return;
 	}
 
-	if (g_PlayerJumpsInStage[client] > 1) {
-		PrintToChat(client, "[%cSurf Timer%c] %cPrehoping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
+	if (g_PlayerJumpsInStage[client] > 1)
+	{
+		PrintToChat(client, "[%cSurf Timer%c] %cPrehopping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
 		return;
 	}
 
@@ -585,34 +587,40 @@ public void EndStageTimer(int client)
 	// Get record diff
 	float srdiff = g_StageRecords[stage][srRunTime] - runtime;
 	float pbdiff = g_fStagePlayerRecord[client][stage] - runtime;
-	char 	srdiff_str[32], pbdiff_str[32];
-
+	char srdiff_str[32], pbdiff_str[32];
 
 	FormatTimeFloat(client, srdiff, 5, srdiff_str, sizeof(srdiff_str));
 	FormatTimeFloat(client, pbdiff, 5, pbdiff_str, sizeof(pbdiff_str));
 
-	if (g_StageRecords[stage][srRunTime] != 9999999.0) {
+	if (g_StageRecords[stage][srRunTime] != 9999999.0)
+	{
 		if (srdiff > 0)	Format(srdiff_str, sizeof(srdiff_str), "-%s", srdiff_str);
-		else						Format(srdiff_str, sizeof(srdiff_str), "+%s", srdiff_str);
-	} else if (!g_StageRecords[stage][srLoaded])
-										Format(srdiff_str, sizeof(srdiff_str), "N/A");
-	else {
+		else
+			Format(srdiff_str, sizeof(srdiff_str), "+%s", srdiff_str);
+	}
+	else if (!g_StageRecords[stage][srLoaded])
+		Format(srdiff_str, sizeof(srdiff_str), "N/A");
+	else
+	{
 		Format(srdiff_str, sizeof(srdiff_str), "Not loaded");
 		db_loadStageServerRecords(stage);
 	}
 
-	if (g_fStagePlayerRecord[client][stage] != 9999999.0) {
+	if (g_fStagePlayerRecord[client][stage] != 9999999.0)
+	{
 		if (pbdiff > 0) Format(pbdiff_str, sizeof(pbdiff_str), "-%s", pbdiff_str);
-		else						Format(pbdiff_str, sizeof(pbdiff_str), "+%s", pbdiff_str);
-	} else						Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
+		else
+			Format(pbdiff_str, sizeof(pbdiff_str), "+%s", pbdiff_str);
+	}
+	else Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
 
 
 	// Get rank of current run
 	int rank = db_getStageRank(client, stage, runtime);
 
 	// Check if the player beated the record
-	if (g_StageRecords[stage][srRunTime] > runtime) {
-
+	if (g_StageRecords[stage][srRunTime] > runtime)
+	{
 		// Send message to all players
 		PrintToChatAll("[%cSurf Timer%c] %c%N %chas beated the %cstage %d %crecord!", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW);
 		PrintToChatAll("[%cSurf Timer%c] %c%N %chas finished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
@@ -638,7 +646,9 @@ public void EndStageTimer(int client)
 		g_fStagePlayerRecord[client][stage] = runtime;
 		g_StagePlayerRank[client][stage] = rank;
 
-	} else if (g_fStagePlayerRecord[client][stage] > runtime) {
+	}
+	else if (g_fStagePlayerRecord[client][stage] > runtime)
+	{
 		// Player beated his own record
 
 		PrintToChat(client, "[%cSurf Timer%c] %cFinished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
@@ -651,7 +661,9 @@ public void EndStageTimer(int client)
 
 		g_fStagePlayerRecord[client][stage] = runtime;
 		g_StagePlayerRank[client][stage] = rank;
-	} else {
+	}
+	else
+	{
 		// missed sr and pb
 		PrintToChat(client, "[%cSurf Timer%c] %cFinished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
 		return;

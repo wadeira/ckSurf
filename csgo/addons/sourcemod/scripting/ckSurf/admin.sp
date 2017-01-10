@@ -369,7 +369,7 @@ public Action Admin_insertMapTier(int client, int args)
 
 	if (args < 2)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_addmaptier <ZoneGroup> <Tier>");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_addmaptier <ZoneGroup> <Tier>");
 		PrintToChat(client, "[%cSurf Timer%c] Zone Groups:", MOSSGREEN, WHITE);
 		PrintToChat(client, "[%c0.%c] Map Tier", BLUE, WHITE);
 		for (int i = 1; i < g_mapZoneGroupCount; i++)
@@ -455,7 +455,7 @@ public Action Admin_ckPanel(int client, int args)
 	if ((GetUserFlagBits(client) & g_AdminMenuFlag))
 	{
 		PrintToChat(client, "[%cSurf Timer%c] See console for more commands", LIMEGREEN, WHITE);
-		PrintToConsole(client, "\n[ckSurf root admin]\n");
+		PrintToConsole(client, "\n[Surf Timer root admin]\n");
 		PrintToConsole(client, "\n sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
 		PrintToConsole(client, "\n sm_zones (Open up the zonee modification menu)\n sm_insertmapzones (Inserts premade map zones into the servers database. ONLY RUN THIS ONCE!)\n sm_insertmaptiers (Inserts premade map tier information into the servers database. ONLY RUN THIS ONCE!)\n");
 		PrintToConsole(client, "[PLAYER RANKING]\n sm_resetranks (Drops playerrank table)\n sm_resetchallenges (Drops challenges table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
@@ -482,9 +482,9 @@ public void ckAdminMenu(int client)
 
 	Handle adminmenu = CreateMenu(AdminPanelHandler);
 	if (GetUserFlagBits(client) & g_ZoneMenuFlag)
-		Format(szTmp, sizeof(szTmp), "ckSurf %s Admin Menu (full access)", VERSION);
+		Format(szTmp, sizeof(szTmp), "Surf Timer %s Admin Menu (full access)", VERSION);
 	else
-		Format(szTmp, sizeof(szTmp), "ckSurf %s Admin Menu (limited access)", VERSION);
+		Format(szTmp, sizeof(szTmp), "Surf Timer %s Admin Menu (limited access)", VERSION);
 	SetMenuTitle(adminmenu, szTmp);
 
 	if (!g_pr_RankingRecalc_InProgress)
@@ -1000,7 +1000,7 @@ public void SQLTxn_TierInsertFailed(Handle db, any data, int numQueries, const c
 		PrintToChat(data, "[%cSurf Timer%c] Inserting map tiers %cfailed!%c. Check error logs.", MOSSGREEN, WHITE, RED, WHITE);
 
 	g_insertingInformation = false;
-	LogError("[ckSurf] SQL Tier insertion failed! Index: %i Error: %s", failIndex, error);
+	LogError("[Surf Timer] SQL Tier insertion failed! Index: %i Error: %s", failIndex, error);
 }
 
 public void SQLTxn_TierInsertSuccess(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
@@ -1154,7 +1154,7 @@ public void SQLTxn_ZoneInsertFailed(Handle db, any data, int numQueries, const c
 		PrintToChat(data, "[%cSurf Timer%c] Inserting zones %cfailed!%c. Check error logs.", MOSSGREEN, WHITE, RED, WHITE);
 
 	g_insertingInformation = false;
-	LogError("[ckSurf] SQL Zone insertion failed! Index: %i Error: %s", failIndex, error);
+	LogError("[Surf Timer] SQL Zone insertion failed! Index: %i Error: %s", failIndex, error);
 }
 
 public void SQLTxn_ZoneInsertSuccess(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
@@ -1209,7 +1209,7 @@ public Action Admin_ResetRecords(int client, int args)
 {
 	if (args < 1)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_resetplayertimes <steamid> [<mapname>]");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_resetplayertimes <steamid> [<mapname>]");
 		return Plugin_Handled;
 	}
 	else
@@ -1241,7 +1241,7 @@ public Action Admin_RefreshProfile(int client, int args)
 {
 	if (args == 0)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_refreshprofile <steamid>");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_refreshprofile <steamid>");
 		return Plugin_Handled;
 	}
 	if (args > 0)
@@ -1264,7 +1264,7 @@ public Action Admin_ResetMapRecord(int client, int args)
 {
 	if (args != 6)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_resetplayermaptime <steamid> <mapname>");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_resetplayermaptime <steamid> <mapname>");
 		return Plugin_Handled;
 	}
 	else
@@ -1292,7 +1292,7 @@ public Action Admin_ResetChallenges(int client, int args)
 {
 	if (args == 0)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_resetplayerchallenges <steamid>");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_resetplayerchallenges <steamid>");
 		return Plugin_Handled;
 	}
 	if (args > 0)
@@ -1315,7 +1315,7 @@ public Action Admin_ResetMapRecords(int client, int args)
 {
 	if (args != 1)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_resetmaptimes <mapname>");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_resetmaptimes <mapname>");
 		return Plugin_Handled;
 	}
 	if (args == 1)
@@ -1331,7 +1331,7 @@ public Action Admin_DeleteMapReplay(int client, int args)
 {
 	if (args == 0)
 	{
-		ReplyToCommand(client, "[CK] Usage: sm_resetproreplay <mapname>");
+		ReplyToCommand(client, "[Surf Timer] Usage: sm_resetproreplay <mapname>");
 		return Plugin_Handled;
 	}
 	if (args > 0)

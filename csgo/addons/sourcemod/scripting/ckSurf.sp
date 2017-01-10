@@ -1,6 +1,6 @@
 /*=============================================
-=            Surf Timer - CS:GO surf Timer 		   *
-*					By Elzi 			       =
+=            Surf Timer - CS:GO surf Timer 	  *
+*					By Elzi 			      =
 =============================================*/
 
 /*=============================================
@@ -1552,7 +1552,8 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		Format(color, 28, "%s", newValue[0]);
 		StringRGBtoInt(color, g_iZoneColors[0]);
 	}
-	else if (convar == g_hRecordBotTrail) {
+	else if (convar == g_hRecordBotTrail)
+	{
 		if (GetConVarBool(g_hRecordBotTrail) && IsValidClient(g_RecordBot) && g_hBotTrail[0] == null)
 		{
 			g_hBotTrail[0] = CreateTimer(5.0 , ReplayTrailRefresh, g_RecordBot, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
@@ -1564,14 +1565,16 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 			g_hBotTrail[0] = null;
 		}
 	}
-	else if (convar == g_hAutoVIPFlag) {
+	else if (convar == g_hAutoVIPFlag)
+	{
 		AdminFlag flag;
 		g_bAutoVIPFlag = FindFlagByChar(newValue[0], flag);
 		g_AutoVIPFlag = FlagToBit(flag);
 		if (!g_bAutoVIPFlag)
 			PrintToServer("[Surf Timer] Invalid flag for ck_autovip_flag");
 	}
-	else if (convar == g_hZoneMenuFlag) {
+	else if (convar == g_hZoneMenuFlag)
+	{
 		AdminFlag flag;
 		bool validFlag;
 		validFlag = FindFlagByChar(newValue[0], flag);
@@ -1584,7 +1587,8 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		else
 			g_ZoneMenuFlag = FlagToBit(flag);
 	}
-	else if (convar == g_hAdminMenuFlag) {
+	else if (convar == g_hAdminMenuFlag)
+	{
 		AdminFlag flag;
 		bool validFlag;
 		validFlag = FindFlagByChar(newValue[0], flag);
