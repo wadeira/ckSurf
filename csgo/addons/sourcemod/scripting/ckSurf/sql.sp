@@ -5256,7 +5256,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		// Clear old stage records
 		for (int i = 0; i < CPLIMIT; i++)
 		{
-			g_StageRecords[i][srRunTime] = 999999.0;
+			g_StageRecords[i][srRunTime] = 9999999.0;
 			g_StageRecords[i][srLoaded] = false;
 		}
 
