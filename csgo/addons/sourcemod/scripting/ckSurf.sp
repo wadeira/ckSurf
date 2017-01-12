@@ -181,7 +181,9 @@ enum MapZone
 	String:zoneName[128],
 	zoneGroup,
 	Vis,
-	Team
+	Team,
+	Float:TeleportPosition[3],
+	Float:TeleportAngles[3]
 }
 
 enum SkillGroup

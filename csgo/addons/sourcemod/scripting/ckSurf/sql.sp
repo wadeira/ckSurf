@@ -5041,6 +5041,8 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			g_mapZones[i][Vis] = 0;
 			g_mapZones[i][Team] = 0;
 			g_mapZones[i][zoneGroup] = 0;
+			g_mapZones[i][TeleportPosition] = -1.0;
+			g_mapZones[i][TeleportAngles] = -1.0;
 		}
 
 		for (int x = 0; x < MAXZONEGROUPS; x++)
@@ -5182,15 +5184,33 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			g_mapZonesTypeCount[g_mapZones[g_mapZonesCount][zoneGroup]][g_mapZones[g_mapZonesCount][zoneType]]++;
 			g_mapZonesCount++;
 		}
-		// Count zone corners
-		// https://forums.alliedmods.net/showpost.php?p=2006539&postcount=8
+
 		for (int x = 0; x < g_mapZonesCount; x++)
 		{
+			// Count zone corners
+			// https://forums.alliedmods.net/showpost.php?p=2006539&postcount=8
 			for(int i = 1; i < 7; i++)
 			{
 				for(int j = 0; j < 3; j++)
 				{
 					g_fZoneCorners[x][i][j] = g_fZoneCorners[x][((i >> (2-j)) & 1) * 7][j];
+				}
+			}
+
+			// Find info_teleport_destination insize zones
+			int ent = -1;
+			while((ent = FindEntityByClassname(ent, "info_teleport_destination")) != -1)
+			{
+				float pos[3], ang[3];
+				GetEntPropVector(ent, Prop_Data, "m_vecOrigin", pos);
+				GetEntPropVector(ent, Prop_Data, "m_angRotation", ang);
+
+				// Check if entity is inside zone
+				if (IsInsideZone(pos) == x)
+				{
+					Array_Copy(pos, g_mapZones[x][TeleportPosition], 3);
+					Array_Copy(ang, g_mapZones[x][TeleportAngles], 3);
+					break;
 				}
 			}
 		}
