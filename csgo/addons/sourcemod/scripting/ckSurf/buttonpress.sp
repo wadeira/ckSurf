@@ -615,8 +615,11 @@ public void EndStageTimer(int client)
 		else
 			Format(pbdiff_str, sizeof(pbdiff_str), "+%s", pbdiff_str);
 	}
-	else Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
-
+	else
+	{
+		Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
+		g_StageRecords[stage][srCompletions]++;
+	}
 
 	// Get rank of current run
 	int rank = db_getStageRank(client, stage, runtime);
