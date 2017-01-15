@@ -733,6 +733,8 @@ int g_StagePlayerRank[MAXPLAYERS+1][CPLIMIT];
 int g_PlayerJumpsInStage[MAXPLAYERS+1];
 bool g_bPlayerIsJumping[MAXPLAYERS+1];
 
+int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
+
 
 
 /*---------- Replay Bot ---------------*/
@@ -1908,6 +1910,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_rs", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
 	RegConsoleCmd("sm_play", Command_Teleport, "[Surf Timer] Teleports player back to the start");
 	RegConsoleCmd("sm_spawn", Command_Teleport, "[Surf Timer] Teleports player back to the start");
+	RegConsoleCmd("sm_repeat", Command_Repeat, "[Surf Timer] Teleports player back to the stage after finishing the stage");
 
 	// Player Checkpoints
 	RegConsoleCmd("sm_teleport", Command_goToPlayerCheckpoint, "[Surf Timer] Teleports player to his last checkpoint");

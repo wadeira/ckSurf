@@ -1587,6 +1587,9 @@ public void SetClientDefaults(int client)
 
 	for (int i = 0; i < 64; i++)
 		g_fStagePlayerRecord[client][i] = 9999999.0;
+
+
+	g_RepeatStage[client] = -1;
 }
 
 public void clearPlayerCheckPoints(int client)
