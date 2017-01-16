@@ -4,7 +4,7 @@ void disableServerHibernate()
 	g_iServerHibernationValue = GetConVarInt(hServerHibernate);
 	if (g_iServerHibernationValue > 0)
 	{
-		PrintToServer("[ckSurf] Disabling server hibernation.");
+		PrintToServer("[Surf Timer] Disabling server hibernation.");
 		SetConVarInt(hServerHibernate, 0, false, false);
 	}
 	CloseHandle(hServerHibernate);
@@ -16,7 +16,7 @@ void revertServerHibernateSettings()
 	Handle hServerHibernate = FindConVar("sv_hibernate_when_empty");
 	if (GetConVarInt(hServerHibernate) != g_iServerHibernationValue)
 	{
-		PrintToServer("[ckSurf] Resetting Server Hibernation CVar");
+		PrintToServer("[Surf Timer] Resetting Server Hibernation CVar");
 		SetConVarInt(hServerHibernate, g_iServerHibernationValue, false, false);
 	}
 	CloseHandle(hServerHibernate);
@@ -406,12 +406,17 @@ bool DoesClientPassFilter(int entity, int client)
 //https://forums.alliedmods.net/showthread.php?t=206308
 void TeamChangeActual(int client, int toteam)
 {
-	if (GetConVarBool(g_hForceCT)) {
-		if (toteam == 0 || toteam == 2) {
+	if (GetConVarBool(g_hForceCT))
+	{
+		if (toteam == 0 || toteam == 2)
+		{
 			toteam = 3;
 		}
-	} else {
-		if (toteam == 0) {  // client is auto-assigning
+	}
+	else
+	{
+		if (toteam == 0)
+		{  // client is auto-assigning
 			toteam = GetRandomInt(2, 3);
 		}
 	}
@@ -493,7 +498,7 @@ public void readMultiServerMapcycle()
 		}
 	}
 	else
-		SetFailState("[ckSurf] %s is empty or does not exist.", MULTI_SERVER_MAPCYCLE);
+		SetFailState("[Surf Timer] %s is empty or does not exist.", MULTI_SERVER_MAPCYCLE);
 
 	if (fileHandle != null)
 		CloseHandle(fileHandle);
@@ -515,7 +520,7 @@ public void readMapycycle()
 	{
 		if (mapListSerial == -1)
 		{
-			SetFailState("[ckSurf] mapcycle.txt is empty or does not exist.");
+			SetFailState("[Surf Timer] mapcycle.txt is empty or does not exist.");
 		}
 	}
 	for (int i = 0; i < GetArraySize(g_MapList); i++)
@@ -559,7 +564,7 @@ public bool loadHiddenChatCommands()
 		}
 	}
 	else
-		LogError("[ckSurf] %s is empty or does not exist.", BLOCKED_LIST_PATH);
+		LogError("[Surf Timer] %s is empty or does not exist.", BLOCKED_LIST_PATH);
 
 	if (fileHandle != null)
 		CloseHandle(fileHandle);
@@ -836,7 +841,7 @@ public void checkSpawnPoints()
 
 		if (f_spawnLocation[0] == 0.0 && f_spawnLocation[1] == 0.0 && f_spawnLocation[2] == 0.0) // No spawnpoint added to map with !addspawn, try to find spawns from map
 		{
-			PrintToServer("[CK] No valid spawns found in the map.");
+			PrintToServer("[Surf Timer] No valid spawns found in the map.");
 			int zoneEnt = -1;
 			zoneEnt = FindEntityByClassname(zoneEnt, "info_player_teamspawn"); // CSS/TF spawn found
 
@@ -845,7 +850,7 @@ public void checkSpawnPoints()
 				GetEntPropVector(zoneEnt, Prop_Data, "m_angRotation", f_spawnAngle);
 				GetEntPropVector(zoneEnt, Prop_Send, "m_vecOrigin", f_spawnLocation);
 
-				PrintToServer("[CK] Found info_player_teamspawn in location %f, %f, %f", f_spawnLocation[0], f_spawnLocation[1], f_spawnLocation[2]);
+				PrintToServer("[Surf Timer] Found info_player_teamspawn in location %f, %f, %f", f_spawnLocation[0], f_spawnLocation[1], f_spawnLocation[2]);
 			}
 			else
 			{
@@ -855,7 +860,7 @@ public void checkSpawnPoints()
 					GetEntPropVector(zoneEnt, Prop_Data, "m_angRotation", f_spawnAngle);
 					GetEntPropVector(zoneEnt, Prop_Send, "m_vecOrigin", f_spawnLocation);
 
-					PrintToServer("[CK] Found info_player_start in location %f, %f, %f", f_spawnLocation[0], f_spawnLocation[1], f_spawnLocation[2]);
+					PrintToServer("[Surf Timer] Found info_player_start in location %f, %f, %f", f_spawnLocation[0], f_spawnLocation[1], f_spawnLocation[2]);
 				}
 				else
 				{
@@ -1270,7 +1275,8 @@ public void LimitSpeed(int client)
 
 	// Limit the player velocity
 	bool limitZVel = false;
-	if (CurVelVec[2] < -300.0) {
+	if (CurVelVec[2] < -300.0)
+	{
 		limitZVel = true;
 		CurVelVec[2] = -300.0;
 		//PrintToChat(client, "[%cSurf Timer%c] %cYou have too much vertical velocity.", MOSSGREEN, WHITE, LIGHTRED);
@@ -1781,7 +1787,7 @@ stock void MapFinishedMsgs(int client, int rankThisRun = 0)
 					{
 						PlayRecordSound(2);
 						PrintToChat(i, "%t", "NewMapRecord", MOSSGREEN, WHITE, LIMEGREEN, szName, GRAY, DARKBLUE);
-						PrintToConsole(i, "[CK] %s scored a new MAP RECORD", szName);
+						PrintToConsole(i, "[Surf Timer] %s scored a new MAP RECORD", szName);
 					}
 				}
 			}
@@ -2247,7 +2253,7 @@ public void SetSkillGroups()
 			CloseHandle(hKeyValues);
 	}
 	else
-		SetFailState("[ckSurf] %s not found.", SKILLGROUP_PATH);
+		SetFailState("[Surf Timer] %s not found.", SKILLGROUP_PATH);
 
 }
 
@@ -2672,7 +2678,8 @@ public void SpecListMenuDead(int client) // What Spectators see
 						}
 						else
 						{
-							if (ObservedUser == g_RecordBot) {
+							if (ObservedUser == g_RecordBot)
+							{
 								if (g_CurrentReplay == 0)
 									Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
 								else if (g_CurrentReplay > 0)
@@ -2682,7 +2689,8 @@ public void SpecListMenuDead(int client) // What Spectators see
 					}
 					else
 					{
-						if (ObservedUser == g_RecordBot) {
+						if (ObservedUser == g_RecordBot)
+						{
 							if (g_CurrentReplay == 0)
 								Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTick, count, szStage);
 							else if (g_CurrentReplay > 0)
@@ -2924,10 +2932,12 @@ public void CenterHudDead(int client)
 			else
 				Format(sResult, sizeof(sResult), "%s _", sResult);
 
-			if (g_bTimeractivated[ObservedUser]) {
+			if (g_bTimeractivated[ObservedUser])
+			{
 				obsTimer = GetGameTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];
 				FormatTimeFloat(client, obsTimer, 3, obsAika, sizeof(obsAika));
-			} else {
+			} else
+			{
 				obsAika = "<font color='#FF0000'>Stopped</font>";
 			}
 			char timerText[32] = "";
@@ -2995,7 +3005,8 @@ public void CenterHudAlive(int client)
 
 
 	// If the timer isnt running but the stage timer is
-	if (!g_bTimeractivated[client] && g_bStageTimerRunning[client]) {
+	if (!g_bTimeractivated[client] && g_bStageTimerRunning[client])
+	{
 
 		// Get current stage time
 		float stage_time = GetGameTime() - g_fStageStartTime[client];
@@ -3013,19 +3024,22 @@ public void CenterHudAlive(int client)
 	 ********************/
 
 	// Bonus
-	if (zgroup > 0) {
-		if (g_fPersonalRecordBonus[zgroup][client] > 0.0) {
+	if (zgroup > 0)
+	{
+		if (g_fPersonalRecordBonus[zgroup][client] > 0.0)
+		{
 			Format(sRank, sizeof(sRank), "%i / %i", g_MapRankBonus[zgroup][client], g_iBonusCount[zgroup]);
 			Format(sPBest, sizeof(sPBest), "%s", g_szPersonalRecordBonus[zgroup][client]);
 			Format(sSRec, sizeof(sSRec), "%s", g_szBonusFastestTime[zgroup]);
 		}
-		else if (g_iBonusCount[zgroup] > 0) {
+		else if (g_iBonusCount[zgroup] > 0)
+		{
 			Format(sRank, sizeof(sRank), "N/A / %i", g_iBonusCount[zgroup]);
 			Format(sPBest, sizeof(sPBest), "N/A\t");
 			Format(sSRec, sizeof(sSRec), "%s", g_szBonusFastestTime[zgroup]);
 		}
-
-		else {
+		else
+		{
 			Format(sRank, sizeof(sRank), "N/A");
 			Format(sPBest, sizeof(sPBest), "N/A\t");
 			Format(sSRec, sizeof(sSRec), "N/A");
@@ -3033,19 +3047,22 @@ public void CenterHudAlive(int client)
 	}
 
 	// Map
-	else {
-		if (g_fPersonalRecord[client] > 0.0) {
+	else
+	{
+		if (g_fPersonalRecord[client] > 0.0)
+		{
 			Format(sRank, sizeof(sRank), "%i / %i", g_MapRank[client], g_MapTimesCount);
 			Format(sPBest, sizeof(sPBest), "%s", g_szPersonalRecord[client]);
 			Format(sSRec, sizeof(sSRec), "%s", g_szRecordMapTime);
 		}
-		else if (g_MapTimesCount > 0) {
+		else if (g_MapTimesCount > 0)
+		{
 			Format(sRank, sizeof(sRank), "N/A / %i", g_MapTimesCount);
 			Format(sPBest, sizeof(sPBest), "N/A\t");
 			Format(sSRec, sizeof(sSRec), "%s", g_szRecordMapTime);
 		}
-
-		else {
+		else
+		{
 			Format(sRank, sizeof(sRank), "N/A");
 			Format(sPBest, sizeof(sPBest), "N/A\t");
 			Format(sSRec, sizeof(sSRec), "N/A");
@@ -3111,7 +3128,8 @@ public void LeftHudAlive(int client)
 		Format(buffer, sizeof(buffer), "%sSR: N/A\n", buffer);
 
 
-	if (zgroup > 0) {
+	if (zgroup > 0)
+	{
 		Format(buffer, sizeof(buffer), "%s--------------------------\n", buffer);
 
 		Format(buffer, sizeof(buffer), "%s%s\n", buffer, g_szZoneGroupName[zgroup]);
@@ -3128,8 +3146,9 @@ public void LeftHudAlive(int client)
 		//	Format(buffer, sizeof(buffer), "%sSR: N/A\n", buffer);
 
 
-	}	else if (g_bhasStages) {
-
+	}
+	else if (g_bhasStages)
+	{
 		Format(buffer, sizeof(buffer), "%s--------------------------\n", buffer);
 
 		Format(buffer, sizeof(buffer), "%sStage: %d/%d\n", buffer, stage, (g_mapZonesTypeCount[zgroup][3] + 1));
@@ -3141,7 +3160,8 @@ public void LeftHudAlive(int client)
 		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage][srCompletions]);
 
 		// stage player record
-		if (g_fStagePlayerRecord[client][stage] != 9999999.0) {
+		if (g_fStagePlayerRecord[client][stage] != 9999999.0)
+		{
 			char srcp[16];
 			FormatTimeFloat(client, g_fStagePlayerRecord[client][stage], 5, srcp, sizeof(srcp));
 			Format(buffer, sizeof(buffer), "%sPB: %s\n", buffer, srcp);
@@ -3150,7 +3170,8 @@ public void LeftHudAlive(int client)
 		//	Format(buffer, sizeof(buffer), "%sPB: N/A\n", buffer);
 
 		// stage server record
-		if (g_StageRecords[stage][srLoaded]) {
+		if (g_StageRecords[stage][srLoaded])
+		{
 			char srcp[16];
 			FormatTimeFloat(client, g_StageRecords[stage][srRunTime], 5, srcp, sizeof(srcp));
 			Format(buffer, sizeof(buffer), "%sSR: %s\n    by %s\n", buffer, srcp, g_StageRecords[stage][srPlayerName]);
@@ -3192,7 +3213,8 @@ public void Checkpoint(int client, int zone, int zonegroup)
 	percent = percent * 100.0;
 	Format(szPercnt, 24, "%1.f%%", percent);
 
-	if (g_bTimeractivated[client] && !g_bPracticeMode[client]) {
+	if (g_bTimeractivated[client] && !g_bPracticeMode[client])
+	{
 		if (g_fMaxPercCompleted[client] < 1.0) // First time a checkpoint is reached
 			g_fMaxPercCompleted[client] = percent;
 		else
@@ -3369,14 +3391,17 @@ public void CheckpointToSpec(int client, char[] buffer)
 	}
 }
 
-public int CountSpectators(int client) {
+public int CountSpectators(int client)
+{
 	int specCount = 0;
 	for (int x = 1; x <= MaxClients; x++)
 	{
-		if (IsValidClient(x) && !IsFakeClient(client) && !IsPlayerAlive(x) && GetClientTeam(x) >= 1 && GetClientTeam(x) <= 3) {
+		if (IsValidClient(x) && !IsFakeClient(client) && !IsPlayerAlive(x) && GetClientTeam(x) >= 1 && GetClientTeam(x) <= 3)
+		{
 			int SpecMode = GetEntProp(x, Prop_Send, "m_iObserverMode");
 
-			if (SpecMode == 4 || SpecMode == 5) {
+			if (SpecMode == 4 || SpecMode == 5)
+			{
 				int ObservedUser = GetEntPropEnt(x, Prop_Send, "m_hObserverTarget");
 
 				if (ObservedUser == client)

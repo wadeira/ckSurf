@@ -264,19 +264,19 @@ public Action Command_VoteExtend(int client, int args)
 
 	if (!g_bflagTitles[client][0])
 	{
-		ReplyToCommand(client, "[CK] This command requires the VIP title.");
+		ReplyToCommand(client, "[Surf Timer] This command requires the VIP title.");
 		return Plugin_Handled;
 	}
 
 	if (IsVoteInProgress())
 	{
-		ReplyToCommand(client, "[CK] Please wait until the current vote has finished.");
+		ReplyToCommand(client, "[Surf Timer] Please wait until the current vote has finished.");
 		return Plugin_Handled;
 	}
 
 	if (g_VoteExtends >= GetConVarInt(g_hMaxVoteExtends))
 	{
-		ReplyToCommand(client, "[CK] There have been too many extends this map.");
+		ReplyToCommand(client, "[Surf Timer] There have been too many extends this map.");
 		return Plugin_Handled;
 	}
 
@@ -285,7 +285,7 @@ public Action Command_VoteExtend(int client, int args)
 	{
 		if (StrEqual(g_szUsedVoteExtend[i], g_szSteamID[client], false))
 		{
-			ReplyToCommand(client, "[CK] You have already used your vote to extend this map.");
+			ReplyToCommand(client, "[Surf Timer] You have already used your vote to extend this map.");
 			return Plugin_Handled;
 		}
 	}
@@ -332,15 +332,19 @@ public void H_VoteExtendCallback(Menu menu, int num_votes, int num_clients, cons
 	int votesYes = 0;
 	int votesNo = 0;
 
-	if (item_info[0][VOTEINFO_ITEM_INDEX] == 0) {	// If the winner is Yes
+	if (item_info[0][VOTEINFO_ITEM_INDEX] == 0)
+	{	// If the winner is Yes
 		votesYes = item_info[0][VOTEINFO_ITEM_VOTES];
-		if (num_items > 1) {
+		if (num_items > 1)
+		{
 			votesNo = item_info[1][VOTEINFO_ITEM_VOTES];
 		}
 	}
-	else {	// If the winner is No
+	else
+	{	// If the winner is No
 		votesNo = item_info[0][VOTEINFO_ITEM_VOTES];
-		if (num_items > 1) {
+		if (num_items > 1)
+		{
 			votesYes = item_info[1][VOTEINFO_ITEM_VOTES];
 		}
 	}
@@ -622,7 +626,8 @@ public Action Command_ToBonus(int client, int args)
 		else
 			zoneGrp = StringToInt(arg1);
 
-		if (zoneGrp == 0) {
+		if (zoneGrp == 0)
+		{
 			Command_Restart(client, 1);
 			return Plugin_Handled;
 		}
@@ -1416,8 +1421,10 @@ public Action Client_BonusTop(int client, int args)
 	if (!IsValidClient(client))
 		return Plugin_Handled;
 
-	switch (args) {
-		case 0: {  // !btop
+	switch (args)
+	{
+		case 0:
+		{  // !btop
 			if (g_mapZoneGroupCount == 1)
 			{
 				PrintToChat(client, "[%cSurf Timer%c] No bonus found on this map.", MOSSGREEN, WHITE);
@@ -1435,7 +1442,8 @@ public Action Client_BonusTop(int client, int args)
 				return Plugin_Handled;
 			}
 		}
-		case 1: {  //!btop <mapname> / <bonus id>
+		case 1:
+		{  //!btop <mapname> / <bonus id>
 			// 1st check if bonus id or mapname
 			GetCmdArg(1, szArg, 128);
 			if (StringToInt(szArg) == 0 && szArg[0] != '0') // passes, if not a number (argument is mapname)
@@ -1457,7 +1465,8 @@ public Action Client_BonusTop(int client, int args)
 				}
 			}
 		}
-		case 2: {
+		case 2:
+		{
 			GetCmdArg(1, szArg, 128);
 			if (StringToInt(szArg) == 0 && szArg[0] != '0') // passes, if not a number (argument is mapname)
 			{
@@ -1477,7 +1486,8 @@ public Action Client_BonusTop(int client, int args)
 				return Plugin_Handled;
 			}
 		}
-		default: {
+		default:
+		{
 			PrintToChat(client, "[%cSurf Timer%c] Usage: !btop <bonus id> <mapname>", MOSSGREEN, WHITE);
 			return Plugin_Handled;
 		}
@@ -2233,7 +2243,8 @@ public Action Client_Stop(int client, int args)
 		g_fCurrentRunTime[client] = -1.0;
 	}
 
-	if (g_bStageTimerRunning[client]) {
+	if (g_bStageTimerRunning[client])
+	{
 		g_bStageTimerRunning[client] = false;
 		g_fStageStartTime[client] = -1.0;
 	}
@@ -2367,7 +2378,8 @@ public void BonusTopMenu(int client)
 		sMenu.ExitButton = true;
 		sMenu.Display(client, 60);
 	}
-	else {
+	else
+	{
 		db_selectBonusTopSurfers(client, g_szMapName, 1);
 	}
 }
@@ -2387,7 +2399,8 @@ public void StageTopMenu(int client)
 	menu.SetTitle("Stage Records: Select stage");
 
 
-	for (int i = 1; i <= g_mapZonesTypeCount[0][3] + 1; i++) {
+	for (int i = 1; i <= g_mapZonesTypeCount[0][3] + 1; i++)
+	{
 		char name[32];
 		Format(name, sizeof(name), "Stage %d", i);
 
@@ -2756,7 +2769,8 @@ public Action Command_saveLoc(int client, int args)
 	int id = g_SavedLocationsCount++;
 
 	// Check if we reached the limit of savelocs
-	if (id >= MAX_SAVELOCS) {
+	if (id >= MAX_SAVELOCS)
+	{
 		PrintToChat(client, "[%cSurf Timer%c] We reached the limit of saved locations for this map.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
 	}
@@ -2805,20 +2819,22 @@ public Action Command_loadLoc(int client, int args)
 	int id;
 
 	// Check if no args were given
-	if (args < 1) {
-
+	if (args < 1)
+	{
 		// Check if the player used an loadloc before
-		if (g_LastSaveLocUsed[client] >= 0) {
-
+		if (g_LastSaveLocUsed[client] >= 0)
+		{
 			// Use the last used loadloc id
 			id = g_LastSaveLocUsed[client];
-
-		} else {
+		}
+		else
+		{
 			PrintToChat(client, "[%cSurf Timer%c] Usage: %c!loadloc <id>", MOSSGREEN, WHITE, GREEN);
 			return Plugin_Handled;
 		}
 	}
-	else {
+	else
+	{
 		// Get the argument given
 		char arg1[5];
 		GetCmdArg(1, arg1, sizeof(arg1));
@@ -2826,7 +2842,8 @@ public Action Command_loadLoc(int client, int args)
 	}
 
 	// Make sure the saveloc id exists and is not from the past map
-	if (g_SavedLocationsCount < id) {
+	if (g_SavedLocationsCount < id)
+	{
 		PrintToChat(client, "[%cSurf Timer%c] No location was found with the id %c#%d", MOSSGREEN, WHITE, GREEN, id);
 		return Plugin_Handled;
 	}
@@ -2851,8 +2868,8 @@ public Action Command_loadLoc(int client, int args)
 	teleportEntitySafe(client, origin, angles, velocity, true);
 
 	// Check if its the first time the player is using this saved location
-	if (g_LastSaveLocUsed[client] != id) {
-
+	if (g_LastSaveLocUsed[client] != id)
+	{
 		// Format run time
 		char sTime[64];
 		FormatTimeFloat(client, g_SavedLocations[id][slRunTime], 3, sTime, sizeof(sTime));
@@ -2872,19 +2889,22 @@ public Action Command_Replay(int client, int args)
 {
 	// TODO: Check if there are spectators
 
-	if (!g_RecordBot) {
+	if (!g_RecordBot)
+	{
 		PrintToChat(client, "[%cSurf Timer%c] No replay bots available.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
 	}
 
-	if (g_bIsPlayingReplay) {
+	if (g_bIsPlayingReplay)
+	{
 		PrintToChat(client, "[%cSurf Timer%c] The replay bot is currently busy. Wait for the current replay to finish.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
 	}
 
 
 	float requestDelay = GetGameTime() - g_fLastReplayRequested[client];
-	if (requestDelay < 15.0 && CountSpectators(g_RecordBot) > 1) {
+	if (requestDelay < 15.0 && CountSpectators(g_RecordBot) > 1)
+	{
 		PrintToChat(client, "[%cSurf Timer%c] Please wait %d seconds before requesting a new replay", MOSSGREEN, WHITE, RoundToCeil(15.0 - requestDelay));
 		return Plugin_Handled;
 	}
@@ -2907,7 +2927,8 @@ public Action Command_Replay(int client, int args)
 }
 
 
-public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int item) {
+public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int item)
+{
 	if (action != MenuAction_Select) return 0;
 
 	g_ReplayRequester = client;
