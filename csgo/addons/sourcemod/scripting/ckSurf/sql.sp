@@ -143,7 +143,7 @@ char sql_resetMapRecords[] = "DELETE FROM ck_playertimes WHERE mapname = '%s'";
 
 
 // STAGES
-char sql_createStageRecordsTable[] = "CREATE TABLE `ck_stages` (`id` int(11) NOT NULL AUTO_INCREMENT, `steamid` varchar(45) NOT NULL, `map` varchar(45) NOT NULL, `stage` int(11) NOT NULL, `runtime` float NOT NULL, `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), UNIQUE KEY `id_UNIQUE` (`id`)) AUTO_INCREMENT=1;";
+char sql_createStageRecordsTable[] = "CREATE TABLE IF NOT EXISTS `ck_stages` (`id` int(11) NOT NULL AUTO_INCREMENT, `steamid` varchar(45) NOT NULL, `map` varchar(45) NOT NULL, `stage` int(11) NOT NULL, `runtime` float NOT NULL, `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), UNIQUE KEY `id_UNIQUE` (`id`)) AUTO_INCREMENT=1;";
 char sql_selectStageRecords[] = "SELECT stage, runtime, name, (SELECT COUNT(runtime) FROM ck_stages c WHERE c.map = '%s' AND c.stage = '%d') as completions FROM ck_stages a JOIN ck_playerrank p ON a.steamid = p.steamid WHERE map = '%s' AND stage = '%d' ORDER BY runtime ASC LIMIT 1;";
 char sql_selectStagePlayerRecords[] = "SELECT stage as stg, runtime as rt, map as mp, (SELECT COUNT(*) FROM ck_stages a WHERE a.map = mp AND a.stage = stg AND runtime <= rt) as rank FROM ck_stages WHERE map = '%s' AND steamid = '%s'";
 char sql_insertStageRecord[] = "INSERT INTO ck_stages (steamid, map, stage, runtime) VALUES ('%s', '%s', '%d', '%f')";
