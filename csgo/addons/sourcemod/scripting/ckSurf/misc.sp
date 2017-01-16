@@ -172,7 +172,10 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 						Client_Stop(client, 0);
 
 					// Set spawn location to the destination zone:
-					Array_Copy(g_mapZones[destinationZoneId][CenterPoint], g_fTeleLocation[client], 3);
+					if (g_mapZones[destinationZoneId][TeleportPosition] != -1.0)
+						Array_Copy(g_mapZones[destinationZoneId][TeleportPosition], g_fTeleLocation[client], 3);
+					else
+						Array_Copy(g_mapZones[destinationZoneId][CenterPoint], g_fTeleLocation[client], 3);
 
 					// Set specToStage flag
 					g_bRespawnPosition[client] = false;
@@ -187,10 +190,21 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 					SetEntPropVector(client, Prop_Data, "m_vecVelocity", view_as<float>( { 0.0, 0.0, -100.0 } ));
 
 					float fLocation[3];
-					Array_Copy(g_mapZones[destinationZoneId][CenterPoint], fLocation, 3);
+
+					if (g_mapZones[destinationZoneId][TeleportPosition] != -1.0)
+						Array_Copy(g_mapZones[destinationZoneId][TeleportPosition], fLocation, 3);
+					else
+						Array_Copy(g_mapZones[destinationZoneId][CenterPoint], fLocation, 3);
+
+					float ang[3];
+
+					if (g_mapZones[destinationZoneId][TeleportAngles] != -1.0)
+						Array_Copy(g_mapZones[destinationZoneId][TeleportAngles], ang, 3);
+					else
+						ang = NULL_VECTOR;
 
 					// Teleport
-					teleportEntitySafe(client, fLocation, NULL_VECTOR, view_as<float>( { 0.0, 0.0, -100.0 } ), stopTime);
+					teleportEntitySafe(client, fLocation, ang, view_as<float>( { 0.0, 0.0, -100.0 } ), stopTime);
 				}
 			}
 			else
@@ -1573,6 +1587,9 @@ public void SetClientDefaults(int client)
 
 	for (int i = 0; i < 64; i++)
 		g_fStagePlayerRecord[client][i] = 9999999.0;
+
+
+	g_RepeatStage[client] = -1;
 }
 
 public void clearPlayerCheckPoints(int client)

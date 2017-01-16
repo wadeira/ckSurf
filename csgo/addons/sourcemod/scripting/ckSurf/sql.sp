@@ -78,7 +78,7 @@ char sql_insertLatestRecords[] = "INSERT INTO ck_latestrecords (steamid, name, r
 char sql_selectLatestRecords[] = "SELECT name, runtime, map, date FROM ck_latestrecords ORDER BY date DESC LIMIT 50";
 
 //TABLE PLAYEROPTIONS
-char sql_createPlayerOptions[] = "CREATE TABLE IF NOT EXISTS ck_playeroptions (steamid VARCHAR(32), speedmeter INT(12) DEFAULT '0', quake_sounds INT(12) DEFAULT '1', shownames INT(12) DEFAULT '1', goto INT(12) DEFAULT '1', showtime INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', knife VARCHAR(32) DEFAULT 'weapon_knife', new1 INT(12) DEFAULT '0', new2 INT(12) DEFAULT '0', new3 INT(12) DEFAULT '0', checkpoints INT(12) DEFAULT '1', hidelefthud INT(12) DEFAULT '0' PRIMARY KEY(steamid));";
+char sql_createPlayerOptions[] = "CREATE TABLE IF NOT EXISTS ck_playeroptions (steamid VARCHAR(32), speedmeter INT(12) DEFAULT '0', quake_sounds INT(12) DEFAULT '1', shownames INT(12) DEFAULT '1', goto INT(12) DEFAULT '1', showtime INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', knife VARCHAR(32) DEFAULT 'weapon_knife', new1 INT(12) DEFAULT '0', new2 INT(12) DEFAULT '0', new3 INT(12) DEFAULT '0', checkpoints INT(12) DEFAULT '1', hidelefthud INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
 char sql_insertPlayerOptions[] = "INSERT INTO ck_playeroptions (steamid, speedmeter, quake_sounds, shownames, goto, showtime, hideplayers, showspecs, knife, new1, new2, new3, checkpoints, hidelefthud) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%i');";
 char sql_selectPlayerOptions[] = "SELECT speedmeter, quake_sounds, shownames, goto, showtime, hideplayers, showspecs, knife, new1, new2, new3, checkpoints, hidelefthud FROM ck_playeroptions where steamid = '%s'";
 char sql_updatePlayerOptions[] = "UPDATE ck_playeroptions SET speedmeter ='%i', quake_sounds ='%i', shownames ='%i', goto ='%i', showtime ='%i', hideplayers ='%i', showspecs ='%i', knife ='%s', new1 = '%i', new2 = '%i', new3 = '%i', checkpoints = '%i', hidelefthud = '%i' where steamid = '%s'";
@@ -143,6 +143,7 @@ char sql_resetMapRecords[] = "DELETE FROM ck_playertimes WHERE mapname = '%s'";
 
 
 // STAGES
+char sql_createStageRecordsTable[] = "CREATE TABLE `ck_stages` (`id` int(11) NOT NULL AUTO_INCREMENT, `steamid` varchar(45) NOT NULL, `map` varchar(45) NOT NULL, `stage` int(11) NOT NULL, `runtime` float NOT NULL, `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), UNIQUE KEY `id_UNIQUE` (`id`)) AUTO_INCREMENT=1;";
 char sql_selectStageRecords[] = "SELECT stage, runtime, name, (SELECT COUNT(runtime) FROM ck_stages c WHERE c.map = '%s' AND c.stage = '%d') as completions FROM ck_stages a JOIN ck_playerrank p ON a.steamid = p.steamid WHERE map = '%s' AND stage = '%d' ORDER BY runtime ASC LIMIT 1;";
 char sql_selectStagePlayerRecords[] = "SELECT stage as stg, runtime as rt, map as mp, (SELECT COUNT(*) FROM ck_stages a WHERE a.map = mp AND a.stage = stg AND runtime <= rt) as rank FROM ck_stages WHERE map = '%s' AND steamid = '%s'";
 char sql_insertStageRecord[] = "INSERT INTO ck_stages (steamid, map, stage, runtime) VALUES ('%s', '%s', '%d', '%f')";
@@ -472,6 +473,7 @@ public void db_createTables()
 	SQL_AddQuery(createTableTnx, sql_createMapTier);
 	SQL_AddQuery(createTableTnx, sql_createSpawnLocations);
 	SQL_AddQuery(createTableTnx, sql_createPlayerFlags);
+	SQL_AddQuery(createTableTnx, sql_createStageRecordsTable);
 
 	SQL_ExecuteTransaction(g_hDb, createTableTnx, SQLTxn_CreateDatabaseSuccess, SQLTxn_CreateDatabaseFailed);
 
@@ -5041,6 +5043,8 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			g_mapZones[i][Vis] = 0;
 			g_mapZones[i][Team] = 0;
 			g_mapZones[i][zoneGroup] = 0;
+			g_mapZones[i][TeleportPosition] = -1.0;
+			g_mapZones[i][TeleportAngles] = -1.0;
 		}
 
 		for (int x = 0; x < MAXZONEGROUPS; x++)
@@ -5182,15 +5186,33 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			g_mapZonesTypeCount[g_mapZones[g_mapZonesCount][zoneGroup]][g_mapZones[g_mapZonesCount][zoneType]]++;
 			g_mapZonesCount++;
 		}
-		// Count zone corners
-		// https://forums.alliedmods.net/showpost.php?p=2006539&postcount=8
+
 		for (int x = 0; x < g_mapZonesCount; x++)
 		{
+			// Count zone corners
+			// https://forums.alliedmods.net/showpost.php?p=2006539&postcount=8
 			for(int i = 1; i < 7; i++)
 			{
 				for(int j = 0; j < 3; j++)
 				{
 					g_fZoneCorners[x][i][j] = g_fZoneCorners[x][((i >> (2-j)) & 1) * 7][j];
+				}
+			}
+
+			// Find info_teleport_destination insize zones
+			int ent = -1;
+			while((ent = FindEntityByClassname(ent, "info_teleport_destination")) != -1)
+			{
+				float pos[3], ang[3];
+				GetEntPropVector(ent, Prop_Data, "m_vecOrigin", pos);
+				GetEntPropVector(ent, Prop_Data, "m_angRotation", ang);
+
+				// Check if entity is inside zone
+				if (IsInsideZone(pos) == x)
+				{
+					Array_Copy(pos, g_mapZones[x][TeleportPosition], 3);
+					Array_Copy(ang, g_mapZones[x][TeleportAngles], 3);
+					break;
 				}
 			}
 		}
@@ -5256,7 +5278,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		// Clear old stage records
 		for (int i = 0; i < CPLIMIT; i++)
 		{
-			g_StageRecords[i][srRunTime] = 999999.0;
+			g_StageRecords[i][srRunTime] = 9999999.0;
 			g_StageRecords[i][srLoaded] = false;
 		}
 

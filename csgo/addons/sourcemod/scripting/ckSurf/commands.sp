@@ -2944,3 +2944,28 @@ public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int ite
 
 	return 0;
 }
+
+public Action Command_Repeat(int client, int args) {
+	if (g_RepeatStage[client] != -1) {
+		g_RepeatStage[client] = -1;
+		PrintToChat(client, "[%cSurf Timer%c] Repeat mode is now disabled.", MOSSGREEN, WHITE);
+		return Plugin_Handled;
+	}
+
+	// Check if player is in a bonus
+	if (g_iClientInZone[client][2] != 0) {
+		PrintToChat(client, "[%cSurf Timer%c] This command is not available in bonus.", MOSSGREEN, WHITE);
+		return Plugin_Handled;
+	}
+
+	// Check if its not a staged map
+	if (!g_bhasStages) {
+		PrintToChat(client, "[%cSurf Timer%c] This command is not available in linear maps.", MOSSGREEN, WHITE);
+		return Plugin_Handled;
+	}
+
+
+	g_RepeatStage[client] = g_Stage[0][client];
+	PrintToChat(client, "[%cSurf Timer%c] Repeating mode is now enabled, repeating stage %d", MOSSGREEN, WHITE, g_RepeatStage[client]);
+	return Plugin_Handled;
+}

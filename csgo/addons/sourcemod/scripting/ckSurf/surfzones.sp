@@ -215,6 +215,11 @@ public void StartTouch(int client, int action[3])
 			}
 			// Resetting checkpoints
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
+
+			// Repeat stage
+			if (g_RepeatStage[client] != -1)
+				teleportClient(client, 0, g_RepeatStage[client], true);
+
 		}
 		else if (action[0] == view_as<int>(ST_Stage)) // Stage Zone
 		{
@@ -250,6 +255,10 @@ public void StartTouch(int client, int action[3])
 				}
 
 			}
+
+			// Repeat stage
+			if (g_RepeatStage[client] != -1)
+				teleportClient(client, 0, g_RepeatStage[client], true);
 		}
 		else if (action[0] == view_as<int>(ST_Checkpoint)) // Checkpoint Zone
 		{
@@ -310,7 +319,10 @@ public void EndTouch(int client, int action[3])
 					else
 					{
 						CL_OnStartTimerPress(client);
-						StartStageTimer(client);
+
+						// Make sure the player is not in a bonus
+						if (g_iClientInZone[client][2] == 0)
+							StartStageTimer(client);
 					}
 
 					g_bValidRun[client] = false;
