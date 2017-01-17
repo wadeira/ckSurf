@@ -538,7 +538,10 @@ public void StartStageTimer(int client)
 		return;
 	}
 
-	if (g_fLastSpeed[client] > 360)
+	float vPlayerVelocity[3];
+	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
+
+	if (g_fLastSpeed[client] > 360 || vPlayerVelocity[2] < -300.0)
 	{
 		PrintToChat(client, "[%cSurf Timer%c] %cMax velocity exceeded to start stage %d.", MOSSGREEN, WHITE, LIGHTRED, g_Stage[0][client]);
 		return;
@@ -612,8 +615,11 @@ public void EndStageTimer(int client)
 		else
 			Format(pbdiff_str, sizeof(pbdiff_str), "+%s", pbdiff_str);
 	}
-	else Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
-
+	else
+	{
+		Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
+		g_StageRecords[stage][srCompletions]++;
+	}
 
 	// Get rank of current run
 	int rank = db_getStageRank(client, stage, runtime);
