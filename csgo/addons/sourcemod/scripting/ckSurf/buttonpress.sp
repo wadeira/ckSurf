@@ -647,7 +647,6 @@ public void EndStageTimer(int client)
 		g_StageRecords[stage][srLoaded] = true;
 
 		g_fStagePlayerRecord[client][stage] = runtime;
-		g_StagePlayerRank[client][stage] = 1;
 
 	}
 	else if (g_fStagePlayerRecord[client][stage] > runtime)
@@ -662,8 +661,6 @@ public void EndStageTimer(int client)
 			db_insertStageRecord(client, stage, runtime);
 
 		g_fStagePlayerRecord[client][stage] = runtime;
-
-		db_updateStageRank(client, stage, runtime);
 	}
 	else
 	{

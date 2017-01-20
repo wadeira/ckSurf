@@ -6698,7 +6698,13 @@ public void db_updateStageRecord(int client, int stage, float runtime)
 {
 	char query[256];
 	Format(query, sizeof(query), sql_updateStageRecord, runtime, g_szMapName, g_szSteamID[client], stage);
-	SQL_TQuery(g_hDb, sql_updateStageRecordCallback, query, client, DBPrio_High);
+
+	DataPack pack = new DataPack();
+
+	pack.WriteCell(client);
+	pack.WriteCell(stage);
+
+	SQL_TQuery(g_hDb, sql_updateStageRecordCallback, query, pack, DBPrio_High);
 }
 
 public void sql_updateStageRecordCallback(Handle owner, Handle hndl, const char[] error, any data)
@@ -6708,6 +6714,14 @@ public void sql_updateStageRecordCallback(Handle owner, Handle hndl, const char[
 		LogError("[Surf Timer] SQL Error (sql_updateStageRecordCallback): %s", error);
 		return;
 	}
+
+	DataPack pack = view_as<DataPack>(data);
+	pack.Reset();
+	int client = pack.ReadCell();
+	int stage = pack.ReadCell();
+
+	// Update Rank
+	db_updateStageRank(client, stage);
 }
 
 // todo: load all stages in 1 query
@@ -6869,21 +6883,16 @@ public int ViewStageRecordsMenuCallback(Menu menu, MenuAction action, int param1
 }
 
 
-void db_updateStageRank(int client, int stage, float runtime = -1.0)
+public void db_updateStageRank(int client, int stage)
 {
 	char query[256];
-	Format(query, sizeof(query), "SELECT COUNT(runtime)+1 FROM ck_stages WHERE map = '%s' AND stage = '%d'", g_szMapName, stage);
-
-
-	if (runtime != -1)
-		Format(query, sizeof(query), "%s AND runtime < %f", query, runtime);
-	else
-		Format(query, sizeof(query), "%s AND steamid = '%s'", query, g_szSteamID[client]);
+	Format(query, sizeof(query), "SELECT COUNT(*) FROM ck_stages WHERE runtime <= (SELECT runtime FROM ck_stages WHERE map = '%s' and stage = '%d' AND steamid = '%s') AND map = '%s' AND stage = '%d' ORDER BY runtime, date ASC;", g_szMapName, stage, g_szSteamID[client], g_szMapName, stage);
 
 	DataPack data = new DataPack();
 	data.WriteCell(client);
 	data.WriteCell(stage);
-	data.WriteFloat(runtime);
+
+	PrintToChatAll("updating rank");
 
 	SQL_TQuery(g_hDb, SQL_updateStageRankCallback, query, data, DBPrio_Low);
 }
@@ -6908,10 +6917,9 @@ public void SQL_updateStageRankCallback(Handle owner, Handle hndl, const char[] 
 		pack.Reset();
 		int client = pack.ReadCell();
 		int stage = pack.ReadCell();
-		float runtime = pack.ReadCell();
-
-		// Check if the time improved the player rank
-		if (runtime != -1.0 && rank != -1 && rank < g_StagePlayerRank[client][stage])
+		
+		// Check if the player improved his time
+		if (rank != -1 && rank < g_StagePlayerRank[client][stage])
 			PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
 			
 		g_StagePlayerRank[client][stage] = rank;
