@@ -6869,7 +6869,7 @@ public int ViewStageRecordsMenuCallback(Menu menu, MenuAction action, int param1
 }
 
 
-int db_getStageRank(int client, int stage, float runtime = -1.0)
+void db_updateStageRank(int client, int stage, float runtime = -1.0)
 {
 	char query[256];
 	Format(query, sizeof(query), "SELECT COUNT(runtime)+1 FROM ck_stages WHERE map = '%s' AND stage = '%d'", g_szMapName, stage);
@@ -6880,15 +6880,42 @@ int db_getStageRank(int client, int stage, float runtime = -1.0)
 	else
 		Format(query, sizeof(query), "%s AND steamid = '%s'", query, g_szSteamID[client]);
 
+	DataPack data = new DataPack();
+	data.WriteCell(client);
+	data.WriteCell(stage);
+	data.WriteFloat(runtime);
 
-	DBResultSet hQuery = SQL_Query(g_hDb, query);
+	SQL_TQuery(g_hDb, SQL_updateStageRankCallback, query, data, DBPrio_Low);
+}
+
+
+public void SQL_updateStageRankCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (SQL_updateStageRankCallback): %s", error);
+		return;
+	}
 
 	int rank = -1;
 
-	if (hQuery != null && SQL_HasResultSet(hQuery) && SQL_FetchRow(hQuery))
+	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
-			rank = SQL_FetchInt(hQuery, 0);
+		rank = SQL_FetchInt(hndl, 0);
+
+		DataPack pack = view_as<DataPack>(data);
+		pack.Reset();
+		int client = pack.ReadCell();
+		int stage = pack.ReadCell();
+		float runtime = pack.ReadCell();
+
+		// Check if the time improved the player rank
+		if (runtime != -1.0 && rank != -1 && rank < g_StagePlayerRank[client][stage])
+			PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
+			
+		g_StagePlayerRank[client][stage] = rank;
 	}
 
-	return rank;
+	
 }

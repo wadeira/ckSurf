@@ -621,9 +621,6 @@ public void EndStageTimer(int client)
 		g_StageRecords[stage][srCompletions]++;
 	}
 
-	// Get rank of current run
-	int rank = db_getStageRank(client, stage, runtime);
-
 	// Check if the player beated the record
 	if (g_StageRecords[stage][srRunTime] > runtime)
 	{
@@ -650,7 +647,7 @@ public void EndStageTimer(int client)
 		g_StageRecords[stage][srLoaded] = true;
 
 		g_fStagePlayerRecord[client][stage] = runtime;
-		g_StagePlayerRank[client][stage] = rank;
+		g_StagePlayerRank[client][stage] = 1;
 
 	}
 	else if (g_fStagePlayerRecord[client][stage] > runtime)
@@ -658,7 +655,6 @@ public void EndStageTimer(int client)
 		// Player beated his own record
 
 		PrintToChat(client, "[%cSurf Timer%c] %cFinished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
-		PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
 
 		if (g_fStagePlayerRecord[client][stage] != 9999999.0)
 			db_updateStageRecord(client, stage, runtime);
@@ -666,7 +662,8 @@ public void EndStageTimer(int client)
 			db_insertStageRecord(client, stage, runtime);
 
 		g_fStagePlayerRecord[client][stage] = runtime;
-		g_StagePlayerRank[client][stage] = rank;
+
+		db_updateStageRank(client, stage, runtime);
 	}
 	else
 	{
