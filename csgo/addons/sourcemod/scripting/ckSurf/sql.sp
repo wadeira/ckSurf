@@ -6704,6 +6704,8 @@ public void sql_insertStageRecordCallback(Handle owner, Handle hndl, const char[
 	int stage = pack.ReadCell();
 
 	db_updateStageRank(client, stage);
+
+	g_StageRecords[stage][srCompletions]++;
 }
 
 

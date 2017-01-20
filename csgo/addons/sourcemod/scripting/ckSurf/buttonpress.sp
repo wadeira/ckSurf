@@ -597,7 +597,8 @@ public void EndStageTimer(int client)
 
 	if (g_StageRecords[stage][srRunTime] != 9999999.0)
 	{
-		if (srdiff > 0)	Format(srdiff_str, sizeof(srdiff_str), "-%s", srdiff_str);
+		if (srdiff > 0)	
+			Format(srdiff_str, sizeof(srdiff_str), "-%s", srdiff_str);
 		else
 			Format(srdiff_str, sizeof(srdiff_str), "+%s", srdiff_str);
 	}
@@ -616,10 +617,7 @@ public void EndStageTimer(int client)
 			Format(pbdiff_str, sizeof(pbdiff_str), "+%s", pbdiff_str);
 	}
 	else
-	{
 		Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
-		g_StageRecords[stage][srCompletions]++;
-	}
 
 	// Check if the player beated the record
 	if (g_StageRecords[stage][srRunTime] > runtime)
