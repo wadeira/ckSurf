@@ -1590,6 +1590,9 @@ public void SetClientDefaults(int client)
 
 
 	g_RepeatStage[client] = -1;
+
+	for (int i = 0; i < CPLIMIT; i++)
+		g_StagePlayerRank[client][i] = 9999999;
 }
 
 public void clearPlayerCheckPoints(int client)

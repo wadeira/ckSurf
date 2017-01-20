@@ -6681,7 +6681,13 @@ public void db_insertStageRecord(int client, int stage, float runtime)
 {
 		char query[256];
 		Format(query, sizeof(query), sql_insertStageRecord, g_szSteamID[client], g_szMapName, stage, runtime);
-		SQL_TQuery(g_hDb, sql_insertStageRecordCallback, query, client, DBPrio_High);
+
+		DataPack pack = new DataPack();
+
+		pack.WriteCell(client);
+		pack.WriteCell(stage);
+
+		SQL_TQuery(g_hDb, sql_insertStageRecordCallback, query, pack, DBPrio_High);
 }
 
 public void sql_insertStageRecordCallback(Handle owner, Handle hndl, const char[] error, any data)
@@ -6691,6 +6697,13 @@ public void sql_insertStageRecordCallback(Handle owner, Handle hndl, const char[
 		LogError("[Surf Timer] SQL Error (sql_insertStageRecordCallback): %s", error);
 		return;
 	}
+
+	DataPack pack = view_as<DataPack>(data);
+	pack.Reset();
+	int client = pack.ReadCell();
+	int stage = pack.ReadCell();
+
+	db_updateStageRank(client, stage);
 }
 
 
@@ -6917,7 +6930,7 @@ public void SQL_updateStageRankCallback(Handle owner, Handle hndl, const char[] 
 		pack.Reset();
 		int client = pack.ReadCell();
 		int stage = pack.ReadCell();
-		
+
 		// Check if the player improved his time
 		if (rank != -1 && rank < g_StagePlayerRank[client][stage])
 			PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
