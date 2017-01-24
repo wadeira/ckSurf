@@ -541,7 +541,7 @@ public void StartStageTimer(int client)
 	float vPlayerVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
 
-	if (g_fLastSpeed[client] > 360 || vPlayerVelocity[2] < -300.0)
+	if (g_fLastSpeed[client] > 360)
 	{
 		PrintToChat(client, "[%cSurf Timer%c] %cMax velocity exceeded to start stage %d.", MOSSGREEN, WHITE, LIGHTRED, g_Stage[0][client]);
 		return;

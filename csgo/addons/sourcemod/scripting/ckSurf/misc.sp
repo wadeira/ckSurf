@@ -1289,11 +1289,20 @@ public void LimitSpeed(int client)
 
 	// Limit the player velocity
 	bool limitZVel = false;
-	if (CurVelVec[2] < -300.0)
-	{
-		limitZVel = true;
-		CurVelVec[2] = -300.0;
-		//PrintToChat(client, "[%cSurf Timer%c] %cYou have too much vertical velocity.", MOSSGREEN, WHITE, LIGHTRED);
+	if (CurVelVec[2] < -300.0) {
+
+		// Get lowest cornor of the zone
+		float vLowestCorner[3];
+		if (g_mapZones[g_iClientInZone[client][3]][PointA][2] > g_mapZones[g_iClientInZone[client][3]][PointB][2])
+			Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointB], vLowestCorner, 3);
+		else
+			Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointA], vLowestCorner, 3);
+
+		// Check if the player jumped from an high platform
+		if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 10)) {
+			limitZVel = true;
+			CurVelVec[2] = -300.0;
+		}
 	}
 
 	if (currentspeed > speedCap || limitZVel)
@@ -2298,7 +2307,7 @@ public void SetPlayerRank(int client)
 		{
 			GetArrayArray(g_hSkillGroups, index, RankValue[0]);
 
-			Format(g_pr_rankname[client], 128, "[%s]", RankValue[RankName]);
+			Format(g_pr_rankname[client], 128, "%s", RankValue[RankName]);
 			Format(g_pr_chat_coloredrank[client], 128, "[%s%c]", RankValue[RankNameColored], WHITE);
 			g_PlayerChatRank[client] = RankValue[NameColor];
 		}

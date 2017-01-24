@@ -537,8 +537,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (IsPlayerAlive(client))
 	{
 		g_bLastOnGround[client] = g_bOnGround[client];
-		if (GetEntityFlags(client) & FL_ONGROUND)
+		if (GetEntityFlags(client) & FL_ONGROUND) {
 			g_bOnGround[client] = true;
+			GetEntPropVector(client, Prop_Data, "m_vecOrigin", g_vLastGroundTouch[client]);
+		}
 		else
 			g_bOnGround[client] = false;
 

@@ -242,7 +242,7 @@ public Plugin myinfo =
 {
 	name = "Surf Timer",
 	author = "marcowmadeira",
-	description = "Nightimate's Surf Plugin",
+	description = "",
 	version = VERSION,
 	url = ""
 };
@@ -729,11 +729,13 @@ float g_fStagePlayerRecord[MAXPLAYERS + 1][64];
 bool g_bLoadingStages;
 int g_StageRecords[CPLIMIT][StageRecord];
 int g_StagePlayerRank[MAXPLAYERS+1][CPLIMIT];
+int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
+
 
 int g_PlayerJumpsInStage[MAXPLAYERS+1];
 bool g_bPlayerIsJumping[MAXPLAYERS+1];
 
-int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
+float g_vLastGroundTouch[MAXPLAYERS+1][3];
 
 
 
