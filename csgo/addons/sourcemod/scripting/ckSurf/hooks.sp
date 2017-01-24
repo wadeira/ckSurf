@@ -689,6 +689,15 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		}
 	}
 
+	if (GetClientTeam(client) == 1 && buttons & IN_USE) {
+
+		int target = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
+
+		if (target == g_RecordBot)
+			Command_Replay(client, 0);
+
+	}
+
 	return Plugin_Continue;
 }
 
