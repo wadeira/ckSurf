@@ -499,7 +499,7 @@ public Action Command_GoBack(int client, int args)
 
 public Action Command_HowTo(int client, int args)
 {
-	ShowMOTDPanel(client, "ckSurf - How To Surf", "http://nightimate.pt/motd.php?u=https://www.youtube.com/v/lYc52kwTNb8", MOTDPANEL_TYPE_URL);
+	ShowMOTDPanel(client, "ckSurf - How To Surf", "http://2gcrew.space/motd.php?u=https://www.youtube.com/v/lYc52kwTNb8", MOTDPANEL_TYPE_URL);
 	return Plugin_Handled;
 }
 
@@ -2761,7 +2761,7 @@ public void InfoPanel(int client)
 
 public Action Command_ViewStats(int client, int args)
 {
-	ShowMOTDPanel(client, "Surf statistics", "http://nightimate.pt/motd.php?u=http://surf.nightimate.pt/", MOTDPANEL_TYPE_URL);
+	ShowMOTDPanel(client, "Surf statistics", "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/", MOTDPANEL_TYPE_URL);
 }
 
 public Action Command_saveLoc(int client, int args)
@@ -2914,11 +2914,17 @@ public Action Command_Replay(int client, int args)
 
 	SetMenuTitle(menu, "[Surf Timer] Replay");
 
-	menu.AddItem("map", "Map");
+	char sPath[256];
+
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
+
+	menu.AddItem("map", "Map", !FileExists(sPath));
 
 	for (int i = 1; i < g_mapZoneGroupCount; i++)
 	{
-		menu.AddItem(g_szZoneGroupName[i], g_szZoneGroupName[i]);
+		// Check if file exists
+		BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_bonus_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+		menu.AddItem(g_szZoneGroupName[i], g_szZoneGroupName[i], !FileExists(sPath));
 	}
 
 	menu.Display(client, 60);

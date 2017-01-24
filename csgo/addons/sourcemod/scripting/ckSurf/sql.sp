@@ -6513,7 +6513,7 @@ public int ProfileMenuHandler(Handle menu, MenuAction action, int client, int it
 			case 2:
 			{
 				char sUrl[128];
-				Format(sUrl, sizeof(sUrl), "http://nightimate.pt/motd.php?u=http://surf.nightimate.pt/players/view/%s", g_szProfileSteamId[client]);
+				Format(sUrl, sizeof(sUrl), "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/players/view/%s", g_szProfileSteamId[client]);
 
 				ShowMOTDPanel(client, "Profile", sUrl, MOTDPANEL_TYPE_URL);
 			}
@@ -6906,8 +6906,6 @@ public void db_updateStageRank(int client, int stage)
 	DataPack data = new DataPack();
 	data.WriteCell(client);
 	data.WriteCell(stage);
-
-	PrintToChatAll("updating rank");
 
 	SQL_TQuery(g_hDb, SQL_updateStageRankCallback, query, data, DBPrio_Low);
 }
