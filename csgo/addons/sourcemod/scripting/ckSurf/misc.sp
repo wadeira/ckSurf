@@ -3422,6 +3422,9 @@ public void CheckpointToSpec(int client, char[] buffer)
 
 public int CountSpectators(int client)
 {
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
+		return 0;
+
 	int specCount = 0;
 	for (int x = 1; x <= MaxClients; x++)
 	{
