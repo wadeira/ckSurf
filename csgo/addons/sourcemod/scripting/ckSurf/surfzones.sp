@@ -176,7 +176,7 @@ public void StartTouch(int client, int action[3])
 
 				Client_Stop(client, 1);
 				// Resetting last checkpoint
-				lastCheckpoint[g_iClientInZone[client][2]][client] = 1;
+				lastCheckpoint[g_iClientInZone[client][2]][client] = -1;
 
 
 				// Start recording
