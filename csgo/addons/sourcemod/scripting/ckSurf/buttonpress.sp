@@ -204,7 +204,7 @@ public void CL_OnEndTimerPress(int client)
 			{
 				g_fReplayTimes[0] = g_fFinalTime[client];
 				g_bNewReplay[client] = true;
-				CreateTimer(3.0, ReplayTimer, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+				SaveRecording(client, 0);
 			}
 		}
 
@@ -267,7 +267,7 @@ public void CL_OnEndTimerPress(int client)
 				{
 					g_bNewReplay[client] = true;
 					g_fReplayTimes[0] = g_fFinalTime[client];
-					CreateTimer(3.0, ReplayTimer, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+					SaveRecording(client, 0);
 				}
 			}
 		}
@@ -277,7 +277,7 @@ public void CL_OnEndTimerPress(int client)
 			{
 				g_fReplayTimes[0] = g_fFinalTime[client];
 				g_bNewReplay[client] = true;
-				CreateTimer(3.0, ReplayTimer, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+				SaveRecording(client, 0);
 			}
 			g_bMapSRVRecord[client] = true;
 			g_fRecordMapTime = g_fFinalTime[client];
@@ -438,10 +438,7 @@ public void CL_OnEndTimerPress(int client)
 				{
 					g_bNewBonus[client] = true;
 					g_fReplayTimes[zGroup] = g_fFinalTime[client];
-					Handle pack;
-					CreateDataTimer(3.0, BonusReplayTimer, pack);
-					WritePackCell(pack, GetClientUserId(client));
-					WritePackCell(pack, zGroup);
+					SaveRecording(client, zGroup);
 				}
 			}
 		}
@@ -451,10 +448,7 @@ public void CL_OnEndTimerPress(int client)
 			{
 				g_bNewBonus[client] = true;
 				g_fReplayTimes[zGroup] = g_fFinalTime[client];
-				Handle pack;
-				CreateDataTimer(3.0, BonusReplayTimer, pack);
-				WritePackCell(pack, GetClientUserId(client));
-				WritePackCell(pack, zGroup);
+				SaveRecording(client, zGroup);
 			}
 
 			g_fOldBonusRecordTime[zGroup] = g_fBonusFastest[zGroup];
