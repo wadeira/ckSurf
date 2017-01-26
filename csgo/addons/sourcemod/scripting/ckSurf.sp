@@ -35,7 +35,7 @@
 #pragma semicolon 1
 
 // Plugin info
-#define VERSION "1.19"
+#define VERSION "1.20"
 #define PLUGIN_VERSION 119
 
 // Database definitions
