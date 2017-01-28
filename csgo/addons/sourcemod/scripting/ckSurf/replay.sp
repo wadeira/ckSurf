@@ -91,13 +91,12 @@ public void StopRecording(int client)
 
 public void SaveRecording(int client, int zgroup)
 {
-	if (!IsValidClient(client) || g_hRecording[client] == null)
-		return;
-	else
-	{
+	if (!IsValidClient(client) || g_hRecording[client] == null) {
 		g_bNewReplay[client] = false;
 		g_bNewBonus[client] = false;
+		return;
 	}
+	
 
 	char sPath2[256];
 	// Check if the default record folder exists?
