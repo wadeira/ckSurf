@@ -6936,7 +6936,19 @@ public void SQL_updateStageRankCallback(Handle owner, Handle hndl, const char[] 
 			PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
 			
 		g_StagePlayerRank[client][stage] = rank;
-	}
 
-	
+		// Format time
+		char runtime_str[32];
+		FormatTimeFloat(client, g_fStagePlayerRecord[client][stage], 5, runtime_str, sizeof(runtime_str));
+
+
+		// Forward
+		Call_StartForward(g_StageFinishedForward);
+		Call_PushCell(client);
+		Call_PushFloat(g_fStagePlayerRecord[client][stage]);
+		Call_PushString(runtime_str);
+		Call_PushCell(stage);
+		Call_PushCell(rank);
+		Call_Finish();
+	}
 }

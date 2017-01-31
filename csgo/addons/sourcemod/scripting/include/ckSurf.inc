@@ -103,6 +103,15 @@ forward Action:ckSurf_OnBonusFinished(client, Float:fRunTime, String:sRunTime[54
  forward Action:ckSurf_OnPracticeFinished(client, Float:fRunTime, String:sRunTime[54]);
 
 
+ /**
+  * Called when a player finishes a stage
+  *
+  * @param client 	Player index.
+  * @param 
+  */
+forward Action ckSurf_OnStageFinished(int client, float fRuntime, char[] sRuntime, int stage, int rank);
+
+
 public SharedPlugin:__pl_ckSurf =
 {
 	name = "ckSurf",
