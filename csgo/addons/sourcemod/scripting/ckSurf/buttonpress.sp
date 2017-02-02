@@ -405,7 +405,7 @@ public void CL_OnEndTimerPress(int client)
 
 
 		srdiff = g_fBonusFastest[zGroup] - g_fFinalTime[client];
-		FormatTimeFloat(client, diff, 3, szSRDiff, sizeof(szSRDiff));
+		FormatTimeFloat(client, srdiff, 3, szSRDiff, sizeof(szSRDiff));
 
 		if (srdiff > 0.0)
 			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "%c-%s", GREEN, szSRDiff);
