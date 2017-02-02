@@ -3,6 +3,11 @@
 #include <discord>
 
 
+#define MAP_RECORD "{\"username\": \"{BOTNAME}\",\"content\": \"@here\",\"attachments\": [{\"color\": \"#d10000\",\"title\": \"A new map record was set!\",\"fields\": [{\"title\": \"Player\",\"value\": \"{PLAYER}\",\"short\": true},{\"title\": \"Map\",\"value\": \"{MAP}\",\"short\": true},{\"title\": \"Time\",\"value\": \"{TIME}\",\"short\": true}]}]}"
+#define BONUS_RECORD "{\"username\": \"{BOTNAME}\",\"content\": \"@here\",\"attachments\": [{\"color\": \"#d8ff00\",\"title\": \"A new bonus record was set!\",\"fields\": [{\"title\": \"Player\",\"value\": \"{PLAYER}\",\"short\": true},{\"title\": \"Map\",\"value\": \"{MAP}\",\"short\": true},{\"title\": \"Bonus\",\"value\": \"{BONUS}\",\"short\": true},{\"title\": \"Time\",\"value\": \"{TIME}\",\"short\": true}]}]}"
+#define STAGE_RECORD "{\"username\": \"{BOTNAME}\",\"content\": \"@here\",\"attachments\": [{\"color\": \"#00cbff\",\"title\": \"A new stage record was set!\",\"fields\": [{\"title\": \"Player\",\"value\": \"{PLAYER}\",\"short\": true},{\"title\": \"Map\",\"value\": \"{MAP}\",\"short\": true},{\"title\": \"Stage\",\"value\": \"{STAGE}\",\"short\": true},{\"title\": \"Time\",\"value\": \"{TIME}\",\"short\": true}]}]}"
+
+
 /*****************************
  * Plugin Info
  *****************************/
@@ -33,7 +38,7 @@ ConVar g_cvClientName;
 
 public void OnPluginStart() {
 
-	g_cvWebHookUrl = CreateConVar("st_discord_webhook", "", "Discord's webhook url", FCVAR_PROTECTED);
+	g_cvWebHookUrl = CreateConVar("st_discord_webhook", "", "Key value of webhook in discord.cfg", FCVAR_PROTECTED);
 	g_cvClientName = CreateConVar("st_discord_name", "Surf Timer", "Name of the bot");
 
 	AutoExecConfig(true, "surftimer_discord");
@@ -49,97 +54,87 @@ public void OnMapStart() {
 	Format(g_cMapName, sizeof(g_cMapName), "%s", mapPieces[lastPiece - 1]);
 }
 
-
-public DiscordWebHook GetHook() {
-
-	// Get the webhook url from cvar
-	char webhook_url[128]
-	g_cvWebHookUrl.GetString(webhook_url, sizeof(webhook_url));
-
-	// Init a new webhook instance
-	DiscordWebHook hook = new DiscordWebHook(webhook_url);
-
-	hook.SlackMode = true;
-
-	// Get the bot name
-	char client_name[32];
-	g_cvClientName.GetString(client_name, sizeof(client_name));
-
-	// Set the name
-	hook.SetUsername(client_name);
-
-
-	// Notify users
-	hook.SetContent("@here");
-
-	return hook;
-}
-
-
 public Action ckSurf_OnMapFinished(int client, float ftime, char stime[54], int rank, int total, bool improved) {
 	if (!improved || rank > 1)
 		return Plugin_Continue;
 
-	char player_name[32];
+	char player_name[(MAX_NAME_LENGTH + 1) * 2];	// Needs to be doubled since we have to escape it
 	GetClientName(client, player_name, sizeof(player_name));
+	Discord_EscapeString(player_name, sizeof(player_name));
 
-	DiscordWebHook hook = GetHook();
 
-	hook.SetColor("#d10000");
-	hook.SetTitle("A new map record was set!")
-	hook.AddField("Player:", player_name, true);
-	hook.AddField("Map:", g_cMapName, true);
-	hook.AddField("Time:", stime, true);
+	char client_name[32];
+	g_cvClientName.GetString(client_name, sizeof(client_name));
 
-	hook.Send();
-	delete hook;
+	char msg[1024] = MAP_RECORD;
+	ReplaceString(msg, sizeof(msg), "{BOTNAME}", client_name);
+	ReplaceString(msg, sizeof(msg), "{PLAYER}", player_name);
+	ReplaceString(msg, sizeof(msg), "{MAP}", g_cMapName);
+	ReplaceString(msg, sizeof(msg), "{TIME}", stime);
+
+	char webhook_url[128]
+	g_cvWebHookUrl.GetString(webhook_url, sizeof(webhook_url));
+
+	Discord_SendMessage(webhook_url, msg);
+	return Plugin_Continue;
 }
 
 
 public Action ckSurf_OnBonusFinished(int client, float ftime, char stime[54], int rank, int total, int bonusid, bool improved) {
-	if (!improved || rank > 1)
+	if ((!improved && total > 1)  || rank > 1)
 		return Plugin_Continue;
 
-	char player_name[32];
+	char player_name[(MAX_NAME_LENGTH + 1) * 2];	// Needs to be doubled since we have to escape it
 	GetClientName(client, player_name, sizeof(player_name));
+	Discord_EscapeString(player_name, sizeof(player_name));
+
+
+	char client_name[32];
+	g_cvClientName.GetString(client_name, sizeof(client_name));
 
 	// Get bonus number to string
 	char bonus[2];
 	IntToString(bonusid, bonus, sizeof(bonus));
 
-	DiscordWebHook hook = GetHook();
+	char msg[1024] = BONUS_RECORD;
+	ReplaceString(msg, sizeof(msg), "{BOTNAME}", client_name);
+	ReplaceString(msg, sizeof(msg), "{PLAYER}", player_name);
+	ReplaceString(msg, sizeof(msg), "{MAP}", g_cMapName);
+	ReplaceString(msg, sizeof(msg), "{BONUS}", bonus);
+	ReplaceString(msg, sizeof(msg), "{TIME}", stime);
 
-	hook.SetColor("#d8ff00");
-	hook.SetTitle("A new bonus record was set!")
-	hook.AddField("Player:", player_name, true);
-	hook.AddField("Map:", g_cMapName, true);
-	hook.AddField("Bonus:", bonus, true);
-	hook.AddField("Time:", stime, true);
+	char webhook_url[128]
+	g_cvWebHookUrl.GetString(webhook_url, sizeof(webhook_url));
 
-	hook.Send();
-	delete hook;
+	Discord_SendMessage(webhook_url, msg);
+	return Plugin_Continue;
 }
 
 public Action ckSurf_OnStageFinished(int client, float fRuntime, char[] sRuntime, int stage, int rank) {
 	if (rank > 1)
 		return Plugin_Continue;
 
-	char player_name[32];
+	char player_name[(MAX_NAME_LENGTH + 1) * 2];	// Needs to be doubled since we have to escape it
 	GetClientName(client, player_name, sizeof(player_name));
+	Discord_EscapeString(player_name, sizeof(player_name));
+
+
+	char client_name[32];
+	g_cvClientName.GetString(client_name, sizeof(client_name));
 
 	char stage_str[2];
 	IntToString(stage, stage_str, sizeof(stage_str));
 
-	DiscordWebHook hook = GetHook();
-	
+	char msg[1024] = STAGE_RECORD;
+	ReplaceString(msg, sizeof(msg), "{BOTNAME}", client_name);
+	ReplaceString(msg, sizeof(msg), "{PLAYER}", player_name);
+	ReplaceString(msg, sizeof(msg), "{MAP}", g_cMapName);
+	ReplaceString(msg, sizeof(msg), "{STAGE}", stage_str);
+	ReplaceString(msg, sizeof(msg), "{TIME}", sRuntime);
 
-	hook.SetColor("#00cbff");
-	hook.SetTitle("A new stage record was set!")
-	hook.AddField("Player:", player_name, true);
-	hook.AddField("Map:", g_cMapName, true);
-	hook.AddField("Stage:", stage_str, true);
-	hook.AddField("Time:", sRuntime, true);
+	char webhook_url[128]
+	g_cvWebHookUrl.GetString(webhook_url, sizeof(webhook_url));
 
-	hook.Send();
-	delete hook;
+	Discord_SendMessage(webhook_url, msg);
+	return Plugin_Continue;
 }
