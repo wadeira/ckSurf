@@ -1438,8 +1438,10 @@ public void sql_CountFinishedMapsCallback(Handle owner, Handle hndl, const char[
 		return;
 	}
 
-	char szMap[128], szMapName2[128];
+	char szMap[128], szMapName2[128], szSteamId[32];
 	int finishedMaps = 0, totalplayers, rank;
+
+	getSteamIDFromClient(client, szSteamId, 32);
 
 	if (SQL_HasResultSet(hndl))
 	{
@@ -1495,9 +1497,63 @@ public void sql_CountFinishedMapsCallback(Handle owner, Handle hndl, const char[
 	// Points gained from finishing maps for the first time
 	g_pr_points[client] += (finishedMaps * GetConVarInt(g_hExtraPoints2));
 
+	// Next up, calculate stage points:
+	char szQuery[512];
+	Format(szQuery, 512, "SELECT map, (SELECT count(1)+1 FROM ck_stages b WHERE a.map=b.map AND a.runtime > b.runtime AND a.stage = b.stage) AS rank, (SELECT count(1) FROM ck_stages b WHERE a.map = b.map AND a.stage = b.stage) as total FROM ck_stages a WHERE steamid = '%s';", szSteamId);
+	SQL_TQuery(g_hDb, sql_CountFinishedStagesCallback, szQuery, client, DBPrio_Low);
+}
+
+
+public void sql_CountFinishedStagesCallback(Handle owner, Handle hndl, const char[] error, any client)
+{
+	if (hndl == null)
+	{
+		LogError("[Surf Timer] SQL Error (sql_CountFinishedStagesCallback): %s", error);
+		return;
+	}
+
+
+	char szMap[128], szSteamId[32], szMapName2[128];
+	int totalplayers, rank;
+
+	getSteamIDFromClient(client, szSteamId, 32);
+
+	if (SQL_HasResultSet(hndl))
+	{
+		while (SQL_FetchRow(hndl))
+		{
+			// Total amount of players who have finished the bonus
+			totalplayers = SQL_FetchInt(hndl, 2);
+			rank = SQL_FetchInt(hndl, 1);
+			SQL_FetchString(hndl, 0, szMap, 128);
+			for (int i = 0; i < GetArraySize(g_MapList); i++) // Check that the map is in the mapcycle
+			{
+				GetArrayString(g_MapList, i, szMapName2, sizeof(szMapName2));
+				if (StrEqual(szMapName2, szMap, false))
+				{
+					float percentage = 1.0 + ((1.0 / float(totalplayers)) - (float(rank) / float(totalplayers)));
+					g_pr_points[client] += RoundToCeil(20.0 * percentage);
+					switch (rank)
+					{
+						case 1:g_pr_points[client] += 50;
+						case 2:g_pr_points[client] += 45;
+						case 3:g_pr_points[client] += 40;
+						case 4:g_pr_points[client] += 35;
+						case 5:g_pr_points[client] += 30;
+						case 6:g_pr_points[client] += 25;
+						case 7:g_pr_points[client] += 20;
+						case 8:g_pr_points[client] += 15;
+						case 9:g_pr_points[client] += 10;
+						case 10:g_pr_points[client] += 5;
+					}
+					break;
+				}
+			}
+		}
+	}
+
 	// Done checking, update points
 	db_updatePoints(client);
-
 }
 
 //
@@ -6941,6 +6997,8 @@ public void SQL_updateStageRankCallback(Handle owner, Handle hndl, const char[] 
 		char runtime_str[32];
 		FormatTimeFloat(client, g_fStagePlayerRecord[client][stage], 5, runtime_str, sizeof(runtime_str));
 
+		g_pr_showmsg[client] = true;
+		CalculatePlayerRank(client);
 
 		// Forward
 		Call_StartForward(g_StageFinishedForward);
