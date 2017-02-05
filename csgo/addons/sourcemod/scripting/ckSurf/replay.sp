@@ -175,7 +175,6 @@ public void LoadReplays()
 	g_ReplayRequester = 0;
 	g_BonusBotCount = 0;
 	g_RecordBot = -1;
-	g_iCurrentBonusReplayIndex = 0;
 	ClearTrie(g_hLoadedRecordsAdditionalTeleport);
 
 	// Check that map replay exists
@@ -718,18 +717,6 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 		{
 			if (!g_bReplayAtEnd[client])
 			{
-				/*if (client == g_BonusBot)
-				{
-					// Call to load another replay
-					if (g_iCurrentBonusReplayIndex < (g_BonusBotCount-1))
-						g_iCurrentBonusReplayIndex++;
-					else
-						g_iCurrentBonusReplayIndex = 0;
-
-					PlayRecord(g_BonusBot, 1);
-					g_iClientInZone[g_BonusBot][2] = g_iBonusToReplay[g_iCurrentBonusReplayIndex];
-				}*/
-
 				g_fReplayRestarted[client] = GetEngineTime();
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 0.0);
 				g_bReplayAtEnd[client] = true;
@@ -778,7 +765,7 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 			if (g_CurrentReplay == 0)
 				Format(sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
 			else if (g_CurrentReplay > 0)
-				Format(sPath, sizeof(sPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, g_iBonusToReplay[g_iCurrentBonusReplayIndex]);
+				Format(sPath, sizeof(sPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, g_CurrentReplay);
 
 			BuildPath(Path_SM, sPath, sizeof(sPath), "%s", sPath);
 			if (g_hLoadedRecordsAdditionalTeleport != null)

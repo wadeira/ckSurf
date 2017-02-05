@@ -591,7 +591,6 @@ char g_szReplayTime[128]; 										// Replay bot time
 char g_szBonusName[128]; 										// Replay bot name
 char g_szBonusTime[128]; 										// Replay bot time
 int g_BonusBotCount;
-int g_iCurrentBonusReplayIndex;
 int g_iBonusToReplay[MAXZONEGROUPS + 1];
 float g_fReplayTimes[MAXZONEGROUPS];
 
