@@ -1276,6 +1276,17 @@ public void LimitSpeed(int client)
 	if (speedCap == 0.0)
 		return;
 
+	// Do not cap speed if player didn't jump from an high spot or prehopped
+	float vLowestCorner[3];
+	if (g_mapZones[g_iClientInZone[client][3]][PointA][2] > g_mapZones[g_iClientInZone[client][3]][PointB][2])
+		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointB], vLowestCorner, 3);
+	else
+		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointA], vLowestCorner, 3);
+
+	if (g_vLastGroundTouch[client][2] <= (vLowestCorner[2] + 25.0) && g_PlayerJumpsInStage[client] <= 1)
+		return;
+
+
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
 
 	if (CurVelVec[0] == 0.0)
@@ -1290,14 +1301,6 @@ public void LimitSpeed(int client)
 	// Limit the player velocity
 	bool limitZVel = false;
 	if (CurVelVec[2] < -300.0) {
-
-		// Get lowest cornor of the zone
-		float vLowestCorner[3];
-		if (g_mapZones[g_iClientInZone[client][3]][PointA][2] > g_mapZones[g_iClientInZone[client][3]][PointB][2])
-			Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointB], vLowestCorner, 3);
-		else
-			Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointA], vLowestCorner, 3);
-
 		// Check if the player jumped from an high platform
 		if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 10)) {
 			limitZVel = true;
