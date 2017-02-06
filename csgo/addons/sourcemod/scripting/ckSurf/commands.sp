@@ -2887,26 +2887,33 @@ public Action Command_loadLoc(int client, int args)
 
 public Action Command_Replay(int client, int args)
 {
-	// TODO: Check if there are spectators
-
 	if (!g_RecordBot)
 	{
 		PrintToChat(client, "[%cSurf Timer%c] No replay bots available.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
 	}
 
-	if (g_bIsPlayingReplay)
+	// Only restrict use if the player is not an admin or more people are watching the replay
+	int spectators = CountSpectators(g_RecordBot);
+	bool isSpectatingBot = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") == g_RecordBot;
+
+	AdminId admin = GetUserAdmin(client);
+
+	if (admin == INVALID_ADMIN_ID || !admin.HasFlag(Admin_Generic) || (spectators == 1 && isSpectatingBot)) 
 	{
-		PrintToChat(client, "[%cSurf Timer%c] The replay bot is currently busy. Wait for the current replay to finish.", MOSSGREEN, WHITE);
-		return Plugin_Handled;
-	}
+		if (g_bIsPlayingReplay)
+		{
+			PrintToChat(client, "[%cSurf Timer%c] The replay bot is currently busy. Wait for the current replay to finish.", MOSSGREEN, WHITE);
+			return Plugin_Handled;
+		}
 
 
-	float requestDelay = GetGameTime() - g_fLastReplayRequested[client];
-	if (requestDelay < 15.0 && CountSpectators(g_RecordBot) > 1)
-	{
-		PrintToChat(client, "[%cSurf Timer%c] Please wait %d seconds before requesting a new replay", MOSSGREEN, WHITE, RoundToCeil(15.0 - requestDelay));
-		return Plugin_Handled;
+		float requestDelay = GetGameTime() - g_fLastReplayRequested[client];
+		if (requestDelay < 15.0)
+		{
+			PrintToChat(client, "[%cSurf Timer%c] Please wait %d seconds before requesting a new replay", MOSSGREEN, WHITE, RoundToCeil(15.0 - requestDelay));
+			return Plugin_Handled;
+		}
 	}
 
 
