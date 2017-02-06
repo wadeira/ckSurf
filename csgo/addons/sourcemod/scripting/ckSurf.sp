@@ -702,6 +702,7 @@ int g_PlayerRank[MAXPLAYERS + 1]; 								// Players server rank
 int g_MapRecordCount[MAXPLAYERS + 1];							// SR's the client has
 char g_pr_szName[MAX_PR_PLAYERS + 1][64];						// Used to update client's name in database
 char g_pr_szSteamID[MAX_PR_PLAYERS + 1][32];					// steamid of client being recalculated
+bool g_CalculatingPoints[MAXPLAYERS + 1];
 
 /*----------  Practice Mode  ----------*/
 float g_fCheckpointVelocity_undo[MAXPLAYERS + 1][3]; 			// Velocity at checkpoint that is on !undo

@@ -1222,6 +1222,12 @@ public void RecalcPlayerRank(int client, char steamid[128])
 //
 public void CalculatePlayerRank(int client)
 {
+	if (client <= MAXPLAYERS) {
+		if (g_CalculatingPoints[client])
+			return;
+
+		g_CalculatingPoints[client] = true;
+	}
 
 	char szQuery[255];
 	char szSteamId[32];
@@ -1651,17 +1657,16 @@ public void sql_updatePlayerRankPointsCallback(Handle owner, Handle hndl, const 
 			char szName[MAX_NAME_LENGTH];
 			GetClientName(data, szName, MAX_NAME_LENGTH);
 			int diff = g_pr_points[data] - g_pr_oldpoints[data];
+			
 			if (diff > 0) // if player earned points -> Announce
-			{
-				for (int i = 1; i <= MaxClients; i++)
-					if (IsValidClient(i))
-						PrintToChat(i, "%t", "EarnedPoints", MOSSGREEN, WHITE, PURPLE, szName, GRAY, PURPLE, diff, GRAY, PURPLE, g_pr_points[data], GRAY);
-			}
+				PrintToChat(data, "[%cSurf Timer%c] You earned %c%d %cpoints (%c%d %cTotal)", MOSSGREEN, WHITE, ORANGE, diff, WHITE, ORANGE, g_pr_points[data], WHITE);
+
 			g_pr_showmsg[data] = false;
 			db_CalculatePlayersCountGreater0();
 		}
 		g_pr_Calculating[data] = false;
 		db_GetPlayerRank(data);
+		g_CalculatingPoints[data] = false;
 		CreateTimer(1.0, SetClanTag, data, TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
