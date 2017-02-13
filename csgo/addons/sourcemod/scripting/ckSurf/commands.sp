@@ -770,7 +770,6 @@ public Action Command_Restart(int client, int args)
 	}
 
 	g_bClientRestarting[client] = false;
-	g_bNoclipped[client] = false;
 	teleportClient(client, 0, 1, true);
 	return Plugin_Handled;
 }

@@ -125,7 +125,7 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 		return;
 	}
 
-	if (!g_bNoclip[client]) {
+	if (!g_bNoClip[client]) {
 		g_bNoclipped[client] = false;
 	}
 
