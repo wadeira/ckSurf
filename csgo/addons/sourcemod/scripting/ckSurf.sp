@@ -35,8 +35,8 @@
 #pragma semicolon 1
 
 // Plugin info
-#define VERSION "1.20"
-#define PLUGIN_VERSION 119
+#define VERSION "1.22"
+#define PLUGIN_VERSION 122
 
 // Database definitions
 #define MYSQL 0
@@ -102,7 +102,7 @@
 
 // Zone definitions
 #define ZONE_MODEL "models/props/de_train/barrel.mdl"
-#define ZONEAMOUNT 9		// The amount of different type of zones	-	Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
+#define ZONEAMOUNT 10		// The amount of different type of zones	-	Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0), TeleToStage
 #define MAXZONEGROUPS 11	// Maximum amount of zonegroups in a map
 #define MAXZONES 128		// Maximum amount of zones in a map
 
@@ -204,17 +204,18 @@ enum SaveLoc
 	Float:slRunTime
 }
 
-enum StageType
+enum ZoneType
 {
-	ST_Stop = 0,
-	ST_Start = 1,
-	ST_End = 2,
-	ST_Stage = 3,
-	ST_Checkpoint = 4,
-	ST_Speed = 5,
-	ST_TeleToStart = 6,
-	ST_Validator = 7,
-	ST_Checker = 8
+	ZT_Stop = 0,
+	ZT_Start = 1,
+	ZT_End = 2,
+	ZT_Stage = 3,
+	ZT_Checkpoint = 4,
+	ZT_Speed = 5,
+	ZT_TeleToStart = 6,
+	ZT_Validator = 7,
+	ZT_Checker = 8,
+	ZT_TeleToStage = 9
 }
 
 enum StageRecord
@@ -372,7 +373,7 @@ int beamColorT[] =  { 255, 0, 0, 255 };							// Zone team colors TODO: remove
 int beamColorCT[] =  { 0, 0, 255, 255 };
 int beamColorN[] =  { 255, 255, 0, 255 };
 int beamColorM[] =  { 0, 255, 0, 255 };
-char g_szZoneDefaultNames[ZONEAMOUNT][128] =  { "Stop", "Start", "End", "Stage", "Checkpoint", "SpeedStart", "TeleToStart", "Validator", "Checker" }; // Default zone names
+char g_szZoneDefaultNames[ZONEAMOUNT][128] =  { "Stop", "Start", "End", "Stage", "Checkpoint", "SpeedStart", "TeleToStart", "Validator", "Checker", "TeleToStage" }; // Default zone names
 int g_BeamSprite;												// Zone sprites
 int g_HaloSprite;
 
@@ -395,6 +396,7 @@ Handle g_MapFinishForward;
 Handle g_BonusFinishForward;
 Handle g_PracticeFinishForward;
 Handle g_StageFinishedForward;
+Handle g_OnTimerStartedForward;
 
 /*----------  CVars  ----------*/
 // Zones
@@ -471,6 +473,7 @@ ConVar g_hDoubleRestartCommand;									// Double !r restart
 ConVar g_hStartPreSpeed = null; 								// Start zone speed cap
 ConVar g_hSpeedPreSpeed = null; 								// Speed Start zone speed cap
 ConVar g_hBonusPreSpeed = null; 								// Bonus start zone speed cap
+ConVar g_hStagePreSpeed = null;									// Maximum speed allowed to start stage runs
 ConVar g_hSoundEnabled = null; 									// Enable timer start sound
 ConVar g_hSoundPath = null;										// Define start sound
 //char sSoundPath[64];
@@ -482,6 +485,7 @@ float g_fLastChatMessage[MAXPLAYERS + 1]; 						// Last message time
 int g_messages[MAXPLAYERS + 1]; 								// Spam message count
 ConVar g_henableChatProcessing = null; 							// Is chat processing enabled
 ConVar g_hMultiServerMapcycle = null;							// Use multi server mapcycle
+ConVar g_hFreeVipAtRank	= null;									// Give free VIP access at a certain rank
 
 /*----------  SQL Variables  ----------*/
 Handle g_hDb = null; 											// SQL driver
@@ -501,6 +505,7 @@ float g_flastClientDecoy[MAXPLAYERS + 1];						// Throttle !decoy command
 float g_fLastCommandBack[MAXPLAYERS + 1];						// Throttle !back to prevent desync on record bots
 bool g_insertingInformation; 									// Used to check if a admin is inserting zone or maptier information, don't allow many at the same time
 bool g_bNoClip[MAXPLAYERS + 1]; 								// Client is noclipping
+bool g_bNoclipped[MAXPLAYERS + 1];
 
 /*----------  User Options  ----------*/
 // org variables track the original setting status, on disconnect, check if changed, if so, update new settings to database
@@ -746,8 +751,13 @@ int g_CurrentReplay = -1;
 int g_ReplayRequester;
 char g_sReplayRequester[MAX_NAME_LENGTH];
 float g_fLastReplayRequested[MAXPLAYERS+1];
+bool g_bConfirmedReplayRestart[MAXPLAYERS+1];
 
 
+/*--------- Custom chat tags -----------*/
+bool g_bHasChatTag[MAXPLAYERS + 1];
+char g_cChatTag[MAXPLAYERS + 1][64];
+char g_cCustomName[MAXPLAYERS + 1][64];
 
 
 
@@ -1665,6 +1675,7 @@ public void OnPluginStart()
 	g_hStartPreSpeed = CreateConVar("ck_pre_start_speed", "320.0", "The maximum prespeed for start zones. 0.0 = No cap", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
 	g_hSpeedPreSpeed = CreateConVar("ck_pre_speed_speed", "3000.0", "The maximum prespeed for speed start zones. 0.0 = No cap", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
 	g_hBonusPreSpeed = CreateConVar("ck_pre_bonus_speed", "320.0", "The maximum prespeed for bonus start zones. 0.0 = No cap", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
+	g_hStagePreSpeed = CreateConVar("ck_pre_stage_speed", "425.0", "The maximum prespeed for stage start zones.", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
 	g_hSpawnToStartZone = CreateConVar("ck_spawn_to_start_zone", "1.0", "1 = Automatically spawn to the start zone when the client joins the team.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSoundEnabled = CreateConVar("ck_startzone_sound_enabled", "1.0", "Enable the sound after leaving the start zone.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSoundPath = CreateConVar("ck_startzone_sound_path", "buttons\\button3.wav", "The path to the sound file that plays after the client leaves the start zone..", FCVAR_NOTIFY);
@@ -1684,6 +1695,7 @@ public void OnPluginStart()
 	g_hReplaceReplayTime = 	CreateConVar("ck_replay_replace_faster", "1", "(1 / 0) Replace record bots if a players time is faster than the bot, even if the time is not a server record.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hAllowVipMute = CreateConVar("ck_vip_mute", "1", "(1 / 0) Allows VIP's to mute players", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTeleToStartWhenSettingsLoaded = CreateConVar("ck_teleportclientstostart", "1", "(1 / 0) Teleport players automatically back to the start zone, when their settings have been loaded.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hFreeVipAtRank = CreateConVar("ck_freevipatrank", "0", "Gives free VIP Access to players that achieve a certain rank", FCVAR_NOTIFY, true, 0.0, false, 0.0);
 
 	g_hRecordBotTrail = CreateConVar("ck_record_bot_trail", "1", "(1 / 0) Enables a trail on the record bot.", FCVAR_NOTIFY);
 	HookConVarChange(g_hRecordBotTrail, OnSettingChanged);
@@ -1959,6 +1971,10 @@ public void OnPluginStart()
 	RegAdminCmd("sm_addspawn", Admin_insertSpawnLocation, g_AdminMenuFlag, "[Surf Timer] Changes the position !r takes players to");
 	RegAdminCmd("sm_delspawn", Admin_deleteSpawnLocation, g_AdminMenuFlag, "[Surf Timer] Removes custom !r position");
 	RegAdminCmd("sm_clearassists", Admin_ClearAssists, g_AdminMenuFlag, "[Surf Timer] Clears assist points (map progress) from all players");
+	RegAdminCmd("sm_rct", Admin_ReloadChatTags, g_AdminMenuFlag, "[Surf Timer] Reloads custom chat tags for given player");
+
+	RegAdminCmd("sm_settag", Admin_SetTag, g_AdminMenuFlag, "[Surf Timer] Sets a custom tag to players");
+	RegAdminCmd("sm_setname", Admin_SetName, g_AdminMenuFlag, "[Surf Timer] Sets a custom player name");
 
 
 
@@ -2044,6 +2060,7 @@ public void OnPluginStart()
 	g_BonusFinishForward = CreateGlobalForward("ckSurf_OnBonusFinished", ET_Event, Param_Cell, Param_Float, Param_String, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
 	g_PracticeFinishForward = CreateGlobalForward("ckSurf_OnPracticeFinished", ET_Event, Param_Cell, Param_Float, Param_String);
 	g_StageFinishedForward = CreateGlobalForward("ckSurf_OnStageFinished", ET_Event, Param_Cell, Param_Float, Param_String, Param_Cell, Param_Cell);
+	g_OnTimerStartedForward = CreateGlobalForward("ckSurf_OnTimerStarted", ET_Event, Param_Cell, Param_Cell);
 
 	if (g_bLateLoaded)
 	{

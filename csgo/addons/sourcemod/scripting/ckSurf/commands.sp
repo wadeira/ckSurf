@@ -12,7 +12,7 @@ public Action Command_Vip(int client, int args)
 	if (!IsValidClient(client))
 		return Plugin_Handled;
 
-	if (!g_bflagTitles[client][0])
+	if (!g_bflagTitles[client][0] && g_hFreeVipAtRank.IntValue < g_PlayerRank[client])
 	{
 		PrintToChat(client, "[%cSurf Timer%c] This command requires the VIP title.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
@@ -92,7 +92,7 @@ public Action Command_MutePlayer (int client, int args)
 	}
 
 
-	if (!g_bflagTitles[client][0])
+	if (!g_bflagTitles[client][0] && g_hFreeVipAtRank.IntValue < g_PlayerRank[client])
 	{
 		ReplyToCommand(client, "[%cSurf Timer%c] This command requires the VIP title.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
@@ -262,7 +262,7 @@ public Action Command_VoteExtend(int client, int args)
 	if(!IsValidClient(client))
 		return Plugin_Handled;
 
-	if (!g_bflagTitles[client][0])
+	if (!g_bflagTitles[client][0] && g_hFreeVipAtRank.IntValue < g_PlayerRank[client])
 	{
 		ReplyToCommand(client, "[Surf Timer] This command requires the VIP title.");
 		return Plugin_Handled;
@@ -770,7 +770,7 @@ public Action Command_Restart(int client, int args)
 	}
 
 	g_bClientRestarting[client] = false;
-
+	g_bNoclipped[client] = false;
 	teleportClient(client, 0, 1, true);
 	return Plugin_Handled;
 }
@@ -2272,6 +2272,7 @@ public void Action_NoClip(int client)
 				SetEntityRenderMode(client, RENDER_NONE);
 				SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 				g_bNoClip[client] = true;
+				g_bNoclipped[client] = true;
 			}
 		}
 	}
@@ -2915,6 +2916,17 @@ public Action Command_Replay(int client, int args)
 			return Plugin_Handled;
 		}
 	}
+	else if (g_bIsPlayingReplay && !g_bConfirmedReplayRestart[client])
+	{
+		Menu menu_confirm = CreateMenu(ReplayMenu_Confirm_Handler);
+
+		menu_confirm.SetTitle("The replay bot is currently being in use");
+		menu_confirm.AddItem("restart", "Change replay");
+		menu_confirm.AddItem("replay", "Spectate");
+
+		menu_confirm.Display(client, 60);
+		return Plugin_Handled;
+	}
 
 
 	Menu menu = CreateMenu(ReplayMenu_Handler);
@@ -2954,9 +2966,30 @@ public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int ite
 	ChangeClientTeam(client, 1);
 	SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_RecordBot);
 	SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+	g_bConfirmedReplayRestart[client] = false;
 
 	return 0;
 }
+
+
+public int ReplayMenu_Confirm_Handler(Menu menu, MenuAction action, int client, int item)
+{
+	 if (action != MenuAction_Select) return 0;
+
+	 if (item == 0)
+	 {
+	 	g_bConfirmedReplayRestart[client] = true;
+	 	Command_Replay(client, 0);
+	 } 
+	 else if (item == 1)
+	 {
+	 	SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_RecordBot);
+		SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+	 }
+
+	 return 0;
+}
+
 
 public Action Command_Repeat(int client, int args) {
 	if (g_RepeatStage[client] != -1) {

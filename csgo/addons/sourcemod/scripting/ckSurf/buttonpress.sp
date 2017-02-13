@@ -42,6 +42,22 @@ public void CL_OnStartTimerPress(int client)
 
 	if (!g_bSpectate[client] && !g_bNoClip[client] && ((GetGameTime() - g_fLastTimeNoClipUsed[client]) > 2.0))
 	{
+
+		Action result;
+		Call_StartForward(g_OnTimerStartedForward);
+		Call_PushCell(client);
+
+		if (g_iClientInZone[client][2] > 0)
+			Call_PushCell(RT_Bonus);
+		else
+			Call_PushCell(RT_Map);
+
+		Call_Finish(result);
+
+		if (result == Plugin_Handled)
+			return;
+
+
 		if (g_bActivateCheckpointsOnStart[client])
 			g_bCheckpointsEnabled[client] = true;
 
@@ -535,7 +551,7 @@ public void StartStageTimer(int client)
 	float vPlayerVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
 
-	float speedCap = GetConVarFloat(g_hStartPreSpeed);
+	float speedCap = GetConVarFloat(g_hStagePreSpeed);
 
 	if (g_fLastSpeed[client] > speedCap)
 	{
@@ -548,6 +564,16 @@ public void StartStageTimer(int client)
 		PrintToChat(client, "[%cSurf Timer%c] %cPrehopping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
 		return;
 	}
+
+	Action result;
+	Call_StartForward(g_OnTimerStartedForward);
+	Call_PushCell(client);
+	Call_PushCell(RT_Stage);
+
+	Call_Finish(result);
+
+	if (result == Plugin_Handled)
+		return;
 
 	g_bStageTimerRunning[client] = true;
 	g_fStageStartTime[client] = GetGameTime();

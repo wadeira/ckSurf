@@ -125,6 +125,10 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 		return;
 	}
 
+	if (!g_bNoclip[client]) {
+		g_bNoclipped[client] = false;
+	}
+
 	if (g_bPracticeMode[client])
 		Command_normalMode(client, 1);
 
@@ -1605,6 +1609,13 @@ public void SetClientDefaults(int client)
 
 	for (int i = 0; i < CPLIMIT; i++)
 		g_StagePlayerRank[client][i] = 9999999;
+
+	g_bHasChatTag[client] = false;
+	Format(g_cChatTag[client], sizeof(g_cChatTag[]), "");
+	Format(g_cCustomName[client], sizeof(g_cCustomName[]), "");
+
+	g_fLastReplayRequested[client] = 0.0;
+	g_bConfirmedReplayRestart[client] = false;
 }
 
 public void clearPlayerCheckPoints(int client)
@@ -1869,7 +1880,7 @@ stock void MapFinishedMsgs(int client, int rankThisRun = 0)
 		Call_PushString(g_szFinalTime[client]);
 		Call_PushCell(g_MapRank[client]);
 		Call_PushCell(count);
-		Call_PushCell(g_bMapPBRecord[client]);
+		Call_PushCell(g_bMapPBRecord[client] || g_bMapFirstRecord[client]);
 
 		/* Finish the call, get the result */
 		Call_Finish();
@@ -1982,7 +1993,7 @@ stock void PrintChatBonus (int client, int zGroup, int rank = 0)
 	Call_PushCell(rank);
 	Call_PushCell(g_iBonusCount[zGroup]);
 	Call_PushCell(zGroup);
-	Call_PushCell(g_bBonusPBRecord[client]);
+	Call_PushCell(g_bBonusPBRecord[client] || g_bBonusFirstRecord[client]);
 
 	/* Finish the call, get the result */
 	Call_Finish();

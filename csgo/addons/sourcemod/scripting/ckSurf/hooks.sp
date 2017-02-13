@@ -272,6 +272,17 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		if (GetConVarBool(g_hPointSystem) && GetConVarBool(g_hColoredNames))
 			setNameColor(szName, g_PlayerChatRank[client], 64);
 
+		if (g_bHasChatTag[client])
+		{
+			if (strlen(g_cChatTag[client]) < 1)
+				CPrintToChatAllEx(client, "%s %s{default}: %s", g_pr_chat_coloredrank[client], g_cCustomName[client], sText);
+			else
+				CPrintToChatAllEx(client, "%s %s{default}: %s", g_cChatTag[client], g_cCustomName[client], sText);
+
+			return Plugin_Handled;
+		}
+
+
 		if (GetClientTeam(client) == 1)
 		{
 			PrintSpecMessageAll(client);

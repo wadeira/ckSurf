@@ -161,12 +161,12 @@ public void StartTouch(int client, int action[3])
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
 
-		if (action[0] == view_as<int>(ST_Stop)) // Stop Zone
+		if (action[0] == view_as<int>(ZT_Stop)) // Stop Zone
 		{
 			Client_Stop(client, 1);
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
 		}
-		else if (action[0] == view_as<int>(ST_Start) || action[0] == view_as<int>(ST_Speed)) // Start Zone or Speed Start
+		else if (action[0] == view_as<int>(ZT_Start) || action[0] == view_as<int>(ZT_Speed)) // Start Zone or Speed Start
 		{
 			if (g_Stage[g_iClientInZone[client][2]][client] == 1 && g_bPracticeMode[client]) // If practice mode is on
 				Command_goToPlayerCheckpoint(client, 1);
@@ -196,7 +196,7 @@ public void StartTouch(int client, int action[3])
 				}
 			}
 		}
-		else if (action[0] == view_as<int>(ST_End)) // End Zone
+		else if (action[0] == view_as<int>(ZT_End)) // End Zone
 		{
 			if (g_iClientInZone[client][2] == action[2])
 			{ //  Cant end bonus timer in this zone && in the having the same timer on
@@ -223,7 +223,7 @@ public void StartTouch(int client, int action[3])
 				teleportClient(client, 0, g_RepeatStage[client], true);
 
 		}
-		else if (action[0] == view_as<int>(ST_Stage)) // Stage Zone
+		else if (action[0] == view_as<int>(ZT_Stage)) // Stage Zone
 		{
 			if (g_bPracticeMode[client]) // If practice mode is on
 			{
@@ -262,7 +262,7 @@ public void StartTouch(int client, int action[3])
 			if (g_RepeatStage[client] != -1)
 				teleportClient(client, 0, g_RepeatStage[client], true);
 		}
-		else if (action[0] == view_as<int>(ST_Checkpoint)) // Checkpoint Zone
+		else if (action[0] == view_as<int>(ZT_Checkpoint)) // Checkpoint Zone
 		{
 			if (action[1] != lastCheckpoint[g_iClientInZone[client][2]][client] && g_iClientInZone[client][2] == action[2])
 			{
@@ -271,18 +271,25 @@ public void StartTouch(int client, int action[3])
 				lastCheckpoint[g_iClientInZone[client][2]][client] = action[1];
 			}
 		}
-		else if (action[0] == view_as<int>(ST_TeleToStart)) // TeleToStart Zone
+		else if (action[0] == view_as<int>(ZT_TeleToStart)) // TeleToStart Zone
 		{
 			teleportClient(client, g_iClientInZone[client][2], 1, true);
 		}
-		else if (action[0] == view_as<int>(ST_Validator)) // Validator Zone
+		else if (action[0] == view_as<int>(ZT_Validator)) // Validator Zone
 		{
 			g_bValidRun[client] = true;
 		}
-		else if (action[0] == view_as<int>(ST_Checker)) // Checker Zone
+		else if (action[0] == view_as<int>(ZT_Checker)) // Checker Zone
 		{
 			if (!g_bValidRun[client])
 				Command_Teleport(client, 1);
+		}
+		else if (action[0] == view_as<int>(ZT_TeleToStage))
+		{
+			if (g_Stage[g_iClientInZone[client][2]][client] == 1)
+				teleportClient(client, g_iClientInZone[client][2], 1, false);
+			else
+				teleportClient(client, g_iClientInZone[client][2], g_Stage[g_iClientInZone[client][2]][client], false);
 		}
 	}
 }
@@ -292,7 +299,7 @@ public void EndTouch(int client, int action[4])
 	if (IsValidClient(client))
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		if (action[0] == view_as<int>(ST_Start) || action[0] == view_as<int>(ST_Speed))
+		if (action[0] == view_as<int>(ZT_Start) || action[0] == view_as<int>(ZT_Speed))
 		{
 			if (g_bPracticeMode[client] && !g_bTimeractivated[client]) // If on practice mode, but timer isn't on - start timer
 			{
@@ -308,9 +315,9 @@ public void EndTouch(int client, int action[4])
 					float pauseDelay = GetGameTime() - g_fLastTimePauseUsed[client];
 
 					// NoClip check
-					if (g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
+					if (g_bNoclipped[client] || g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
 					{
-						PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, please type !r first.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
 					else if (pauseDelay < 5.0)
@@ -338,7 +345,7 @@ public void EndTouch(int client, int action[4])
 			GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
 			PrintToChat(client, "%f", CurVelVec[2]);*/
 		}
-		else if (action[0] == view_as<int>(ST_Stage))
+		else if (action[0] == view_as<int>(ZT_Stage))
 		{
 			// Get lowest cornor of the zone
 			float vLowestCorner[3];
@@ -1388,6 +1395,7 @@ public void SelectMiscZoneType(int client)
 	SelectZoneMenu.AddItem("7", "Validator");
 	SelectZoneMenu.AddItem("8", "Checker");
 	SelectZoneMenu.AddItem("0", "Stop");
+	SelectZoneMenu.AddItem("9", "TeleToStage");
 
 	SelectZoneMenu.ExitButton = true;
 	SelectZoneMenu.Display(client, MENU_TIME_FOREVER);

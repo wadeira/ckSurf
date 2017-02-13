@@ -34,12 +34,17 @@ char g_cMapName[128];
 
 ConVar g_cvWebHookUrl;
 ConVar g_cvClientName;
-
+ConVar g_cvAnnounceMap;
+ConVar g_cvAnnounceBonus;
+ConVar g_cvAnnounceStage;
 
 public void OnPluginStart() {
 
 	g_cvWebHookUrl = CreateConVar("st_discord_webhook", "", "Key value of webhook in discord.cfg", FCVAR_PROTECTED);
 	g_cvClientName = CreateConVar("st_discord_name", "Surf Timer", "Name of the bot");
+	g_cvAnnounceMap = CreateConVar("st_discord_announce_map", "1", "Announce map records");
+	g_cvAnnounceBonus = CreateConVar("st_discord_announce_bonus", "1", "Announce bonus records");
+	g_cvAnnounceStage = CreateConVar("st_discord_announce_stage", "0", "Announce stage records");
 
 	AutoExecConfig(true, "surftimer_discord");
 }
@@ -55,7 +60,7 @@ public void OnMapStart() {
 }
 
 public Action ckSurf_OnMapFinished(int client, float ftime, char stime[54], int rank, int total, bool improved) {
-	if (!improved || rank > 1)
+	if (!g_cvAnnounceMap.BoolValue || !improved || rank > 1)
 		return Plugin_Continue;
 
 	char player_name[(MAX_NAME_LENGTH + 1) * 2];	// Needs to be doubled since we have to escape it
@@ -81,7 +86,7 @@ public Action ckSurf_OnMapFinished(int client, float ftime, char stime[54], int 
 
 
 public Action ckSurf_OnBonusFinished(int client, float ftime, char stime[54], int rank, int total, int bonusid, bool improved) {
-	if ((!improved && total > 1)  || rank > 1)
+	if (!g_cvAnnounceBonus.BoolValue || !improved || rank > 1)
 		return Plugin_Continue;
 
 	char player_name[(MAX_NAME_LENGTH + 1) * 2];	// Needs to be doubled since we have to escape it
@@ -110,9 +115,9 @@ public Action ckSurf_OnBonusFinished(int client, float ftime, char stime[54], in
 	return Plugin_Continue;
 }
 
-public Action ckSurf_OnStageFinished(int client, float fRuntime, char[] sRuntime, int stage, int rank) {
-	if (rank > 1)
-		return Plugin_Continue;
+public void ckSurf_OnStageFinished(int client, float fRuntime, char[] sRuntime, int stage, int rank) {
+	if (!g_cvAnnounceStage.BoolValue || rank > 1)
+		return;
 
 	char player_name[(MAX_NAME_LENGTH + 1) * 2];	// Needs to be doubled since we have to escape it
 	GetClientName(client, player_name, sizeof(player_name));
@@ -136,5 +141,5 @@ public Action ckSurf_OnStageFinished(int client, float fRuntime, char[] sRuntime
 	g_cvWebHookUrl.GetString(webhook_url, sizeof(webhook_url));
 
 	Discord_SendMessage(webhook_url, msg);
-	return Plugin_Continue;
+	return;
 }
