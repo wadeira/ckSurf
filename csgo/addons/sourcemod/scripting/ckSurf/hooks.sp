@@ -731,6 +731,7 @@ public MRESReturn DHooks_OnTeleport(int client, Handle hParams)
 		return MRES_Ignored;
 	}
 
+	g_vLastGroundTouch[client][2] = -99999.0;
 
 	// This one is currently mimicing something.
 	if (g_hBotMimicsRecord[client] != null)
