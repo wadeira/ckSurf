@@ -5341,6 +5341,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		{
 			g_StageRecords[i][srRunTime] = 9999999.0;
 			g_StageRecords[i][srLoaded] = false;
+			g_StageRecords[i][srCompletions] = 0;
 		}
 
 		// Start loading stages
