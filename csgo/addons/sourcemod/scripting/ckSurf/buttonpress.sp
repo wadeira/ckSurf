@@ -641,11 +641,11 @@ public void EndStageTimer(int client)
 	else
 		Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
 
-	// Check if the player beated the record
+	// Check if the player beaten the record
 	if (g_StageRecords[stage][srRunTime] > runtime)
 	{
 		// Send message to all players
-		PrintToChatAll("[%cSurf Timer%c] %c%N %chas beated the %cstage %d %crecord!", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW);
+		PrintToChatAll("[%cSurf Timer%c] %c%N %chas beaten the %cstage %d %crecord!", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW);
 		PrintToChatAll("[%cSurf Timer%c] %c%N %chas finished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
 
 		// Play sound to everyone
@@ -671,7 +671,7 @@ public void EndStageTimer(int client)
 	}
 	else if (g_fStagePlayerRecord[client][stage] > runtime)
 	{
-		// Player beated his own record
+		// Player beaten his own record
 
 		PrintToChat(client, "[%cSurf Timer%c] %cFinished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
 
