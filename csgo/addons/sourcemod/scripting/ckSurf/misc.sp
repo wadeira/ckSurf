@@ -3197,8 +3197,8 @@ public void LeftHudAlive(int client)
 		Format(buffer, sizeof(buffer), "%sStage: %d/%d\n", buffer, stage, (g_mapZonesTypeCount[zgroup][3] + 1));
 
 		// player rank
-		//if (g_StagePlayerRank[client][stage] > 0)
-			//Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
+		if (g_StagePlayerRank[client][stage] > 0)
+			Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
 		//else
 		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage][srCompletions]);
 
