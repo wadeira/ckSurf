@@ -668,6 +668,8 @@ public void EndStageTimer(int client)
 
 		g_fStagePlayerRecord[client][stage] = runtime;
 
+		Stage_SaveRecording(client, stage, runtime_str);
+
 	}
 	else if (g_fStagePlayerRecord[client][stage] > runtime)
 	{

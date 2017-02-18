@@ -2247,6 +2247,9 @@ public Action Client_Stop(int client, int args)
 		g_bStageTimerRunning[client] = false;
 		g_fStageStartTime[client] = -1.0;
 	}
+
+	StopRecording(client);
+
 	return Plugin_Handled;
 }
 
@@ -2936,13 +2939,31 @@ public Action Command_Replay(int client, int args)
 
 	BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
 
-	menu.AddItem("map", "Map", !FileExists(sPath));
+	menu.AddItem("0", "Map", !FileExists(sPath));
 
 	for (int i = 1; i < g_mapZoneGroupCount; i++)
 	{
 		// Check if file exists
 		BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_bonus_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
-		menu.AddItem(g_szZoneGroupName[i], g_szZoneGroupName[i], !FileExists(sPath));
+
+		char bri[4];
+		IntToString(i, bri, sizeof(bri));
+		menu.AddItem(bri, g_szZoneGroupName[i], !FileExists(sPath));
+	}
+
+
+	for (int i = 1; i <= (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1); i++) {
+
+		// Check if file exists
+		BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+
+		char sri[4], name[16];
+		IntToString((i * -1), sri, sizeof(sri));
+
+		Format(name, sizeof(name), "Stage %d", i);
+
+		// Check if file exists
+		menu.AddItem(sri, name, !FileExists(sPath));
 	}
 
 	menu.Display(client, 60);
@@ -2958,9 +2979,13 @@ public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int ite
 	g_ReplayRequester = client;
 	Format(g_sReplayRequester, sizeof(g_sReplayRequester), "%N", client);
 
+	char id[4];
+
+	tMenu.GetItem(item, id, sizeof(id));
+
 	g_CurrentReplay = item;
 
-	PlayRecord(g_RecordBot, item);
+	PlayRecord(g_RecordBot, id);
 
 	ChangeClientTeam(client, 1);
 	SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_RecordBot);

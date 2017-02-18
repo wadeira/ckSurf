@@ -192,6 +192,9 @@ public void StartTouch(int client, int action[3])
 						if (g_hRecording[client] != null)
 							StopRecording(client);
 						StartRecording(client);
+
+						if (g_bhasStages)
+							Stage_StartRecording(client);
 					}
 				}
 			}
@@ -256,6 +259,7 @@ public void StartTouch(int client, int action[3])
 					g_bStageTimerRunning[client] = false;
 				}
 
+				Stage_StartRecording(client);
 			}
 
 			// Repeat stage

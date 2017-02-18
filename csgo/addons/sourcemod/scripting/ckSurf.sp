@@ -3,6 +3,8 @@
 *					By Elzi 			      =
 =============================================*/
 
+#define DEBUG
+
 /*=============================================
 =            		Includes		          =
 =============================================*/
@@ -752,6 +754,7 @@ int g_ReplayRequester;
 char g_sReplayRequester[MAX_NAME_LENGTH];
 float g_fLastReplayRequested[MAXPLAYERS+1];
 bool g_bConfirmedReplayRestart[MAXPLAYERS+1];
+int g_ReplayCurrentStage = 0;
 
 
 /*--------- Custom chat tags -----------*/
@@ -759,6 +762,12 @@ bool g_bHasChatTag[MAXPLAYERS + 1];
 char g_cChatTag[MAXPLAYERS + 1][64];
 char g_cCustomName[MAXPLAYERS + 1][64];
 
+
+/*--------- Stage replays --------------*/
+int g_StageRecStartFrame[MAXPLAYERS+1];	// Number of frames where the replay started being recorded
+int g_StageRecStartAT[MAXPLAYERS+1];	// Ammount of additional teleport when the replay started being recorded
+float g_fStageInitialPosition[MAXPLAYERS + 1][3]; 					// Replay start position
+float g_fStageInitialAngles[MAXPLAYERS + 1][3]; 						// Replay start angle
 
 
 /*=========================================

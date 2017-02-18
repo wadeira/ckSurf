@@ -2725,6 +2725,8 @@ public void SpecListMenuDead(int client) // What Spectators see
 							{
 								if (g_CurrentReplay == 0)
 									Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
+								else if (g_ReplayCurrentStage > 0)
+									Format(g_szPlayerPanelText[client], 512, "[Stage Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
 								else if (g_CurrentReplay > 0)
 									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTime, szTick, count, szStage);
 							}
@@ -2736,8 +2738,10 @@ public void SpecListMenuDead(int client) // What Spectators see
 						{
 							if (g_CurrentReplay == 0)
 								Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTick, count, szStage);
+							else if (g_ReplayCurrentStage > 0)
+								Format(g_szPlayerPanelText[client], 512, "[Stage Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);	
 							else if (g_CurrentReplay > 0)
-									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: Bonus\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTick, count);
+								Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: Bonus\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTick, count);
 						}
 					}
 				}
@@ -2758,10 +2762,12 @@ public void SpecListMenuDead(int client) // What Spectators see
 					else
 					{
 						if (g_CurrentReplay == 0)
-							Format(g_szPlayerPanelText[client], 512, "Record replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: %s\n", g_szReplayName, szTick, count, sSpecs, szStage);
-						else
-							if (g_CurrentReplay > 0)
-							Format(g_szPlayerPanelText[client], 512, "Bonus replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: Bonus\n", g_szBonusName, szTick, count, sSpecs);
+							Format(g_szPlayerPanelText[client], 512, "Record replay\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: %s\n", g_szReplayName, szTick, count, sSpecs, szStage);
+						else if (g_ReplayCurrentStage > 0)
+							Format(g_szPlayerPanelText[client], 512, "Stage Replay\n\nTickrate: %s\nSpecs (%i):\n%s\nStage: %s\n", szTick, count, sSpecs, szStage);
+						else if (g_CurrentReplay > 0)
+							Format(g_szPlayerPanelText[client], 512, "Bonus replay\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: Bonus\n", g_szBonusName, szTick, count, sSpecs);
+
 
 					}
 				}
@@ -2772,15 +2778,23 @@ public void SpecListMenuDead(int client) // What Spectators see
 					else
 					{
 						if (g_CurrentReplay == 0)
-							Format(g_szPlayerPanelText[client], 512, "Record replay of\n%s\n \nTickrate: %s\n\nStage: %s\n", g_szReplayName, szTick, szStage);
-						else
-							if (g_CurrentReplay > 0)
-							Format(g_szPlayerPanelText[client], 512, "Bonus replay of\n%s\n \nTickrate: %s\n\nStage: Bonus\n", g_szBonusName, szTick, szStage);
+							Format(g_szPlayerPanelText[client], 512, "Record replay\n%s\n \nTickrate: %s\n\nStage: %s\n", g_szReplayName, szTick, szStage);
+						else if (g_ReplayCurrentStage > 0)
+							Format(g_szPlayerPanelText[client], 512, "Stage Replay\nTickrate: %s\nStage: %s\n", szTick, szStage);
+						else if (g_CurrentReplay > 0)
+							Format(g_szPlayerPanelText[client], 512, "Bonus replay\n%s\n \nTickrate: %s\n\nStage: Bonus\n", g_szBonusName, szTick, szStage);
 
 					}
 				}
+
+					
+				if (ObservedUser == g_RecordBot && !g_bIsPlayingReplay)
+				{
+					Format(g_szPlayerPanelText[client], 512, "Press E to select a replay");
+				}
 				SpecList(client);
 			}
+
 		}
 	}
 	else
@@ -3197,7 +3211,7 @@ public void LeftHudAlive(int client)
 		Format(buffer, sizeof(buffer), "%sStage: %d/%d\n", buffer, stage, (g_mapZonesTypeCount[zgroup][3] + 1));
 
 		// player rank
-		if (g_StagePlayerRank[client][stage] > 0)
+		if (g_StagePlayerRank[client][stage] != 9999999)
 			Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
 		//else
 		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage][srCompletions]);
