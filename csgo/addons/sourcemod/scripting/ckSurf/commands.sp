@@ -2951,19 +2951,20 @@ public Action Command_Replay(int client, int args)
 		menu.AddItem(bri, g_szZoneGroupName[i], !FileExists(sPath));
 	}
 
+	if (g_bhasStages) {
+		for (int i = 1; i <= (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1); i++) {
 
-	for (int i = 1; i <= (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1); i++) {
+			// Check if file exists
+			BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
 
-		// Check if file exists
-		BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+			char sri[4], name[16];
+			IntToString((i * -1), sri, sizeof(sri));
 
-		char sri[4], name[16];
-		IntToString((i * -1), sri, sizeof(sri));
+			Format(name, sizeof(name), "Stage %d", i);
 
-		Format(name, sizeof(name), "Stage %d", i);
-
-		// Check if file exists
-		menu.AddItem(sri, name, !FileExists(sPath));
+			// Check if file exists
+			menu.AddItem(sri, name, !FileExists(sPath));
+		}
 	}
 
 	menu.Display(client, 60);
