@@ -2941,31 +2941,13 @@ public Action Command_Replay(int client, int args)
 
 	menu.AddItem("0", "Map", !FileExists(sPath));
 
-	for (int i = 1; i < g_mapZoneGroupCount; i++)
-	{
-		// Check if file exists
-		BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_bonus_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+	if (g_bhasStages)
+		menu.AddItem("stages", "Stages");
 
-		char bri[4];
-		IntToString(i, bri, sizeof(bri));
-		menu.AddItem(bri, g_szZoneGroupName[i], !FileExists(sPath));
-	}
+	if (g_bhasBonus)
+		menu.AddItem("bonus", "Bonus");
 
-	if (g_bhasStages) {
-		for (int i = 1; i <= (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1); i++) {
-
-			// Check if file exists
-			BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
-
-			char sri[4], name[16];
-			IntToString((i * -1), sri, sizeof(sri));
-
-			Format(name, sizeof(name), "Stage %d", i);
-
-			// Check if file exists
-			menu.AddItem(sri, name, !FileExists(sPath));
-		}
-	}
+	
 
 	menu.Display(client, 60);
 
@@ -2980,9 +2962,69 @@ public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int ite
 	g_ReplayRequester = client;
 	Format(g_sReplayRequester, sizeof(g_sReplayRequester), "%N", client);
 
-	char id[4];
+	char id[8];
 
 	tMenu.GetItem(item, id, sizeof(id));
+
+
+	if (StrEqual(id, "stages")) 
+	{
+		Menu menu = CreateMenu(ReplayMenu_Handler);
+		menu.SetTitle("[Surf Timer] Replay - Stages");
+
+		for (int i = 1; i <= (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1); i++)
+		{
+			char sPath[256];
+
+			// Check if file exists
+			BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+
+			char sri[4], name[16];
+			IntToString((i * -1), sri, sizeof(sri));
+
+			Format(name, sizeof(name), "Stage %d", i);
+
+			// Check if file exists
+			menu.AddItem(sri, name, !FileExists(sPath));
+		}
+
+		menu.AddItem("back", "Go back");
+
+		menu.Display(client, 60);
+		return 0;
+	}
+
+
+	// Go to bonus menu
+	if (StrEqual(id, "bonus"))
+	{
+		Menu menu = CreateMenu(ReplayMenu_Handler);
+		menu.SetTitle("[Surf Timer] Replay - Bonus");
+
+		for (int i = 1; i < g_mapZoneGroupCount; i++)
+		{
+			char sPath[256];
+
+			// Check if file exists
+			BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_bonus_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+
+			char bri[4];
+			IntToString(i, bri, sizeof(bri));
+			menu.AddItem(bri, g_szZoneGroupName[i], !FileExists(sPath));
+		}
+
+		menu.AddItem("back", "Go back");
+
+		menu.Display(client, 60);
+		return 0;
+	}
+
+	// Go back to main replay menu
+	if (StrEqual(id, "back"))
+	{
+		Command_Replay(client, 0);
+		return 0;
+	}
 
 	g_CurrentReplay = item;
 
