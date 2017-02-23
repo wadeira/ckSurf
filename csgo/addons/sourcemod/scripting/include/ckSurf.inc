@@ -101,7 +101,7 @@ forward Action ckSurf_OnMapFinished(int client, float fRunTime, char RunTime[54]
  * @param client     Player index.
  * @return           Plugin_Handled; to stop the player from searching.
  */
-forward Action ckSurf_OnBonusFinished(client, float fRunTime, char sRunTime[54], int rank, int total, int bonusid, bool improved);
+forward Action ckSurf_OnBonusFinished(int client, float fRunTime, char sRunTime[54], int rank, int total, int bonusid, bool improved);
 
 /**
  * Called when a player finishes a map in practice mode
@@ -109,7 +109,7 @@ forward Action ckSurf_OnBonusFinished(client, float fRunTime, char sRunTime[54],
  * @param client     Player index.
  * @return           Plugin_Handled; to stop the player from searching.
  */
- forward Action ckSurf_OnPracticeFinished(client, float fRunTime, char sRunTime[54]);
+ forward Action ckSurf_OnPracticeFinished(int client, float fRunTime, char sRunTime[54]);
 
 
  /**
@@ -135,7 +135,7 @@ forward void ckSurf_OnStageFinished(int client, float fRuntime, char[] sRuntime,
 forward Action ckSurf_OnTimerStarted(int client, RunType runtype);
 
 
-public SharedPlugin:__pl_ckSurf =
+public SharedPlugin __pl_ckSurf =
 {
 	name = "ckSurf",
 	file = "ckSurf.smx",
@@ -146,7 +146,7 @@ public SharedPlugin:__pl_ckSurf =
 	#endif
 };
 
-public __pl_ckSurf_SetNTVOptional()
+public void __pl_ckSurf_SetNTVOptional()
 {
 	MarkNativeAsOptional("ckSurf_GetTimerStatus");
 	MarkNativeAsOptional("ckSurf_StopTimer");
