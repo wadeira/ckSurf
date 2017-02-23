@@ -3026,7 +3026,9 @@ public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int ite
 		return 0;
 	}
 
-	g_CurrentReplay = item;
+
+
+	g_CurrentReplay = StringToInt(id);
 
 	PlayRecord(g_RecordBot, id);
 

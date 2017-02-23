@@ -449,6 +449,7 @@ public void LoadRecordFromFile(const char[] path, int headerInfo[FILE_HEADER_LEN
 
 	if (GetArraySize(hAdditionalTeleport) > 0)
 		SetTrieValue(g_hLoadedRecordsAdditionalTeleport, path, hAdditionalTeleport);
+
 	CloseHandle(hFile);
 
 	return;
@@ -782,6 +783,8 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 				Format(sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
 			else if (g_CurrentReplay > 0)
 				Format(sPath, sizeof(sPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, g_CurrentReplay);
+			else if (g_CurrentReplay < 0 && g_ReplayCurrentStage > 0)
+				Format(sPath, sizeof(sPath), "%s%s_stage_%i.rec", CK_REPLAY_PATH, g_szMapName, g_ReplayCurrentStage);
 
 			BuildPath(Path_SM, sPath, sizeof(sPath), "%s", sPath);
 			if (g_hLoadedRecordsAdditionalTeleport != null)
