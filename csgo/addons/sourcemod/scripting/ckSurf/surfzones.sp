@@ -213,6 +213,10 @@ public void StartTouch(int client, int action[3])
 				Client_Stop(client, 1);
 			}
 
+			// Repeat stage
+			if (g_RepeatStage[client] != -1)
+				teleportClient(client, 0, g_RepeatStage[client], true);
+
 			if (g_bPracticeMode[client]) // Go back to normal mode if checkpoint mode is on
 			{
 				Command_normalMode(client, 1);
@@ -220,11 +224,6 @@ public void StartTouch(int client, int action[3])
 			}
 			// Resetting checkpoints
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
-
-			// Repeat stage
-			if (g_RepeatStage[client] != -1)
-				teleportClient(client, 0, g_RepeatStage[client], true);
-
 		}
 		else if (action[0] == view_as<int>(ZT_Stage)) // Stage Zone
 		{

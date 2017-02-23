@@ -717,6 +717,10 @@ public Action Command_ToStage(int client, int args)
 {
 	if (!IsValidClient(client))
 		return Plugin_Handled;
+
+	if (g_RepeatStage[client])
+		Command_Repeat(client, 0);
+
 	if (args < 1)
 	{
 		// Remove chat output to reduce chat spam
@@ -731,8 +735,6 @@ public Action Command_ToStage(int client, int args)
 
 		teleportClient(client, g_iClientInZone[client][2], StageId, true);
 	}
-
-
 
 	return Plugin_Handled;
 }
