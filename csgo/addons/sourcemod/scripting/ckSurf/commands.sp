@@ -718,7 +718,7 @@ public Action Command_ToStage(int client, int args)
 	if (!IsValidClient(client))
 		return Plugin_Handled;
 
-	if (g_RepeatStage[client])
+	if (g_RepeatStage[client] != -1)
 		Command_Repeat(client, 0);
 
 	if (args < 1)
