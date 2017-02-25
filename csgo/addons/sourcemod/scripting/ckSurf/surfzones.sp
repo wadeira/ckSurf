@@ -262,7 +262,7 @@ public void StartTouch(int client, int action[3])
 			}
 
 			// Repeat stage
-			if (g_RepeatStage[client] != -1)
+			if (g_RepeatStage[client] != -1 && g_Stage[0][client] == action[1] + 1)
 				teleportClient(client, 0, g_RepeatStage[client], true);
 		}
 		else if (action[0] == view_as<int>(ZT_Checkpoint)) // Checkpoint Zone
