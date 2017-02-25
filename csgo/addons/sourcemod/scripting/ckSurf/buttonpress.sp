@@ -548,6 +548,9 @@ public void StartStageTimer(int client)
 		return;
 	}
 
+	if (g_bPracticeMode[client])
+		return;
+
 	float vPlayerVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
 

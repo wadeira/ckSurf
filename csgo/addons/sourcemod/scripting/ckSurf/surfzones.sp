@@ -203,7 +203,7 @@ public void StartTouch(int client, int action[3])
 		{
 			if (g_iClientInZone[client][2] == action[2])
 			{ //  Cant end bonus timer in this zone && in the having the same timer on
-				if (g_bStageTimerRunning[client])
+				if (g_bStageTimerRunning[client] && !g_bPracticeMode[client])
 					EndStageTimer(client);
 
 				CL_OnEndTimerPress(client);

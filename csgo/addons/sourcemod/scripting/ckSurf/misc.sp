@@ -3043,6 +3043,9 @@ public void CenterHudAlive(int client)
 	else if (g_bPause[client])
 		Format(sTime, sizeof(sTime), "Paused");
 
+	else if (g_bPracticeMode[client])
+		Format(sTime, sizeof(sTime), "Practicing");
+
 	// Display current time
 	else
 		FormatTimeFloat(client, g_fCurrentRunTime[client], 3, sTime, sizeof(sTime));
