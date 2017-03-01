@@ -1316,7 +1316,7 @@ public void LimitSpeed(int client)
 	
 	
 	// Limit speed to 280 u/s if player is prehopping
-	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[1])
+	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[1] && currentspeed > 280.0)
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, 280.0);
@@ -1328,6 +1328,7 @@ public void LimitSpeed(int client)
 	{	
 		// Apply changes to the Z speed limit
 		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+		return;
 	}
 
 	if (currentspeed > speedCap)
