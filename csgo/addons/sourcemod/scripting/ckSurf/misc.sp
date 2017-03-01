@@ -1267,7 +1267,10 @@ public void LimitSpeed(int client)
 		speedCap = GetConVarFloat(g_hBonusPreSpeed);
 	else
 		if (g_iClientInZone[client][0] == 1)
-			speedCap = GetConVarFloat(g_hStartPreSpeed);
+			if (g_bhasStages)
+				speedCap = g_fStageMaxVelocity[1];
+			else
+				speedCap = GetConVarFloat(g_hStartPreSpeed);
 		else
 			if (g_iClientInZone[client][0] == 5)
 			{
@@ -1287,10 +1290,6 @@ public void LimitSpeed(int client)
 	else
 		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointA], vLowestCorner, 3);
 
-	if (g_vLastGroundTouch[client][2] <= (vLowestCorner[2] + 25.0) && g_PlayerJumpsInStage[client] <= 1)
-		return;
-
-
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
 
 	if (CurVelVec[0] == 0.0)
@@ -1304,21 +1303,40 @@ public void LimitSpeed(int client)
 
 	// Limit the player velocity
 	bool limitZVel = false;
-	if (CurVelVec[2] < -300.0) {
+	if (CurVelVec[2] < -300.0) 
+	{
 		// Check if the player jumped from an high platform
-		if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 10)) {
+		if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 15.0)) 
+		{
 			limitZVel = true;
 			CurVelVec[2] = -300.0;
 		}
 	}
 
-	if (currentspeed > speedCap || limitZVel)
+	
+	
+	// Limit speed to 280 u/s if player is prehopping
+	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[1])
+	{
+		NormalizeVector(CurVelVec, CurVelVec);
+		ScaleVector(CurVelVec, 280.0);
+		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+		return;
+	} 
+
+	if (limitZVel)
+	{	
+		// Apply changes to the Z speed limit
+		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+	}
+
+	if (currentspeed > speedCap)
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, speedCap);
 		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
 	}
-}
+}	
 
 public void changeTrailColor(int client)
 {

@@ -738,7 +738,8 @@ bool g_bLoadingStages;
 int g_StageRecords[CPLIMIT][StageRecord];
 int g_StagePlayerRank[MAXPLAYERS+1][CPLIMIT];
 int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
-
+bool g_bStageIgnorePrehop[CPLIMIT];
+float g_fStageMaxVelocity[CPLIMIT];
 
 int g_PlayerJumpsInStage[MAXPLAYERS+1];
 bool g_bPlayerIsJumping[MAXPLAYERS+1];
@@ -1985,8 +1986,8 @@ public void OnPluginStart()
 	RegAdminCmd("sm_settag", Admin_SetTag, g_AdminMenuFlag, "[Surf Timer] Sets a custom tag to players");
 	RegAdminCmd("sm_setname", Admin_SetName, g_AdminMenuFlag, "[Surf Timer] Sets a custom player name");
 
-
-
+	RegServerCmd("sm_stagemaxvelocity", Command_StageMaxVelocity, "Sets max velocity on given stage. (Usage: sm_stagemaxvelocity <stage> <max velocity>");
+	RegServerCmd("sm_stageallowprehop", Command_StageAllowPrehop, "Toggle prehop on certain stage. (Usage: sm_stageallowprehop <stage> <1|0>)");
 
 
 	//chat command listener

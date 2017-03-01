@@ -551,18 +551,18 @@ public void StartStageTimer(int client)
 	if (g_bPracticeMode[client])
 		return;
 
+	int stage = g_Stage[0][client];
+
 	float vPlayerVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
 
-	float speedCap = GetConVarFloat(g_hStagePreSpeed);
-
-	if (g_fLastSpeed[client] > speedCap)
+	if (g_fLastSpeed[client] > g_fStageMaxVelocity[stage] && g_fStageMaxVelocity[stage] > 0)
 	{
 		PrintToChat(client, "[%cSurf Timer%c] %cMax velocity exceeded to start stage %d.", MOSSGREEN, WHITE, LIGHTRED, g_Stage[0][client]);
 		return;
 	}
 
-	if (g_PlayerJumpsInStage[client] > 1)
+	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[stage])
 	{
 		PrintToChat(client, "[%cSurf Timer%c] %cPrehopping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
 		return;

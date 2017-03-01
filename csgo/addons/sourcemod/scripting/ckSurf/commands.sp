@@ -3086,3 +3086,89 @@ public Action Command_Repeat(int client, int args) {
 	PrintToChat(client, "[%cSurf Timer%c] Repeating mode is now enabled, repeating stage %d", MOSSGREEN, WHITE, g_RepeatStage[client]);
 	return Plugin_Handled;
 }
+
+
+public Action Command_StageMaxVelocity(int args)
+{
+	if (args < 2)
+	{
+		LogError("[Surf Timer] Missing arguments. Usage sm_stagemaxvelocity <stage> <max velocity>");
+		return Plugin_Handled;
+	}
+
+	char szStage[5], szMaxVel[8];
+
+	// Get arguments value
+	GetCmdArg(1, szStage, sizeof(szStage));
+	GetCmdArg(2, szMaxVel, sizeof(szMaxVel));
+
+	int stage = StringToInt(szStage);
+	float maxvelocity = StringToFloat(szMaxVel);
+
+	// Check if the map has stages
+	if (!g_bhasStages)
+	{
+		LogError("[Surf Timer] sm_stagemaxvelocity: %s is a linear map.", g_szMapName);
+		return Plugin_Handled;
+	}
+
+	// Check if the stage is valid
+	if (stage == 0)
+	{
+		LogError("[Surf Timer] sm_stagemaxvelocity: Invalid stage (%s).", szStage);
+		return Plugin_Handled;
+	}
+	
+	// Check if the stage exists
+	if (stage > g_mapZonesTypeCount[0][3] + 1)
+	{
+		LogError("[Surf Timer] sm_stagemaxvelocity: Stage %d does not exist on map %s", stage, g_szMapName);
+		return Plugin_Handled;
+	}
+
+	g_fStageMaxVelocity[stage] = maxvelocity;
+	return Plugin_Handled;
+}
+
+
+public Action Command_StageAllowPrehop(int args)
+{
+	if (args < 2)
+	{
+		LogError("[Surf Timer] Missing arguments. Usage sm_stageallowprehop <stage> <1|0>");
+		return Plugin_Handled;
+	}
+
+	char szStage[5], szAllow[8];
+
+	// Get arguments value
+	GetCmdArg(1, szStage, sizeof(szStage));
+	GetCmdArg(2, szAllow, sizeof(szAllow));
+
+	int stage = StringToInt(szStage);
+	int allow = StringToInt(szAllow);
+
+	// Check if the map has stages
+	if (!g_bhasStages)
+	{
+		LogError("[Surf Timer] sm_stageallowprehop: %s is a linear map. ", g_szMapName, stage);
+		return Plugin_Handled;
+	}
+
+	// Check if the stage is valid
+	if (stage == 0)
+	{
+		LogError("[Surf Timer] sm_stageallowprehop: Invalid stage %s.", szStage);
+		return Plugin_Handled;
+	}
+	
+	// Check if the stage exists
+	if (stage > g_mapZonesTypeCount[0][3] + 1)
+	{
+		LogError("[Surf Timer] sm_stageallowprehop: Stage %d does not exist on map %s", stage, g_szMapName);
+		return Plugin_Handled;
+	}
+
+	g_bStageIgnorePrehop[stage] = (allow == 1);
+	return Plugin_Handled;
+}

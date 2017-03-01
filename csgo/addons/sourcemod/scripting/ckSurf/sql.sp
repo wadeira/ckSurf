@@ -5342,7 +5342,18 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			g_StageRecords[i][srRunTime] = 9999999.0;
 			g_StageRecords[i][srLoaded] = false;
 			g_StageRecords[i][srCompletions] = 0;
+
+			g_fStageMaxVelocity[i] = g_hStagePreSpeed.FloatValue;
+			g_bStageIgnorePrehop[i] = false;
 		}
+
+		// Load custom map config
+		char map_cfg_path[PLATFORM_MAX_PATH], map_cfg_path2[PLATFORM_MAX_PATH];
+		Format(map_cfg_path, sizeof(map_cfg_path), "sourcemod/ckSurf/maps/%s.cfg", g_szMapName);
+		Format(map_cfg_path2, sizeof(map_cfg_path2), "cfg/%s", map_cfg_path);
+
+		if (FileExists(map_cfg_path2))
+			ServerCommand("exec %s", map_cfg_path);
 
 		// Start loading stages
 		g_bLoadingStages = true;
