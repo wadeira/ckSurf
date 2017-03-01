@@ -647,14 +647,17 @@ public void EndStageTimer(int client)
 	// Check if the player beaten the record
 	if (g_StageRecords[stage][srRunTime] > runtime)
 	{
-		// Send message to all players
-		PrintToChatAll("[%cSurf Timer%c] %c%N %chas beaten the %cstage %d %crecord!", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW);
-		PrintToChatAll("[%cSurf Timer%c] %c%N %chas finished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
+		
+		// Check if the stage records were loaded before sending the message
+		if (!g_bLoadingStages) {
+			// Send message to all players
+			PrintToChatAll("[%cSurf Timer%c] %c%N %chas beaten the %cstage %d record %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
 
-		// Play sound to everyone
-		for (int i = 1; i <= MaxClients; i++)
-			if (IsClientConnected(i) && IsValidClient(i) && !IsFakeClient(i))
-				ClientCommand(i, "play buttons\\blip2");
+			// Play sound to everyone
+			for (int i = 1; i <= MaxClients; i++)
+				if (IsClientConnected(i) && IsValidClient(i) && !IsFakeClient(i))
+					ClientCommand(i, "play buttons\\blip2");
+		}
 
 		if (g_fStagePlayerRecord[client][stage] != 9999999.0)
 			db_updateStageRecord(client, stage, runtime);
