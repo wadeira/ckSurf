@@ -91,14 +91,14 @@ native bool ckSurf_SafeTeleport(int client, float fDestination[3], float fAngle[
  * @param type 		 Type to be counted
  * @return           zone type count for zone group (int)
  */
-native bool ckSurf_CountZones(int zonegroup, int type);
+native int ckSurf_CountZones(int zonegroup, int type);
 
 /**
  * Gets ammount of zone groups in current map
  *
  * @return           Zone group count (int)
  */
-native bool ckSurf_CountZoneGroups();
+native int ckSurf_CountZoneGroups();
 
 /**
  * Gets points for a client id
@@ -106,7 +106,7 @@ native bool ckSurf_CountZoneGroups();
  * @param client    		Client's id
  * @return           Player points
  */
-native bool ckSurf_GetPlayerPoints(int client);
+native int ckSurf_GetPlayerPoints(int client);
 
 
 /*
