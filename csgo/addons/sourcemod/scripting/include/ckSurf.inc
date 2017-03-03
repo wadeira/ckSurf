@@ -81,7 +81,33 @@ native void ckSurf_GetServerRank(int client);
  * @param bStopTimer 		Stop the client's timer, default false
  * @return           true on success / false on failure
  */
+
 native bool ckSurf_SafeTeleport(int client, float fDestination[3], float fAngle[3], float fVelocity[3], bool bStopTimer = false);
+
+/**
+ * Gets zone type count for a zonegroup
+ *
+ * @param zoneGroup    		ZoneGroup
+ * @param type 		 Type to be counted
+ * @return           zone type count for zone group (int)
+ */
+native bool ckSurf_CountZones(int zonegroup, int type);
+
+/**
+ * Gets ammount of zone groups in current map
+ *
+ * @return           Zone group count (int)
+ */
+native bool ckSurf_CountZoneGroups();
+
+/**
+ * Gets points for a client id
+ *
+ * @param client    		Client's id
+ * @return           Player points
+ */
+native bool ckSurf_GetPlayerPoints(int client);
+
 
 /*
 		FORWARDS
