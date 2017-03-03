@@ -2157,6 +2157,18 @@ public int Native_SafeTeleport(Handle plugin, int numParams)
 		return false;
 }
 
+public int Native_CountZones(Handle plugin, int numParams){
+	return g_mapZonesTypeCount[GetNativeCell(1)][GetNativeCell(2)] + 1;
+}
+
+public int Native_CountZoneGroups(Handle plugin, int numParams){
+	return g_mapZoneGroupCount;
+}
+
+public int Native_GetPlayerPoints(Handle plugin, int numParams) {
+	return g_pr_points[GetNativeCell(1)];
+}
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	RegPluginLibrary("ckSurf");
@@ -2168,6 +2180,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("ckSurf_ClientIsVIP", Native_ClientIsVIP);
 	CreateNative("ckSurf_GetServerRank", Native_GetServerRank);
 	CreateNative("ckSurf_SafeTeleport", Native_SafeTeleport);
+	CreateNative("ckSurf_CountZones", Native_CountZones);
+	CreateNative("ckSurf_CountZoneGroups", Native_CountZoneGroups);
+	CreateNative("ckSurf_GetPlayerPoints", Native_GetPlayerPoints);
 	g_bLateLoaded = late;
 	return APLRes_Success;
 }
