@@ -74,6 +74,52 @@ public void CL_OnStartTimerPress(int client)
 		g_bMissedMapBest[client] = true;
 		g_bMissedBonusBest[client] = true;
 		g_bTimeractivated[client] = true;
+		int zgroup = g_iClientInZone[client][2];
+
+		// Get player velocity
+		float vecPlayerVelocity[3], fPlayerVelocity;
+
+		GetEntPropVector(client, Prop_Data, "m_vecVelocity", vecPlayerVelocity);
+		fPlayerVelocity = GetVectorLength(vecPlayerVelocity);
+
+		// Build Speed difference message
+		char speedDiffMsg[128];
+		Format(speedDiffMsg, sizeof(speedDiffMsg), "[%cSurf Timer%c] Start: %c%d %cu/s", MOSSGREEN, WHITE, YELLOW, RoundToCeil(fPlayerVelocity), WHITE);
+
+
+		if (g_fPlayerRectStartSpeed[client][zgroup] != -1)
+		{
+			float fDiff = fPlayerVelocity - g_fPlayerRectStartSpeed[client][zgroup];
+			char srDiff[16];
+
+			if (fDiff < 0)
+				Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+			else
+				Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+			Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | PB: %s", speedDiffMsg, srDiff);
+		}
+
+
+
+		if (g_fRecordStartSpeed[zgroup] != -1)
+		{
+			// Get difference between server record 
+			float fDiff = fPlayerVelocity - g_fRecordStartSpeed[zgroup];
+			char srDiff[16];
+
+			if (fDiff < 0)
+				Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+			else
+				Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+			Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | SR: %s", speedDiffMsg, srDiff);
+		}
+
+		PrintToChat(client, speedDiffMsg);
+
+
+		g_fPlayerCurrentStartSpeed[client][g_iClientInZone[client][2]] = fPlayerVelocity;
 
 		if (!IsFakeClient(client))
 		{
@@ -436,6 +482,7 @@ public void CL_OnEndTimerPress(int client)
 			{  // New fastest time in current bonus
 				g_fOldBonusRecordTime[zGroup] = g_fBonusFastest[zGroup];
 				g_fBonusFastest[zGroup] = g_fFinalTime[client];
+				g_fRecordStartSpeed[zGroup] = g_fPlayerCurrentStartSpeed[client][1];
 				Format(g_szBonusFastest[zGroup], MAX_NAME_LENGTH, "%s", szName);
 				FormatTimeFloat(1, g_fBonusFastest[zGroup], 3, g_szBonusFastestTime[zGroup], 64);
 
@@ -469,6 +516,7 @@ public void CL_OnEndTimerPress(int client)
 
 			g_fOldBonusRecordTime[zGroup] = g_fBonusFastest[zGroup];
 			g_fBonusFastest[zGroup] = g_fFinalTime[client];
+			g_fRecordStartSpeed[zGroup] = g_fPlayerCurrentStartSpeed[client][1];
 			Format(g_szBonusFastest[zGroup], MAX_NAME_LENGTH, "%s", szName);
 			FormatTimeFloat(1, g_fBonusFastest[zGroup], 3, g_szBonusFastestTime[zGroup], 64);
 
@@ -494,6 +542,7 @@ public void CL_OnEndTimerPress(int client)
 		if (g_fPersonalRecordBonus[zGroup][client] == 0.0)
 		{  // Clients first record
 			g_fPersonalRecordBonus[zGroup][client] = g_fFinalTime[client];
+			g_fPlayerRectStartSpeed[client][zGroup] = g_fPlayerCurrentStartSpeed[client][1];
 			FormatTimeFloat(1, g_fPersonalRecordBonus[zGroup][client], 3, g_szPersonalRecordBonus[zGroup][client], 64);
 
 			g_bBonusFirstRecord[client] = true;
@@ -580,6 +629,48 @@ public void StartStageTimer(int client)
 
 	g_bStageTimerRunning[client] = true;
 	g_fStageStartTime[client] = GetGameTime();
+
+	// Get player velocity
+	float vecPlayerVelocity[3], fPlayerVelocity;
+
+	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vecPlayerVelocity);
+	fPlayerVelocity = GetVectorLength(vecPlayerVelocity);
+
+	g_fPlayerCurrentStartSpeed[client][stage] = fPlayerVelocity;
+
+	// Build Speed difference message
+	char speedDiffMsg[128];
+
+	Format(speedDiffMsg, sizeof(speedDiffMsg), "[%cSurf Timer%c] Stage: %c%d %cu/s", MOSSGREEN, WHITE, YELLOW, RoundToCeil(fPlayerVelocity), WHITE);
+
+	if (g_fPlayerStageRecStartSpeed[client][stage] != -1)
+	{
+		float fDiff = fPlayerVelocity - g_fPlayerStageRecStartSpeed[client][stage];
+		char srDiff[16];
+
+		if (fDiff < 0)
+			Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+		else
+			Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+		Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | PB: %s", speedDiffMsg, srDiff);
+	}
+
+	if (g_StageRecords[stage][srStartSpeed] != -1)
+	{
+		// Get difference between server record 
+		float fDiff = fPlayerVelocity - g_StageRecords[stage][srStartSpeed];
+		char srDiff[16];
+
+		if (fDiff < 0)
+			Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+		else
+			Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+		Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | SR: %s", speedDiffMsg, srDiff);
+	}
+
+	PrintToChat(client, speedDiffMsg);
 }
 
 
@@ -671,10 +762,13 @@ public void EndStageTimer(int client)
 		strcopy(g_StageRecords[stage][srPlayerName], sizeof(name), name);
 		g_StageRecords[stage][srRunTime] = runtime;
 		g_StageRecords[stage][srLoaded] = true;
+		g_StageRecords[stage][srStartSpeed] = g_fPlayerCurrentStartSpeed[client][stage];
 
 		g_fStagePlayerRecord[client][stage] = runtime;
 
 		Stage_SaveRecording(client, stage, runtime_str);
+
+		g_fPlayerStageRecStartSpeed[client][stage] = g_fPlayerCurrentStartSpeed[client][stage];
 
 	}
 	else if (g_fStagePlayerRecord[client][stage] > runtime)
@@ -689,6 +783,7 @@ public void EndStageTimer(int client)
 			db_insertStageRecord(client, stage, runtime);
 
 		g_fStagePlayerRecord[client][stage] = runtime;
+		g_fPlayerStageRecStartSpeed[client][stage] = g_fPlayerCurrentStartSpeed[client][stage];
 	}
 	else
 	{

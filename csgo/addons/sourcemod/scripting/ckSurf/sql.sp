@@ -51,14 +51,14 @@ char sql_updateBonusTier[] = "UPDATE ck_maptier SET btier%i = %i WHERE mapname =
 char sql_insertBonusTier[] = "INSERT INTO ck_maptier (mapname, btier%i) VALUES ('%s', '%i');";
 
 //TABLE BONUS
-char sql_createBonus[] = "CREATE TABLE IF NOT EXISTS ck_bonus (steamid VARCHAR(32), name VARCHAR(32), mapname VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', zonegroup INT(12) NOT NULL DEFAULT 1, PRIMARY KEY(steamid, mapname, zonegroup));";
+char sql_createBonus[] = "CREATE TABLE IF NOT EXISTS ck_bonus (steamid VARCHAR(32), name VARCHAR(32), mapname VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', zonegroup INT(12) NOT NULL DEFAULT 1, startspeed FLOAT NOT NULL DEFAULT -1 PRIMARY KEY(steamid, mapname, zonegroup));";
 char sql_createBonusIndex[] = "CREATE INDEX bonusrank ON ck_bonus (mapname,runtime,zonegroup);";
-char sql_insertBonus[] = "INSERT INTO ck_bonus (steamid, name, mapname, runtime, zonegroup) VALUES ('%s', '%s', '%s', '%f', '%i')";
-char sql_updateBonus[] = "UPDATE ck_bonus SET runtime = '%f', name = '%s' WHERE steamid = '%s' AND mapname = '%s' AND zonegroup = %i";
+char sql_insertBonus[] = "INSERT INTO ck_bonus (steamid, name, mapname, runtime, zonegroup, startspeed) VALUES ('%s', '%s', '%s', '%f', '%i', '%f')";
+char sql_updateBonus[] = "UPDATE ck_bonus SET runtime = '%f', name = '%s', startspeed = '%f' WHERE steamid = '%s' AND mapname = '%s' AND zonegroup = %i";
 char sql_selectBonusCount[] = "SELECT zonegroup, count(1) FROM ck_bonus WHERE mapname = '%s' GROUP BY zonegroup";
-char sql_selectPersonalBonusRecords[] = "SELECT runtime, zonegroup FROM ck_bonus WHERE steamid = '%s' AND mapname = '%s' AND runtime > '0.0'";
+char sql_selectPersonalBonusRecords[] = "SELECT runtime, zonegroup, startspeed FROM ck_bonus WHERE steamid = '%s' AND mapname = '%s' AND runtime > '0.0'";
 char sql_selectPlayerRankBonus[] = "SELECT name FROM ck_bonus WHERE runtime <= (SELECT runtime FROM ck_bonus WHERE steamid = '%s' AND mapname= '%s' AND runtime > 0.0 AND zonegroup = %i) AND mapname = '%s' AND zonegroup = %i;";
-char sql_selectFastestBonus[] = "SELECT name, MIN(runtime), zonegroup FROM ck_bonus WHERE mapname = '%s' GROUP BY zonegroup;";
+char sql_selectFastestBonus[] = "SELECT name, MIN(runtime), zonegroup, startspeed FROM ck_bonus WHERE mapname = '%s' GROUP BY zonegroup;";
 char sql_deleteBonus[] = "DELETE FROM ck_bonus WHERE mapname = '%s'";
 char sql_selectAllBonusTimesinMap[] = "SELECT zonegroup, runtime from ck_bonus WHERE mapname = '%s';";
 char sql_selectTopBonusSurfers[] = "SELECT db2.steamid, db1.name, db2.runtime as overall, db1.steamid, db2.mapname FROM ck_bonus as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtime > -1.0 AND zonegroup = %i ORDER BY (CASE WHEN db2.mapname = '%s' THEN 1 WHEN db2.mapname LIKE '%s%c' THEN 2 ELSE 3 END), mapname, overall ASC LIMIT 100;";
@@ -103,13 +103,13 @@ char sql_CountRankedPlayers[] = "SELECT COUNT(steamid) FROM ck_playerrank";
 char sql_CountRankedPlayers2[] = "SELECT COUNT(steamid) FROM ck_playerrank where points > 0";
 
 //TABLE PLAYERTIMES
-char sql_createPlayertimes[] = "CREATE TABLE IF NOT EXISTS ck_playertimes (steamid VARCHAR(32), mapname VARCHAR(32), name VARCHAR(32), runtimepro FLOAT NOT NULL DEFAULT '-1.0', PRIMARY KEY(steamid,mapname));";
+char sql_createPlayertimes[] = "CREATE TABLE IF NOT EXISTS ck_playertimes (steamid VARCHAR(32), mapname VARCHAR(32), name VARCHAR(32), runtimepro FLOAT NOT NULL DEFAULT '-1.0', startspeed FLOAT NOT NULL DEFAULT '-1.0' PRIMARY KEY(steamid,mapname));";
 char sql_createPlayertimesIndex[] = "CREATE INDEX maprank ON ck_playertimes (mapname, runtimepro);";
 char sql_insertPlayer[] = "INSERT INTO ck_playertimes (steamid, mapname, name) VALUES('%s', '%s', '%s');";
-char sql_insertPlayerTime[] = "INSERT INTO ck_playertimes (steamid, mapname, name,runtimepro) VALUES('%s', '%s', '%s', '%f');";
-char sql_updateRecordPro[] = "UPDATE ck_playertimes SET name = '%s', runtimepro = '%f' WHERE steamid = '%s' AND mapname = '%s';";
+char sql_insertPlayerTime[] = "INSERT INTO ck_playertimes (steamid, mapname, name,runtimepro, startspeed) VALUES('%s', '%s', '%s', '%f', '%f');";
+char sql_updateRecordPro[] = "UPDATE ck_playertimes SET name = '%s', runtimepro = '%f', startspeed = '%f' WHERE steamid = '%s' AND mapname = '%s';";
 char sql_selectPlayer[] = "SELECT steamid FROM ck_playertimes WHERE steamid = '%s' AND mapname = '%s';";
-char sql_selectMapRecord[] = "SELECT MIN(runtimepro), name, steamid FROM ck_playertimes WHERE mapname = '%s' AND runtimepro > -1.0";
+char sql_selectMapRecord[] = "SELECT MIN(runtimepro), name, steamid, startspeed FROM ck_playertimes WHERE mapname = '%s' AND runtimepro > -1.0";
 char sql_selectPersonalRecords[] = "SELECT runtimepro, name FROM ck_playertimes WHERE mapname = '%s' AND steamid = '%s' AND runtimepro > 0.0";
 char sql_selectPersonalAllRecords[] = "SELECT db1.name, db2.steamid, db2.mapname, db2.runtimepro as overall, db1.steamid FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.steamid = '%s' AND db2.runtimepro > -1.0 ORDER BY mapname ASC;";
 char sql_selectProSurfers[] = "SELECT db1.name, db2.runtimepro, db2.steamid, db1.steamid FROM ck_playertimes as db2 INNER JOIN ck_playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY db2.runtimepro ASC LIMIT 20";
@@ -143,11 +143,11 @@ char sql_resetMapRecords[] = "DELETE FROM ck_playertimes WHERE mapname = '%s'";
 
 
 // STAGES
-char sql_createStageRecordsTable[] = "CREATE TABLE IF NOT EXISTS `ck_stages` (`id` int(11) NOT NULL AUTO_INCREMENT, `steamid` varchar(45) NOT NULL, `map` varchar(45) NOT NULL, `stage` int(11) NOT NULL, `runtime` float NOT NULL, `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), UNIQUE KEY `id_UNIQUE` (`id`)) AUTO_INCREMENT=1;";
-char sql_selectStageRecords[] = "SELECT stage, runtime, name, (SELECT COUNT(runtime) FROM ck_stages c WHERE c.map = '%s' AND c.stage = '%d') as completions FROM ck_stages a JOIN ck_playerrank p ON a.steamid = p.steamid WHERE map = '%s' AND stage = '%d' ORDER BY runtime ASC LIMIT 1;";
-char sql_selectStagePlayerRecords[] = "SELECT stage as stg, runtime as rt, map as mp, (SELECT COUNT(*) FROM ck_stages a WHERE a.map = mp AND a.stage = stg AND runtime <= rt) as rank FROM ck_stages WHERE map = '%s' AND steamid = '%s'";
-char sql_insertStageRecord[] = "INSERT INTO ck_stages (steamid, map, stage, runtime) VALUES ('%s', '%s', '%d', '%f')";
-char sql_updateStageRecord[] = "UPDATE ck_stages SET runtime = '%f', date = CURRENT_TIMESTAMP WHERE map = '%s' AND steamid = '%s' AND stage = '%d'";
+char sql_createStageRecordsTable[] = "CREATE TABLE IF NOT EXISTS `ck_stages` (`id` int(11) NOT NULL AUTO_INCREMENT, `steamid` varchar(45) NOT NULL, `map` varchar(45) NOT NULL, `stage` int(11) NOT NULL, `runtime` float NOT NULL, `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `startspeed` float NOT NULL DEFAULT -1, PRIMARY KEY (`id`), UNIQUE KEY `id_UNIQUE` (`id`)) AUTO_INCREMENT=1;";
+char sql_selectStageRecords[] = "SELECT stage, runtime, name, (SELECT COUNT(runtime) FROM ck_stages c WHERE c.map = '%s' AND c.stage = '%d') as completions, startspeed FROM ck_stages a JOIN ck_playerrank p ON a.steamid = p.steamid WHERE map = '%s' AND stage = '%d' ORDER BY runtime ASC LIMIT 1;";
+char sql_selectStagePlayerRecords[] = "SELECT stage as stg, runtime as rt, map as mp, (SELECT COUNT(*) FROM ck_stages a WHERE a.map = mp AND a.stage = stg AND runtime <= rt) as rank, startspeed FROM ck_stages WHERE map = '%s' AND steamid = '%s'";
+char sql_insertStageRecord[] = "INSERT INTO ck_stages (steamid, map, stage, runtime, startspeed) VALUES ('%s', '%s', '%d', '%f', '%f')";
+char sql_updateStageRecord[] = "UPDATE ck_stages SET runtime = '%f', date = CURRENT_TIMESTAMP, startspeed = '%f' WHERE map = '%s' AND steamid = '%s' AND stage = '%d'";
 char sql_viewStageTop[] = "SELECT name, runtime, s.steamid FROM ck_stages s JOIN ck_playerrank p ON p.steamid = s.steamid WHERE stage = '%d' AND map = '%s' ORDER BY runtime ASC LIMIT 50";
 
 ////////////////////////
@@ -2762,7 +2762,7 @@ public void db_GetMapRecord_Pro()
 {
 	g_fRecordMapTime = 9999999.0;
 	char szQuery[512];
-	// SELECT MIN(runtimepro), name, steamid FROM ck_playertimes WHERE mapname = '%s' AND runtimepro > -1.0
+	// SELECT MIN(runtimepro), name, steamid, startspeed FROM ck_playertimes WHERE mapname = '%s' AND runtimepro > -1.0
 	Format(szQuery, 512, sql_selectMapRecord, g_szMapName);
 	SQL_TQuery(g_hDb, sql_selectMapRecordCallback, szQuery, DBPrio_Low);
 }
@@ -2786,6 +2786,7 @@ public void sql_selectMapRecordCallback(Handle owner, Handle hndl, const char[] 
 			FormatTimeFloat(0, g_fRecordMapTime, 3, g_szRecordMapTime, 64);
 			SQL_FetchString(hndl, 1, g_szRecordPlayer, MAX_NAME_LENGTH);
 			SQL_FetchString(hndl, 2, g_szRecordMapSteamID, MAX_NAME_LENGTH);
+			g_fRecordStartSpeed[0] = SQL_FetchFloat(hndl, 3);
 		}
 		else
 		{
@@ -3221,8 +3222,8 @@ public void sql_selectRecordCallback(Handle owner, Handle hndl, const char[] err
 		WritePackFloat(pack, g_fFinalTime[data]);
 		WritePackCell(pack, data);
 
-		//"INSERT INTO ck_playertimes (steamid, mapname, name,runtimepro) VALUES('%s', '%s', '%s', '%f');";
-		Format(szQuery, 512, sql_insertPlayerTime, g_szSteamID[data], g_szMapName, szName, g_fFinalTime[data]);
+		//"INSERT INTO ck_playertimes (steamid, mapname, name,runtimepro) VALUES('%s', '%s', '%s', '%f', '%f');";
+		Format(szQuery, 512, sql_insertPlayerTime, g_szSteamID[data], g_szMapName, szName, g_fFinalTime[data], g_fPlayerCurrentStartSpeed[data][0]);
 		SQL_TQuery(g_hDb, SQL_UpdateRecordProCallback, szQuery, pack, DBPrio_Low);
 	}
 }
@@ -3249,8 +3250,8 @@ public void db_updateRecordPro(int client)
 	WritePackCell(pack, client);
 
 	char szQuery[1024];
-	//"UPDATE ck_playertimes SET name = '%s', runtimepro = '%f' WHERE steamid = '%s' AND mapname = '%s';";
-	Format(szQuery, 1024, sql_updateRecordPro, szName, g_fFinalTime[client], g_szSteamID[client], g_szMapName);
+	//"UPDATE ck_playertimes SET name = '%s', runtimepro = '%f', startspeed = '%f' WHERE steamid = '%s' AND mapname = '%s';";
+	Format(szQuery, 1024, sql_updateRecordPro, szName, g_fFinalTime[client], g_fPlayerCurrentStartSpeed[client][0], g_szSteamID[client], g_szMapName);
 	SQL_TQuery(g_hDb, SQL_UpdateRecordProCallback, szQuery, pack, DBPrio_Low);
 }
 
@@ -3741,7 +3742,7 @@ public void db_insertPlayer(int client)
 public void db_viewPersonalRecords(int client, char szSteamId[32], char szMapName[128])
 {
 	char szQuery[1024];
-	Format(szQuery, 1024, "SELECT runtimepro FROM ck_playertimes WHERE steamid = '%s' AND mapname ='%s' AND runtimepro > 0.0;", szSteamId, szMapName);
+	Format(szQuery, 1024, "SELECT runtimepro, startspeed FROM ck_playertimes WHERE steamid = '%s' AND mapname ='%s' AND runtimepro > 0.0;", szSteamId, szMapName);
 	SQL_TQuery(g_hDb, SQL_selectPersonalRecordsCallback, szQuery, client, DBPrio_Low);
 }
 
@@ -3757,9 +3758,12 @@ public void SQL_selectPersonalRecordsCallback(Handle owner, Handle hndl, const c
 	}
 
 	g_fPersonalRecord[client] = 0.0;
+	g_fPlayerRectStartSpeed[client][0] = -1.0;
+
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
 		g_fPersonalRecord[client] = SQL_FetchFloat(hndl, 0);
+		g_fPlayerRectStartSpeed[client][0] = SQL_FetchFloat(hndl, 1);
 
 		if (g_fPersonalRecord[client] > 0.0)
 		{
@@ -4367,6 +4371,7 @@ public void SQL_selectPersonalBonusRecordsCallback(Handle owner, Handle hndl, co
 		{
 			zgroup = SQL_FetchInt(hndl, 1);
 			g_fPersonalRecordBonus[zgroup][client] = SQL_FetchFloat(hndl, 0);
+			g_fPlayerRectStartSpeed[client][zgroup] = SQL_FetchFloat(hndl, 2);
 
 			if (g_fPersonalRecordBonus[zgroup][client] > 0.0)
 			{
@@ -4408,6 +4413,7 @@ public void SQL_selectFastestBonusCallback(Handle owner, Handle hndl, const char
 	{
 		Format(g_szBonusFastestTime[i], 64, "N/A");
 		g_fBonusFastest[i] = 9999999.0;
+		g_fRecordStartSpeed[i] = -1.0;
 	}
 
 	if (SQL_HasResultSet(hndl))
@@ -4418,6 +4424,7 @@ public void SQL_selectFastestBonusCallback(Handle owner, Handle hndl, const char
 			zonegroup = SQL_FetchInt(hndl, 2);
 			SQL_FetchString(hndl, 0, g_szBonusFastest[zonegroup], MAX_NAME_LENGTH);
 			g_fBonusFastest[zonegroup] = SQL_FetchFloat(hndl, 1);
+			g_fRecordStartSpeed[zonegroup] = SQL_FetchFloat(hndl, 3);
 
 			FormatTimeFloat(1, g_fBonusFastest[zonegroup], 3, g_szBonusFastestTime[zonegroup], 64);
 		}
@@ -4487,7 +4494,7 @@ public void db_insertBonus(int client, char szSteamId[32], char szUName[32], flo
 	Handle pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackCell(pack, zoneGrp);
-	Format(szQuery, 1024, sql_insertBonus, szSteamId, szName, g_szMapName, FinalTime, zoneGrp);
+	Format(szQuery, 1024, sql_insertBonus, szSteamId, szName, g_szMapName, FinalTime, zoneGrp, g_fPlayerCurrentStartSpeed[client][1]);
 	SQL_TQuery(g_hDb, SQL_insertBonusCallback, szQuery, pack, DBPrio_Low);
 }
 
@@ -4517,7 +4524,7 @@ public void db_updateBonus(int client, char szSteamId[32], char szUName[32], flo
 	WritePackCell(datapack, client);
 	WritePackCell(datapack, zoneGrp);
 	SQL_EscapeString(g_hDb, szUName, szName, MAX_NAME_LENGTH * 2 + 1);
-	Format(szQuery, 1024, sql_updateBonus, FinalTime, szName, szSteamId, g_szMapName, zoneGrp);
+	Format(szQuery, 1024, sql_updateBonus, FinalTime, szName, g_fPlayerCurrentStartSpeed[client][1], szSteamId, g_szMapName, zoneGrp);
 	SQL_TQuery(g_hDb, SQL_updateBonusCallback, szQuery, datapack, DBPrio_Low);
 }
 
@@ -5342,6 +5349,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			g_StageRecords[i][srRunTime] = 9999999.0;
 			g_StageRecords[i][srLoaded] = false;
 			g_StageRecords[i][srCompletions] = 0;
+			g_StageRecords[i][srStartSpeed] = -1.0;
 
 			g_fStageMaxVelocity[i] = g_hStagePreSpeed.FloatValue;
 			g_bStageIgnorePrehop[i] = false;
@@ -6753,7 +6761,7 @@ public void RecordPanelHandler2(Handle menu, MenuAction action, int param1, int 
 public void db_insertStageRecord(int client, int stage, float runtime)
 {
 		char query[256];
-		Format(query, sizeof(query), sql_insertStageRecord, g_szSteamID[client], g_szMapName, stage, runtime);
+		Format(query, sizeof(query), sql_insertStageRecord, g_szSteamID[client], g_szMapName, stage, runtime, g_fPlayerCurrentStartSpeed[client][stage]);
 
 		DataPack pack = new DataPack();
 
@@ -6785,7 +6793,7 @@ public void sql_insertStageRecordCallback(Handle owner, Handle hndl, const char[
 public void db_updateStageRecord(int client, int stage, float runtime)
 {
 	char query[256];
-	Format(query, sizeof(query), sql_updateStageRecord, runtime, g_szMapName, g_szSteamID[client], stage);
+	Format(query, sizeof(query), sql_updateStageRecord, runtime, g_fPlayerCurrentStartSpeed[client][stage], g_szMapName, g_szSteamID[client], stage);
 
 	DataPack pack = new DataPack();
 
@@ -6835,10 +6843,12 @@ public void sql_loadStageServerRecordsCallback(Handle owner, Handle hndl, const 
 		char name[45];
 		SQL_FetchString(hndl, 2, name, sizeof(name));
 		int completions = SQL_FetchInt(hndl, 3);
+		float startSpeed = SQL_FetchFloat(hndl, 4);
 
 		g_StageRecords[stage][srRunTime] = runtime;
 		g_StageRecords[stage][srLoaded] = true;
 		g_StageRecords[stage][srCompletions] = completions;
+		g_StageRecords[stage][srStartSpeed] = startSpeed;
 
 		strcopy(g_StageRecords[stage][srPlayerName], sizeof(name), name);
 	}
@@ -6880,9 +6890,11 @@ public void sql_selectStagePlayerRecordsCallback(Handle owner, Handle hndl, cons
 			int stage = SQL_FetchInt(hndl, 0);
 			float runtime = SQL_FetchFloat(hndl, 1);
 			int rank = SQL_FetchInt(hndl, 3);
+			float startSpeed = SQL_FetchFloat(hndl, 4);
 
 			g_fStagePlayerRecord[client][stage] = runtime;
 			g_StagePlayerRank[client][stage] = rank;
+			g_fPlayerStageRecStartSpeed[client][stage] = startSpeed;
 		}
 	}
 

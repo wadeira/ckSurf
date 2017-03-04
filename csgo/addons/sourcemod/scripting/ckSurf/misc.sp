@@ -1590,6 +1590,8 @@ public void SetClientDefaults(int client)
 			g_fCheckpointTimesNew[x][client][i] = 0.0;
 			g_fCheckpointTimesRecord[x][client][i] = 0.0;
 		}
+
+		g_fPlayerRectStartSpeed[client][x] = -1;
 	}
 
 	for (int i = 0; i < TITLE_COUNT; i++)
@@ -1619,15 +1621,14 @@ public void SetClientDefaults(int client)
 
 	g_fStageStartTime[client] = 0.0;
 	g_bStageTimerRunning[client] = false;
-
-	for (int i = 0; i < 64; i++)
-		g_fStagePlayerRecord[client][i] = 9999999.0;
-
-
 	g_RepeatStage[client] = -1;
 
-	for (int i = 0; i < CPLIMIT; i++)
+	for (int i = 0; i < CPLIMIT; i++) {
+		g_fStagePlayerRecord[client][i] = 9999999.0;
 		g_StagePlayerRank[client][i] = 9999999;
+		g_fPlayerCurrentStartSpeed[client][i] = -1.0;
+		g_fPlayerStageRecStartSpeed[client][i] = -1.0;
+	}
 
 	g_bHasChatTag[client] = false;
 	Format(g_cChatTag[client], sizeof(g_cChatTag[]), "");

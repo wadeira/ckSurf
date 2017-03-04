@@ -225,7 +225,8 @@ enum StageRecord
 	String:srPlayerName[45],
 	Float:srRunTime[16],
 	srCompletions,
-	bool:srLoaded
+	bool:srLoaded,
+	Float:srStartSpeed
 }
 
 
@@ -769,6 +770,13 @@ int g_StageRecStartFrame[MAXPLAYERS+1];	// Number of frames where the replay sta
 int g_StageRecStartAT[MAXPLAYERS+1];	// Ammount of additional teleport when the replay started being recorded
 float g_fStageInitialPosition[MAXPLAYERS + 1][3]; 					// Replay start position
 float g_fStageInitialAngles[MAXPLAYERS + 1][3]; 						// Replay start angle
+
+
+/*--------- Start Speed ----------------*/
+float g_fRecordStartSpeed[MAXZONEGROUPS];
+float g_fPlayerRectStartSpeed[MAXPLAYERS+1][MAXZONEGROUPS];
+float g_fPlayerStageRecStartSpeed[MAXPLAYERS+1][CPLIMIT];
+float g_fPlayerCurrentStartSpeed[MAXPLAYERS+1][CPLIMIT];
 
 
 /*=========================================
