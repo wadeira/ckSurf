@@ -116,7 +116,7 @@ Zonegroup: 0 = normal map, >0 bonuses.
 Zone types: 1 = Start zone,  >1 Stage zones.
 */
 public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
-{
+{	
 	if (!IsValidClient(client))
 		return;
 	if (!IsValidZonegroup(zonegroup))
@@ -1255,6 +1255,15 @@ public void FixPlayerName(int client)
 	}
 }
 
+public void ForceSpeedLimit(int client, float speed){
+	float CurVelVec[3];
+	GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
+	// float currentspeed = SquareRoot(Pow(CurVelVec[0], 2.0) + Pow(CurVelVec[1], 2.0));
+	NormalizeVector(CurVelVec, CurVelVec);
+	ScaleVector(CurVelVec, speed);
+	TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+}
+
 public void LimitSpeed(int client)
 {
 	// Dont limits speed if in practice mode, or if there is no end zone in current zonegroup
@@ -1316,7 +1325,7 @@ public void LimitSpeed(int client)
 	
 	
 	// Limit speed to 280 u/s if player is prehopping
-	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[1] && currentspeed > 280.0)
+	if ((g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[1]))
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, 280.0);
@@ -1331,7 +1340,7 @@ public void LimitSpeed(int client)
 		return;
 	}
 
-	if (currentspeed > speedCap)
+	if (currentspeed > speedCap && currentspeed > 280.0)
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, speedCap);
@@ -3064,7 +3073,7 @@ public void CenterHudAlive(int client)
 
 	else if (g_bPracticeMode[client])
 		Format(sTime, sizeof(sTime), "Practicing");
-
+		
 	// Display current time
 	else
 		FormatTimeFloat(client, g_fCurrentRunTime[client], 3, sTime, sizeof(sTime));
