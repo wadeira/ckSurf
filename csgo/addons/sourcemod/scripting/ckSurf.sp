@@ -244,7 +244,7 @@ enum RecordType
 public Plugin myinfo =
 {
 	name = "Surf Timer",
-	author = "",
+	author = "marcowmadeira",
 	description = "",
 	version = VERSION,
 	url = ""
