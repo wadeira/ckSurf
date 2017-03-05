@@ -208,7 +208,10 @@ public int ProfileMenuHandler(Handle menu, MenuAction action, int client, int it
 			case 1:db_viewChallengeHistory(client, g_szProfileSteamId[client]);
 			case 2:
 			{
-				db_viewAllRecords(client, g_szProfileSteamId[client]);
+				char sUrl[128];
+				Format(sUrl, sizeof(sUrl), "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/players/view/%s", g_szProfileSteamId[client]);
+
+				ShowMOTDPanel(client, "Profile", sUrl, MOTDPANEL_TYPE_URL);
 			}
 			case 3:
 			{

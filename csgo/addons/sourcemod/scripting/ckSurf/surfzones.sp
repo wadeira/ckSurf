@@ -276,7 +276,7 @@ public void StartTouch(int client, int action[3])
 		}
 		else if (action[0] == view_as<int>(ZT_TeleToStart)) // TeleToStart Zone
 		{
-			// teleportClient(client, g_iClientInZone[client][2], 1, true);
+			teleportClient(client, g_iClientInZone[client][2], 1, true);
 		}
 		else if (action[0] == view_as<int>(ZT_Validator)) // Validator Zone
 		{
@@ -289,10 +289,10 @@ public void StartTouch(int client, int action[3])
 		}
 		else if (action[0] == view_as<int>(ZT_TeleToStage))
 		{
-			// if (g_Stage[g_iClientInZone[client][2]][client] == 1)
-			// 	teleportClient(client, g_iClientInZone[client][2], 1, false);
-			// else
-			// 	teleportClient(client, g_iClientInZone[client][2], g_Stage[g_iClientInZone[client][2]][client], false);
+			if (g_Stage[g_iClientInZone[client][2]][client] == 1)
+				teleportClient(client, g_iClientInZone[client][2], 1, false);
+			else
+				teleportClient(client, g_iClientInZone[client][2], g_Stage[g_iClientInZone[client][2]][client], false);
 		}
 	}
 }
@@ -357,9 +357,8 @@ public void EndTouch(int client, int action[4])
 			else
 				Array_Copy(g_mapZones[action[3]][PointA], vLowestCorner, 3);
 
-			float speedCap = GetConVarFloat(g_hStagePreSpeed);
 			// Check if the player jumped from an high platform
-			if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 25.0) && speedCap < 600) 
+			if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 25.0)) 
 				PrintToChat(client, "[%cSurf Timer%c] %cYou jumped from way too high.", MOSSGREEN, WHITE, LIGHTRED); 
 
 			else

@@ -552,7 +552,6 @@ public void StartStageTimer(int client)
 		return;
 
 	int stage = g_Stage[0][client];
-	float speedCap = GetConVarFloat(g_hStagePreSpeed);
 
 	float vPlayerVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
@@ -563,9 +562,9 @@ public void StartStageTimer(int client)
 		return;
 	}
 
-	if (g_PlayerJumpsInStage[client] > 1 && (speedCap < 600))
+	if (g_PlayerJumpsInStage[client] > 1 || !g_bStageIgnorePrehop[stage])
 	{
-		ForceSpeedLimit(client, 255.0);
+		PrintToChat(client, "[%cSurf Timer%c] %cPrehopping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
 		return;
 	}
 

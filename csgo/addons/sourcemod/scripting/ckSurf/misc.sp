@@ -1340,7 +1340,7 @@ public void LimitSpeed(int client)
 		return;
 	}
 
-	if (currentspeed > speedCap && currentspeed > 280.0)
+	if (currentspeed > speedCap)
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, speedCap);
