@@ -492,13 +492,13 @@ public void LoadRecordReplay()
 
 		char clantag[100];
 		CS_GetClientClanTag(g_RecordBot, clantag, sizeof(clantag));
-		if (StrContains(clantag, "REPLAY") == -1)
+		if (StrContains(clantag, "BOT") == -1)
 			g_bNewRecordBot = true;
 
 		g_iClientInZone[g_RecordBot][2] = 0;
 
-		CS_SetClientClanTag(g_RecordBot, "REPLAY");
-		SetClientName(g_RecordBot, "Type !replay to watch");
+		CS_SetClientClanTag(g_RecordBot, "BOT");
+		SetClientName(g_RecordBot, "Press E While Spectating");
 
 		SetEntityRenderColor(g_RecordBot, g_ReplayBotColor[0], g_ReplayBotColor[1], g_ReplayBotColor[2], 50);
 		if (GetConVarBool(g_hPlayerSkinChange))
@@ -749,8 +749,8 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 			g_bIsPlayingReplay = false;
 			g_ReplayCurrentStage = 0;
 
-			CS_SetClientClanTag(g_RecordBot, "REPLAY");
-			SetClientName(g_RecordBot, "Type !replay to watch");
+			CS_SetClientClanTag(g_RecordBot, "BOT");
+			SetClientName(g_RecordBot, "Press E While Spectating");
 
 			return;
 		}

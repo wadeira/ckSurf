@@ -821,14 +821,44 @@ char RGB_COLOR_NAMES[][] =  // Store RGB color names in an array also
 ================================*/
 
 #include "ckSurf/misc.sp"
-#include "ckSurf/admin.sp"
-#include "ckSurf/commands.sp"
-#include "ckSurf/hooks.sp"
+#include "ckSurf/commands/admin.sp"
+#include "ckSurf/commands/commands.sp"
+#include "ckSurf/commands/vip.sp"
+#include "ckSurf/hooks/log_action.sp"
+#include "ckSurf/hooks/player_death.sp"
+#include "ckSurf/hooks/player_disconnect.sp"
+#include "ckSurf/hooks/player_fire.sp"
+#include "ckSurf/hooks/player_hurt.sp"
+#include "ckSurf/hooks/player_run.sp"
+#include "ckSurf/hooks/player_say.sp"
+#include "ckSurf/hooks/player_spawn.sp"
+#include "ckSurf/hooks/player_takedamage.sp"
+#include "ckSurf/hooks/player_team.sp"
+#include "ckSurf/hooks/player_teleport.sp"
+#include "ckSurf/hooks/rounds.sp"
+#include "ckSurf/hooks/set_transmit.sp"
+#include "ckSurf/hooks/trigger_push.sp"
 #include "ckSurf/buttonpress.sp"
-#include "ckSurf/sql.sp"
+#include "ckSurf/sql/statements.sp"
+#include "ckSurf/sql/menus.sp"
+#include "ckSurf/sql/sql.sp"
+#include "ckSurf/sql/bonus.sp"
+#include "ckSurf/sql/challenges.sp"
+#include "ckSurf/sql/checkpoints.sp"
+#include "ckSurf/sql/maptier.sp"
+#include "ckSurf/sql/player_chat.sp"
+#include "ckSurf/sql/player_options.sp"
+#include "ckSurf/sql/player_spawns.sp"
+#include "ckSurf/sql/player_temp.sp"
+#include "ckSurf/sql/player_times.sp"
+#include "ckSurf/sql/ranks.sp"
+#include "ckSurf/sql/stage.sp"
+#include "ckSurf/sql/titles.sp"
+#include "ckSurf/sql/zones.sp"
 #include "ckSurf/timer.sp"
 #include "ckSurf/replay.sp"
 #include "ckSurf/surfzones.sp"
+
 
 
 
@@ -1637,12 +1667,12 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 			g_AdminMenuFlag = FlagToBit(flag);
 	}
 	else if (convar == g_hStartPreSpeed) 
-	{
-		if (g_bhasStages) 
-		{
-			g_fStageMaxVelocity[1] = g_hStartPreSpeed.FloatValue;
-		}
-	}
+ 	{
+ 		if (g_bhasStages) 
+ 		{
+ 			g_fStageMaxVelocity[1] = g_hStartPreSpeed.FloatValue;
+ 		}
+ 	}
 
 	if (g_hZoneTimer != INVALID_HANDLE)
 	{
@@ -1948,6 +1978,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_stuck", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
 	RegConsoleCmd("sm_back", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
 	RegConsoleCmd("sm_goback", Command_GoBack, "[Surf Timer] Teleports player to one stage before the current one");
+	RegConsoleCmd("sm_gb", Command_GoBack, "[Surf Timer] Teleports player to one stage before the current one");
 	RegConsoleCmd("sm_rs", Command_Teleport, "[Surf Timer] Teleports player back to the start of the stage");
 	RegConsoleCmd("sm_play", Command_Teleport, "[Surf Timer] Teleports player back to the start");
 	RegConsoleCmd("sm_spawn", Command_Teleport, "[Surf Timer] Teleports player back to the start");
@@ -2184,7 +2215,6 @@ public int Native_CountZoneGroups(Handle plugin, int numParams){
 public int Native_GetPlayerPoints(Handle plugin, int numParams) {
 	return g_pr_points[GetNativeCell(1)];
 }
-
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	RegPluginLibrary("ckSurf");
@@ -2199,6 +2229,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("ckSurf_CountZones", Native_CountZones);
 	CreateNative("ckSurf_CountZoneGroups", Native_CountZoneGroups);
 	CreateNative("ckSurf_GetPlayerPoints", Native_GetPlayerPoints);
+
+
 	g_bLateLoaded = late;
 	return APLRes_Success;
 }
