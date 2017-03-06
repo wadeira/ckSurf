@@ -1591,7 +1591,7 @@ public void SetClientDefaults(int client)
 			g_fCheckpointTimesRecord[x][client][i] = 0.0;
 		}
 
-		g_fPlayerRectStartSpeed[client][x] = -1;
+		g_fPlayerRectStartSpeed[client][x] = -1.0;
 	}
 
 	for (int i = 0; i < TITLE_COUNT; i++)
