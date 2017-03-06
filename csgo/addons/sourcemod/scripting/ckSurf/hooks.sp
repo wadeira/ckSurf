@@ -272,6 +272,11 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		if (GetConVarBool(g_hPointSystem) && GetConVarBool(g_hColoredNames))
 			setNameColor(szName, g_PlayerChatRank[client], 64);
 
+		// Remove color inputs from users
+		for (int i = 0; i < sizeof(sText); i++)
+			if (0x00 < sText[i] <= 0x0F)
+				sText[i] = ' ';
+
 		if (g_bHasChatTag[client])
 		{
 			if (strlen(g_cChatTag[client]) < 1)
