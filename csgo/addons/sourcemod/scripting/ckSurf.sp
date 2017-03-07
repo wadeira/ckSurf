@@ -939,7 +939,10 @@ public void OnMapStart()
 	* 14. Get dynamic timelimit (db_GetDynamicTimelimit)
 	* -> loadAllClientSettings
 	*/
-	if (!g_bRenaming && !g_bInTransactionChain && IsServerProcessing())
+
+	ConVar cvHibernateWhenEmpty = FindConVar("sv_hibernate_when_empty");
+
+	if (!g_bRenaming && !g_bInTransactionChain && (IsServerProcessing() || !cvHibernateWhenEmpty.BoolValue))
 		db_selectMapZones();
 
 
