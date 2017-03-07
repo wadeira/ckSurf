@@ -3172,3 +3172,45 @@ public Action Command_StageAllowPrehop(int args)
 	g_bStageIgnorePrehop[stage] = (allow == 1);
 	return Plugin_Handled;
 }
+
+public Action Command_AllowHighJumps(int args)
+{
+	if (args < 2)
+	{
+		LogError("[Surf Timer] Missing arguments. Usage sm_stageallowhighjumps <stage> <1|0>");
+		return Plugin_Handled;
+	}
+
+	char szStage[5], szAllow[8];
+
+	// Get arguments value
+	GetCmdArg(1, szStage, sizeof(szStage));
+	GetCmdArg(2, szAllow, sizeof(szAllow));
+
+	int stage = StringToInt(szStage);
+	int allow = StringToInt(szAllow);
+
+	// Check if the map has stages
+	if (!g_bhasStages)
+	{
+		LogError("[Surf Timer] sm_stageallowhighjumps: %s is a linear map. ", g_szMapName, stage);
+		return Plugin_Handled;
+	}
+
+	// Check if the stage is valid
+	if (stage == 0)
+	{
+		LogError("[Surf Timer] sm_stageallowhighjumps: Invalid stage %s.", szStage);
+		return Plugin_Handled;
+	}
+	
+	// Check if the stage exists
+	if (stage > g_mapZonesTypeCount[0][3] + 1)
+	{
+		LogError("[Surf Timer] sm_stageallowhighjumps: Stage %d does not exist on map %s", stage, g_szMapName);
+		return Plugin_Handled;
+	}
+
+	g_bStageAllowHighJumps[stage] = (allow == 1);
+	return Plugin_Handled;
+}

@@ -358,7 +358,7 @@ public void EndTouch(int client, int action[4])
 				Array_Copy(g_mapZones[action[3]][PointA], vLowestCorner, 3);
 
 			// Check if the player jumped from an high platform
-			if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 25.0)) 
+			if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 25.0) &&  !g_bStageAllowHighJumps[g_Stage[0][client]]) 
 				PrintToChat(client, "[%cSurf Timer%c] %cYou jumped from way too high.", MOSSGREEN, WHITE, LIGHTRED); 
 
 			else
