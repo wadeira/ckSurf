@@ -1303,7 +1303,6 @@ public void LimitSpeed(int client)
 
 	// Limit the player velocity
 	bool limitZVel = false;
-	if (CurVelVec[2] < -300.0) 
 	if (CurVelVec[2] < -300.0 && !g_bStageAllowHighJumps[1]) 
 	{
 		// Check if the player jumped from an high platform
