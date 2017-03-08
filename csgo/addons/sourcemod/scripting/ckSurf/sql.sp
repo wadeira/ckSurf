@@ -5353,6 +5353,7 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 
 			g_fStageMaxVelocity[i] = g_hStagePreSpeed.FloatValue;
 			g_bStageIgnorePrehop[i] = false;
+			g_bStageAllowHighJumps[i] = false;
 		}
 
 		// Load custom map config
