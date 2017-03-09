@@ -703,6 +703,50 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 			g_bPlayerIsJumping[client] = false;
 		}
+
+		// Do not record frames where the player was afk in start zone
+		if (!IsFakeClient(client)) {
+			float vVelocity[3];
+			GetEntPropVector(client, Prop_Data, "m_vecVelocity", vVelocity);
+			float velocity = GetVectorLength(vVelocity);
+
+			// Player is afk, stop recording if already recording
+			if (velocity == 0.0) 
+			{
+				if (g_iClientInZone[client][0] == view_as<int>(ZT_Start) || g_iClientInZone[client][0] == view_as<int>(ZT_Speed))
+				{
+					// Check if the replay is recording
+					if (g_hRecording[client] != null) {
+						// Stop recording
+						StopRecording(client);
+					}
+				}
+				else if (g_iClientInZone[client][0] == view_as<int>(ZT_Stage))
+				{
+					// Check if the stage replay is being recorded
+					if (g_StageRecStartFrame[client] != -1)
+						g_StageRecStartFrame[client] = -1;
+				}
+			}
+			else 
+			{
+				if (g_iClientInZone[client][0] == view_as<int>(ZT_Start) || g_iClientInZone[client][0] == view_as<int>(ZT_Speed))
+				{
+					// Check if the the client is recording already
+					if (g_hRecording[client] == null)
+						StartRecording(client);
+
+					// Check if the map has stages
+					if (g_bhasStages)
+						Stage_StartRecording(client);
+				}
+				else if (g_iClientInZone[client][0] == view_as<int>(ZT_Stage))
+				{
+					if (g_StageRecStartFrame[client] == -1)
+						Stage_StartRecording(client);
+				}
+			}
+		}
 	}
 
 	if (GetClientTeam(client) == 1 && buttons & IN_USE) {
