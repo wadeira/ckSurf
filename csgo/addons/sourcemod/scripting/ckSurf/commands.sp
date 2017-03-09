@@ -3113,7 +3113,7 @@ public Action Command_StageMaxVelocity(int args)
 	}
 
 	// Check if the stage is valid
-	if (stage == 0)
+	if (stage == 0 || stage >= CPLIMIT)
 	{
 		LogError("[Surf Timer] sm_stagemaxvelocity: Invalid stage (%s).", szStage);
 		return Plugin_Handled;
@@ -3156,7 +3156,7 @@ public Action Command_StageAllowPrehop(int args)
 	}
 
 	// Check if the stage is valid
-	if (stage == 0)
+	if (stage == 0 || stage >= CPLIMIT)
 	{
 		LogError("[Surf Timer] sm_stageallowprehop: Invalid stage %s.", szStage);
 		return Plugin_Handled;
@@ -3198,11 +3198,13 @@ public Action Command_AllowHighJumps(int args)
 	}
 
 	// Check if the stage is valid
-	if (stage == 0)
+	if (stage == 0 || stage >= CPLIMIT)
 	{
 		LogError("[Surf Timer] sm_stageallowhighjumps: Invalid stage %s.", szStage);
 		return Plugin_Handled;
 	}
+
+
 	
 	// Check if the stage exists
 	if (stage > g_mapZonesTypeCount[0][3] + 1)
