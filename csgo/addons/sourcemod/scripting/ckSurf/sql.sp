@@ -103,7 +103,7 @@ char sql_CountRankedPlayers[] = "SELECT COUNT(steamid) FROM ck_playerrank";
 char sql_CountRankedPlayers2[] = "SELECT COUNT(steamid) FROM ck_playerrank where points > 0";
 
 //TABLE PLAYERTIMES
-char sql_createPlayertimes[] = "CREATE TABLE IF NOT EXISTS ck_playertimes (steamid VARCHAR(32), mapname VARCHAR(32), name VARCHAR(32), runtimepro FLOAT NOT NULL DEFAULT '-1.0', startspeed FLOAT NOT NULL DEFAULT '-1.0' PRIMARY KEY(steamid,mapname));";
+char sql_createPlayertimes[] = "CREATE TABLE IF NOT EXISTS ck_playertimes (steamid VARCHAR(32), mapname VARCHAR(32), name VARCHAR(32), runtimepro FLOAT NOT NULL DEFAULT '-1.0', startspeed FLOAT NOT NULL DEFAULT '-1.0', PRIMARY KEY(steamid,mapname));";
 char sql_createPlayertimesIndex[] = "CREATE INDEX maprank ON ck_playertimes (mapname, runtimepro);";
 char sql_insertPlayer[] = "INSERT INTO ck_playertimes (steamid, mapname, name) VALUES('%s', '%s', '%s');";
 char sql_insertPlayerTime[] = "INSERT INTO ck_playertimes (steamid, mapname, name,runtimepro, startspeed) VALUES('%s', '%s', '%s', '%f', '%f');";
