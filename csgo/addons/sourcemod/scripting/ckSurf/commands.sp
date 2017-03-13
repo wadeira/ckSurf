@@ -3216,3 +3216,10 @@ public Action Command_AllowHighJumps(int args)
 	g_bStageAllowHighJumps[stage] = (allow == 1);
 	return Plugin_Handled;
 }
+
+public Action Command_ShowZones(int client, int args)
+{	
+	g_bShowZones[client] = !g_bShowZones[client];
+
+	PrintToChat(client, "[%cSurf Timer%c] Zone display is now %s.", MOSSGREEN, WHITE, (g_bShowZones[client] ? "enabled" : "disabled"));
+}

@@ -280,9 +280,15 @@ public Action Say_Hook(int client, const char[] command, int argc)
 		if (g_bHasChatTag[client])
 		{
 			if (strlen(g_cChatTag[client]) < 1)
-				CPrintToChatAllEx(client, "%s %s{default}: %s", g_pr_chat_coloredrank[client], g_cCustomName[client], sText);
+			{
+				CSetNextAuthor(client);
+				CPrintToChatAll("%s %s{default}: %s", g_pr_chat_coloredrank[client], g_cCustomName[client], sText);
+			}
 			else
-				CPrintToChatAllEx(client, "%s %s{default}: %s", g_cChatTag[client], g_cCustomName[client], sText);
+			{
+				CSetNextAuthor(client);
+				CPrintToChatAll("%s %s{default}: %s", g_cChatTag[client], g_cCustomName[client], sText);
+			}
 
 			return Plugin_Handled;
 		}
@@ -300,29 +306,47 @@ public Action Say_Hook(int client, const char[] command, int argc)
 
 			if (GetConVarBool(g_hCountry) && (GetConVarBool(g_hPointSystem) || (StrEqual(g_pr_rankname[client], "ADMIN", false) && GetConVarBool(g_hAdminClantag))))
 			{
-				if (IsPlayerAlive(client))
-					CPrintToChatAllEx(client, "{green}%s{default} %s {teamcolor}%s{default}: %s", g_szCountryCode[client], szChatRank, szName, sText);
-				else
-					CPrintToChatAllEx(client, "{green}%s{default} %s {teamcolor}*DEAD* %s{default}: %s", g_szCountryCode[client], szChatRank, szName, sText);
+				if (IsPlayerAlive(client)) 
+				{
+					CSetNextAuthor(client);
+					CPrintToChatAll("{green}%s{default} %s {teamcolor}%s{default}: %s", g_szCountryCode[client], szChatRank, szName, sText);
+				}
+				else 
+				{
+					CSetNextAuthor(client);
+					CPrintToChatAll("{green}%s{default} %s {teamcolor}*DEAD* %s{default}: %s", g_szCountryCode[client], szChatRank, szName, sText);
+				}
 				return Plugin_Handled;
 			}
 			else
 			{
 				if (GetConVarBool(g_hPointSystem) || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && GetConVarBool(g_hAdminClantag)))
 				{
-					if (IsPlayerAlive(client))
-						CPrintToChatAllEx(client, "%s {teamcolor}%s{default}: %s", szChatRank, szName, sText);
-					else
-						CPrintToChatAllEx(client, "%s {teamcolor}*DEAD* %s{default}: %s", szChatRank, szName, sText);
+					if (IsPlayerAlive(client)) 
+					{
+						CSetNextAuthor(client);
+						CPrintToChatAll("%s {teamcolor}%s{default}: %s", szChatRank, szName, sText);
+					}
+					else 
+					{
+						CSetNextAuthor(client);
+						CPrintToChatAll("%s {teamcolor}*DEAD* %s{default}: %s", szChatRank, szName, sText);
+					}
 					return Plugin_Handled;
 				}
 				else
 					if (GetConVarBool(g_hCountry))
 				{
 					if (IsPlayerAlive(client))
-						CPrintToChatAllEx(client, "[{green}%s{default}] {teamcolor}%s{default}: %s", g_szCountryCode[client], szName, sText);
+					{
+						CSetNextAuthor(client);
+						CPrintToChatAll("[{green}%s{default}] {teamcolor}%s{default}: %s", g_szCountryCode[client], szName, sText);
+					}
 					else
-						CPrintToChatAllEx(client, "[{green}%s{default}] {teamcolor}*DEAD* %s{default}: %s", g_szCountryCode[client], szName, sText);
+					{
+						CSetNextAuthor(client);
+						CPrintToChatAll("[{green}%s{default}] {teamcolor}*DEAD* %s{default}: %s", g_szCountryCode[client], szName, sText);
+					}
 					return Plugin_Handled;
 				}
 			}

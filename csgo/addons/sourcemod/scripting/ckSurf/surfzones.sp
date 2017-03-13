@@ -439,81 +439,45 @@ public Action BeamBox(Handle timer, any client)
 
 public Action BeamBoxAll(Handle timer, any data)
 {
-	int zColor[4], tzColor[4];
-	bool draw;
-
-	if (GetConVarInt(g_hZoneDisplayType) < 1)
-		return Plugin_Handled;
-
-	for (int i = 0; i < g_mapZonesCount; ++i)
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		draw = false;
-		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		if (0 < g_mapZones[i][Vis] < 4)
-		{
-			draw = true;
-		}
-		else
-		{
-			if (GetConVarInt(g_hZonesToDisplay) == 1 && ((0 < g_mapZones[i][zoneType] < 3) || g_mapZones[i][zoneType] == 5))
-			{
-				draw = true;
-			}
-			else
-			{
-				if (GetConVarInt(g_hZonesToDisplay) == 2 && ((0 < g_mapZones[i][zoneType] < 4) || g_mapZones[i][zoneType] == 5))
-				{
-					draw = true;
-				}
-				else
-				{
-					if (GetConVarInt(g_hZonesToDisplay) == 3)
-					{
-						draw = true;
-					}
-				}
-			}
-		}
+		if (!IsValidClient(client))
+			continue;
 
-		if (draw)
+		// Make sure the zones are enabled
+		if (g_hZoneDisplayType.IntValue == 0 && !g_bShowZones[client])
+			continue;
+
+		// Loop through the zones
+		for (int i = 0; i < g_mapZonesCount; ++i)
 		{
-			getZoneDisplayColor(g_mapZones[i][zoneType], zColor, g_mapZones[i][zoneGroup]);
-			getZoneTeamColor(g_mapZones[i][Team], tzColor);
-			for (int p = 1; p <= MaxClients; p++)
+			// Ignore zone draw checks if the client wants to see all zones
+			if (!g_bShowZones[client])
 			{
-				if (IsValidClient(p))
-				{
-					if ( g_mapZones[i][Vis] == 2 ||  g_mapZones[i][Vis] == 3)
-					{
-						if (GetClientTeam(p) ==  g_mapZones[i][Vis] && g_ClientSelectedZone[p] != i)
-						{
-							float buffer_a[3], buffer_b[3];
-							for (int x = 0; x < 3; x++)
-							{
-								buffer_a[x] = g_mapZones[i][PointA][x];
-								buffer_b[x] = g_mapZones[i][PointB][x];
-							}
-							TE_SendBeamBoxToClient(p, buffer_a, buffer_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 5.0, 5.0, 2, 1.0, tzColor, 0, 0, i);
-						}
-					}
-					else
-					{
-						if (g_ClientSelectedZone[p] != i)
-						{
-							float buffer_a[3], buffer_b[3];
-							for (int x = 0; x < 3; x++)
-							{
-								buffer_a[x] = g_mapZones[i][PointA][x];
-								buffer_b[x] = g_mapZones[i][PointB][x];
-							}
-							TE_SendBeamBoxToClient(p, buffer_a, buffer_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 5.0, 5.0, 2, 1.0, zColor, 0, 0, i);
-						}
-					}
-				}
+				// Only draw Start, End and Speed
+				if (g_hZonesToDisplay.IntValue == 1 && !((0 < g_mapZones[i][zoneType] < 3) || g_mapZones[i][zoneType] == 5)) 
+					continue;
+
+				// Only draw Start, End, Speed and Stage
+				else if (g_hZonesToDisplay.IntValue == 2 && !((0 < g_mapZones[i][zoneType] < 4) || g_mapZones[i][zoneType] == 5))
+					continue;
 			}
+
+			// Do not display the current zone if the player is editing it
+			if (g_ClientSelectedZone[client] == i)
+				continue;
+
+			// Get the color of the zone
+			int color[4];
+			getZoneDisplayColor(g_mapZones[i][zoneType], color, g_mapZones[i][zoneGroup]);
+
+			float point_a[3], point_b[3];
+			Array_Copy(g_mapZones[i][PointA], point_a, sizeof(point_a));
+			Array_Copy(g_mapZones[i][PointB], point_b, sizeof(point_b));
+
+			TE_SendBeamBoxToClient(client, point_a, point_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 5.0, 5.0, 2, 1.0, color, 0, 0, i);
 		}
 	}
-	return Plugin_Continue;
 }
 
 public void getZoneDisplayColor(int type, int zColor[4], int zGrp)
@@ -607,10 +571,10 @@ public void BeamBox_OnPlayerRunCmd(int client)
 stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottomcorner[3], int ModelIndex, int HaloIndex, int StartFrame, int FrameRate, float Life, float Width, float EndWidth, int FadeLength, float Amplitude, const int Color[4], int Speed, int type, int zoneid = -1)
 {
 	//0 = Do not display zones, 1 = Display the lower edges of zones, 2 = Display whole zone
-	if (!IsValidClient(client) || GetConVarInt(g_hZoneDisplayType) < 1)
+	if (!IsValidClient(client) || (GetConVarInt(g_hZoneDisplayType) < 1 && !g_bShowZones[client] && g_ClientSelectedZone[client] != zoneid))
 		return;
 
-	if (GetConVarInt(g_hZoneDisplayType) > 1 || type == 1) // All sides
+	if (GetConVarInt(g_hZoneDisplayType) > 1 || type == 1 || g_bShowZones[client] || g_ClientSelectedZone[client] == zoneid) // All sides
 	{
 		float corners[8][3];
 		if (zoneid == -1)

@@ -16,7 +16,7 @@
 #include <smlib>
 #include <geoip>
 #include <basecomm>
-#include <colors>
+#include <colorvariables>
 #undef REQUIRE_EXTENSIONS
 #include <clientprefs>
 #undef REQUIRE_PLUGIN
@@ -641,7 +641,7 @@ char g_szCountryCode[MAXPLAYERS + 1][16];						// Country codes
 char g_szSteamID[MAXPLAYERS + 1][32];							// Client's steamID
 char g_BlockedChatText[256][256];								// Blocked chat commands
 float g_fLastOverlay[MAXPLAYERS + 1];							// Last time an overlay was displayed
-
+bool g_bShowZones[MAXPLAYERS+1];
 
 /*----------  Player location restoring  ----------*/
 bool g_bPositionRestored[MAXPLAYERS + 1]; 						// Clients location was restored this run
@@ -1970,6 +1970,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_n", Command_normalMode, "[Surf Timer] Switches player back to normal mode.");
 	RegConsoleCmd("sm_saveloc", Command_saveLoc, "[Surf Timer] Saves current location.");
 	RegConsoleCmd("sm_loadloc", Command_loadLoc, "[Surf Timer] Loads a saved location.");
+	RegConsoleCmd("sm_showzones", Command_ShowZones, "[Surf Timer] Draws zones and shows them to the players.");
 
 
 	RegConsoleCmd("sm_specbot", Command_Replay, "[Surf Timer] Shows the replay menu.");

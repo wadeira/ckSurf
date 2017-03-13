@@ -1636,6 +1636,7 @@ public void SetClientDefaults(int client)
 
 	g_fLastReplayRequested[client] = 0.0;
 	g_bConfirmedReplayRestart[client] = false;
+	g_bShowZones[client] = false;
 }
 
 public void clearPlayerCheckPoints(int client)
