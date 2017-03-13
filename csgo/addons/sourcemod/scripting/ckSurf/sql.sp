@@ -51,7 +51,7 @@ char sql_updateBonusTier[] = "UPDATE ck_maptier SET btier%i = %i WHERE mapname =
 char sql_insertBonusTier[] = "INSERT INTO ck_maptier (mapname, btier%i) VALUES ('%s', '%i');";
 
 //TABLE BONUS
-char sql_createBonus[] = "CREATE TABLE IF NOT EXISTS ck_bonus (steamid VARCHAR(32), name VARCHAR(32), mapname VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', zonegroup INT(12) NOT NULL DEFAULT 1, startspeed FLOAT NOT NULL DEFAULT -1 PRIMARY KEY(steamid, mapname, zonegroup));";
+char sql_createBonus[] = "CREATE TABLE IF NOT EXISTS ck_bonus (steamid VARCHAR(32), name VARCHAR(32), mapname VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', zonegroup INT(12) NOT NULL DEFAULT 1, startspeed FLOAT NOT NULL DEFAULT -1, PRIMARY KEY(steamid, mapname, zonegroup));";
 char sql_createBonusIndex[] = "CREATE INDEX bonusrank ON ck_bonus (mapname,runtime,zonegroup);";
 char sql_insertBonus[] = "INSERT INTO ck_bonus (steamid, name, mapname, runtime, zonegroup, startspeed) VALUES ('%s', '%s', '%s', '%f', '%i', '%f')";
 char sql_updateBonus[] = "UPDATE ck_bonus SET runtime = '%f', name = '%s', startspeed = '%f' WHERE steamid = '%s' AND mapname = '%s' AND zonegroup = %i";
