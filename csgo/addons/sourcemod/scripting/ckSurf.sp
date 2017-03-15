@@ -544,8 +544,8 @@ bool g_bValidRun[MAXPLAYERS + 1];								// Used to check if a clients run is va
 bool g_bBonusFirstRecord[MAXPLAYERS + 1];						// First bonus time in map?
 bool g_bBonusPBRecord[MAXPLAYERS + 1];							// Personal best time in bonus
 bool g_bBonusSRVRecord[MAXPLAYERS + 1];							// New server record in bonus
-char g_szBonusTimeDifference[MAXPLAYERS + 1];					// How many seconds were improved / lost in that run
-char g_szBonusSRTimeDifference[MAXPLAYERS + 1];				// Difference between the run and the bonus record
+char g_szBonusTimeDifference[MAXPLAYERS + 1][54];				// How many seconds were improved / lost in that run
+char g_szBonusSRTimeDifference[MAXPLAYERS + 1][54];				// Difference between the run and the bonus record
 float g_fStartTime[MAXPLAYERS + 1]; 							// Time when run was started
 float g_fFinalTime[MAXPLAYERS + 1]; 							// Total time the run took
 char g_szFinalTime[MAXPLAYERS + 1][32]; 						// Total time the run took in 00:00:00 format
