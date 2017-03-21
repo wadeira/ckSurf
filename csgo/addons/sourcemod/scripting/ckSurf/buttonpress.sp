@@ -116,6 +116,18 @@ public void CL_OnStartTimerPress(int client)
 			Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | SR: %s", speedDiffMsg, srDiff);
 		}
 
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (GetClientTeam(i) != CS_TEAM_SPECTATOR)
+				continue;
+
+			int ObserverMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
+			if (ObserverMode != 4 && ObserverMode != 5)
+				continue;
+
+			PrintToChat(client, speedDiffMsg);
+		}
+
 		PrintToChat(client, speedDiffMsg);
 
 
@@ -668,6 +680,18 @@ public void StartStageTimer(int client)
 			Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
 
 		Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | SR: %s", speedDiffMsg, srDiff);
+	}
+
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (GetClientTeam(i) != CS_TEAM_SPECTATOR)
+			continue;
+
+		int ObserverMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
+		if (ObserverMode != 4 && ObserverMode != 5)
+			continue;
+
+		PrintToChat(client, speedDiffMsg);
 	}
 
 	PrintToChat(client, speedDiffMsg);
