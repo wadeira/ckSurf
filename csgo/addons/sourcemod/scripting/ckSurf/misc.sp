@@ -3014,7 +3014,13 @@ public void CenterHudDead(int client)
 			{
 				obsTimer = GetGameTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];
 				FormatTimeFloat(client, obsTimer, 3, obsAika, sizeof(obsAika));
-			} else
+			}
+			else if (g_bStageTimerRunning[ObservedUser])
+			{
+				obsTimer = GetGameTime() - g_fStageStartTime[ObservedUser];
+				FormatTimeFloat(client, obsTimer, 3, obsAika, sizeof(obsAika));
+			}
+			else
 			{
 				obsAika = "<font color='#FF0000'>Stopped</font>";
 			}
