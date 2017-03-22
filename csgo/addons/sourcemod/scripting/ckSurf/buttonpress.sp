@@ -118,7 +118,7 @@ public void CL_OnStartTimerPress(int client)
 
 		for (int i = 1; i <= MaxClients; i++)
 		{
-			if (!IsClientConnected(i))
+			if (!IsClientInGame(i))
 				continue;
 
 			if (GetClientTeam(i) != CS_TEAM_SPECTATOR)
@@ -687,7 +687,7 @@ public void StartStageTimer(int client)
 
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (!IsClientConnected(i))
+		if (!IsClientInGame(i))
 			continue;
 			
 		if (GetClientTeam(i) != CS_TEAM_SPECTATOR)
