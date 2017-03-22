@@ -499,7 +499,7 @@ public Action Command_GoBack(int client, int args)
 
 public Action Command_HowTo(int client, int args)
 {
-	ShowMOTDPanel(client, "ckSurf - How To Surf", "http://2gcrew.space/motd.php?u=https://www.youtube.com/v/lYc52kwTNb8", MOTDPANEL_TYPE_URL);
+	OpenMOTD(client, "https://www.youtube.com/embed/lYc52kwTNb8");
 	return Plugin_Handled;
 }
 
@@ -2766,7 +2766,8 @@ public void InfoPanel(int client)
 
 public Action Command_ViewStats(int client, int args)
 {
-	ShowMOTDPanel(client, "Surf statistics", "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/", MOTDPANEL_TYPE_URL);
+	//ShowMOTDPanel(client, "Surf statistics", "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/", MOTDPANEL_TYPE_URL);
+	OpenMOTD(client, g_cWebStatsUrl_Base);
 }
 
 public Action Command_saveLoc(int client, int args)

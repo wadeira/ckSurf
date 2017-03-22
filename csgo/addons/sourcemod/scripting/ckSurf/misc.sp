@@ -3502,3 +3502,22 @@ public int CountSpectators(int client)
 
 	return specCount;
 }
+
+
+// Credits to boomix for the JS injection (https://forums.alliedmods.net/showthread.php?t=292478)
+void OpenMOTD(int client, const char[] url)
+{
+	int len = strlen(url) + 256;
+	char[] urlJs = new char[len];
+
+	// Inject javascript to the url
+	Format(urlJs, len, "javascript: window.open('%s','Surf Timer','scrollbars=yes, width='+screen.width*.9+',height='+screen.height*.9)", url);
+
+	
+	if (StrContains(url, "{steamid}") != -1)
+		ReplaceString(urlJs, len, "{steamid}", g_szProfileSteamId[client]);
+
+	// Open motd to client
+	ShowMOTDPanel(client, "Surf Timer", urlJs, MOTDPANEL_TYPE_URL);
+	PrintToConsole(client, urlJs);
+}

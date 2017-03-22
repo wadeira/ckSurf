@@ -6590,15 +6590,9 @@ public int ProfileMenuHandler(Handle menu, MenuAction action, int client, int it
 	{
 		switch (item)
 		{
-			case 0:db_viewRecord(client, g_szProfileSteamId[client], g_szMapName);
-			case 1:db_viewChallengeHistory(client, g_szProfileSteamId[client]);
-			case 2:
-			{
-				char sUrl[128];
-				Format(sUrl, sizeof(sUrl), "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/players/view/%s", g_szProfileSteamId[client]);
-
-				ShowMOTDPanel(client, "Profile", sUrl, MOTDPANEL_TYPE_URL);
-			}
+			case 0: db_viewRecord(client, g_szProfileSteamId[client], g_szMapName);
+			case 1: db_viewChallengeHistory(client, g_szProfileSteamId[client]);
+			case 2: OpenMOTD(client, g_cWebStatsUrl_Profile);
 			case 3:
 			{
 				if (g_bRecalcRankInProgess[client])
