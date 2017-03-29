@@ -677,7 +677,7 @@ public void RecordReplay (int client, int &buttons, int &subtype, int &seed, int
 			iAT[atFlags] = ADDITIONAL_FIELD_TELEPORTED_ORIGIN;
 			PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT[0], view_as<int>(AdditionalTeleport));
 			g_OriginSnapshotInterval[client] = 0;
-			g_previousSpeedSnapshot[client] = 0;
+			g_previousSpeedSnapshot[client] = 0.0;
 		}
 
 		g_OriginSnapshotInterval[client]++;
