@@ -91,13 +91,12 @@ public void StopRecording(int client)
 
 public void SaveRecording(int client, int zgroup)
 {
-	if (!IsValidClient(client) || g_hRecording[client] == null)
-		return;
-	else
-	{
+	if (!IsValidClient(client) || g_hRecording[client] == null) {
 		g_bNewReplay[client] = false;
 		g_bNewBonus[client] = false;
+		return;
 	}
+	
 
 	char sPath2[256];
 	// Check if the default record folder exists?
@@ -163,7 +162,7 @@ public void LoadReplays()
 		return;
 
 	// Init variables:
-	g_bMapReplay = false;
+	g_bMapReplay = true;
 
 	for (int i = 0; i < MAXZONEGROUPS; i++)
 	{
@@ -176,7 +175,7 @@ public void LoadReplays()
 	g_ReplayRequester = 0;
 	g_BonusBotCount = 0;
 	g_RecordBot = -1;
-	g_iCurrentBonusReplayIndex = 0;
+	g_ReplayCurrentStage = 0;
 	ClearTrie(g_hLoadedRecordsAdditionalTeleport);
 
 	// Check that map replay exists
@@ -250,16 +249,23 @@ public void LoadReplays()
 	CreateTimer(1.0, RefreshBot, TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public void PlayRecord(int client, int type)
+public void PlayRecord(int client, char[] id)
 {
 	if (!IsValidClient(client))
 		return;
 	char buffer[256];
 	char sPath[256];
+	int type = StringToInt(id);
+
 	if (type == 0)
 		Format(sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
 	if (type > 0)
 		Format(sPath, sizeof(sPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, type);
+	if (type < 0) {
+		Format(sPath, sizeof(sPath), "%s%s_stage_%i.rec", CK_REPLAY_PATH, g_szMapName, (type * -1));
+		g_ReplayCurrentStage = type * -1;
+	}
+
 
 	// He's currently recording. Don't start to play some record on him at the same time.
 	if (g_hRecording[client] != null || !IsFakeClient(client))
@@ -284,13 +290,19 @@ public void PlayRecord(int client, int type)
 		Format(buffer, sizeof(buffer), "%s (%s)", g_szReplayName, g_szReplayTime);
 		SetClientName(client, buffer);
 	}
-	else
+	else if (type > 0)
 	{
 		Format(g_szBonusTime, sizeof(g_szBonusTime), "%s", iFileHeader[view_as<int>(FH_Time)]);
 		Format(g_szBonusName, sizeof(g_szBonusName), "%s", iFileHeader[view_as<int>(FH_Playername)]);
 		Format(buffer, sizeof(buffer), "%s (%s)", g_szBonusName, g_szBonusTime);
 		SetClientName(client, buffer);
 	}
+	else if (type < 0)
+	{
+		Format(buffer, sizeof(buffer), "%s (%s)", iFileHeader[view_as<int>(FH_Playername)], iFileHeader[view_as<int>(FH_Time)]);
+		SetClientName(client, buffer);
+	}
+
 	g_hBotMimicsRecord[client] = iFileHeader[view_as<int>(FH_frames)];
 	g_BotMimicTick[client] = 0;
 	g_BotMimicRecordTickCount[client] = iFileHeader[view_as<int>(FH_tickCount)];
@@ -437,6 +449,7 @@ public void LoadRecordFromFile(const char[] path, int headerInfo[FILE_HEADER_LEN
 
 	if (GetArraySize(hAdditionalTeleport) > 0)
 		SetTrieValue(g_hLoadedRecordsAdditionalTeleport, path, hAdditionalTeleport);
+
 	CloseHandle(hFile);
 
 	return;
@@ -719,18 +732,6 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 		{
 			if (!g_bReplayAtEnd[client])
 			{
-				/*if (client == g_BonusBot)
-				{
-					// Call to load another replay
-					if (g_iCurrentBonusReplayIndex < (g_BonusBotCount-1))
-						g_iCurrentBonusReplayIndex++;
-					else
-						g_iCurrentBonusReplayIndex = 0;
-
-					PlayRecord(g_BonusBot, 1);
-					g_iClientInZone[g_BonusBot][2] = g_iBonusToReplay[g_iCurrentBonusReplayIndex];
-				}*/
-
 				g_fReplayRestarted[client] = GetEngineTime();
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 0.0);
 				g_bReplayAtEnd[client] = true;
@@ -746,9 +747,11 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 
 			g_fLastReplayRequested[g_ReplayRequester] = GetGameTime();
 			g_bIsPlayingReplay = false;
+			g_ReplayCurrentStage = 0;
 
 			CS_SetClientClanTag(g_RecordBot, "REPLAY");
 			SetClientName(g_RecordBot, "Type !replay to watch");
+
 			return;
 		}
 
@@ -779,7 +782,9 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 			if (g_CurrentReplay == 0)
 				Format(sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
 			else if (g_CurrentReplay > 0)
-				Format(sPath, sizeof(sPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, g_iBonusToReplay[g_iCurrentBonusReplayIndex]);
+				Format(sPath, sizeof(sPath), "%s%s_bonus_%i.rec", CK_REPLAY_PATH, g_szMapName, g_CurrentReplay);
+			else if (g_CurrentReplay < 0 && g_ReplayCurrentStage > 0)
+				Format(sPath, sizeof(sPath), "%s%s_stage_%i.rec", CK_REPLAY_PATH, g_szMapName, g_ReplayCurrentStage);
 
 			BuildPath(Path_SM, sPath, sizeof(sPath), "%s", sPath);
 			if (g_hLoadedRecordsAdditionalTeleport != null)
@@ -908,4 +913,94 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 		}
 		g_BotMimicTick[client]++;
 	}
+}
+
+
+
+public void Stage_StartRecording(int client)
+{
+	GetClientAbsOrigin(client, g_fStageInitialPosition[client]);
+	GetClientEyeAngles(client, g_fStageInitialAngles[client]);
+
+	// Client is being recorded, save the ticks where the recording started
+	if (g_hRecording[client] != null) {
+		g_StageRecStartFrame[client] = g_RecordedTicks[client];
+		g_StageRecStartAT[client] = g_CurrentAdditionalTeleportIndex[client];
+		return;
+	}
+
+	StartRecording(client);
+	g_StageRecStartFrame[client] = 0;
+	g_StageRecStartAT[client] = 0;
+}
+
+
+public void Stage_SaveRecording(int client, int stage, char[] time)
+{
+	if (!IsValidClient(client) || g_hRecording[client] == null) {
+		return;
+	}
+	
+
+	char sPath2[256];
+
+	// Check if the default record folder exists?
+	BuildPath(Path_SM, sPath2, sizeof(sPath2), "%s", CK_REPLAY_PATH);
+	if (!DirExists(sPath2))
+	{
+		CreateDirectory(sPath2, 511);
+	}
+
+	BuildPath(Path_SM, sPath2, sizeof(sPath2), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, stage);
+	
+
+	if (FileExists(sPath2) && GetConVarBool(g_hBackupReplays))
+	{
+		char newPath[256];
+		Format(newPath, 256, "%s.bak", sPath2);
+		RenameFile(newPath, sPath2);
+	}
+
+	char szName[MAX_NAME_LENGTH];
+	GetClientName(client, szName, MAX_NAME_LENGTH);
+
+
+	int startframe = g_StageRecStartFrame[client];
+	int framesRecorded = GetArraySize(g_hRecording[client]) - startframe;
+
+	int iHeader[FILE_HEADER_LENGTH];
+	iHeader[view_as<int>(FH_binaryFormatVersion)] = BINARY_FORMAT_VERSION;
+	strcopy(iHeader[view_as<int>(FH_Time)], 32, time);
+	iHeader[view_as<int>(FH_tickCount)] = framesRecorded;
+	strcopy(iHeader[view_as<int>(FH_Playername)], 32, szName);
+	iHeader[view_as<int>(FH_Checkpoints)] = 0; // So that KZTimers replays work
+	Array_Copy(g_fStageInitialPosition[client], iHeader[view_as<int>(FH_initialPosition)], 3);
+	Array_Copy(g_fStageInitialAngles[client], iHeader[view_as<int>(FH_initialAngles)], 3);
+
+	Handle frames = CreateArray(view_as<int>(FrameInfo));
+
+	for (int i = startframe; i < GetArraySize(g_hRecording[client]); i++)
+	{
+		int iFrame[FRAME_INFO_SIZE];
+		GetArrayArray(g_hRecording[client], i, iFrame, view_as<int>(FrameInfo));
+		PushArrayArray(frames, iFrame, view_as<int>(FrameInfo));
+	}
+
+	iHeader[view_as<int>(FH_frames)] = frames;
+
+	if (GetArraySize(g_hRecordingAdditionalTeleport[client]) > 0)
+	{
+		Handle additionalteleports = CreateArray(view_as<int>(AdditionalTeleport));
+
+		for (int i = g_StageRecStartAT[client]; i < GetArraySize(g_hRecordingAdditionalTeleport[client]); i++)
+		{
+			int iAT[AT_SIZE];
+			GetArrayArray(g_hRecordingAdditionalTeleport[client], i, iAT, AT_SIZE);
+			PushArrayArray(additionalteleports, iAT, AT_SIZE);
+		}
+
+		SetTrieValue(g_hLoadedRecordsAdditionalTeleport, sPath2, additionalteleports);
+	}
+
+	WriteRecordToDisk(sPath2, iHeader);
 }

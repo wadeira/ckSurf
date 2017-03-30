@@ -3,6 +3,8 @@
 *					By Elzi 			      =
 =============================================*/
 
+#define DEBUG
+
 /*=============================================
 =            		Includes		          =
 =============================================*/
@@ -14,7 +16,7 @@
 #include <smlib>
 #include <geoip>
 #include <basecomm>
-#include <colors>
+#include <colorvariables>
 #undef REQUIRE_EXTENSIONS
 #include <clientprefs>
 #undef REQUIRE_PLUGIN
@@ -35,8 +37,8 @@
 #pragma semicolon 1
 
 // Plugin info
-#define VERSION "1.19"
-#define PLUGIN_VERSION 119
+#define VERSION "1.22"
+#define PLUGIN_VERSION 122
 
 // Database definitions
 #define MYSQL 0
@@ -102,7 +104,7 @@
 
 // Zone definitions
 #define ZONE_MODEL "models/props/de_train/barrel.mdl"
-#define ZONEAMOUNT 9		// The amount of different type of zones	-	Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
+#define ZONEAMOUNT 10		// The amount of different type of zones	-	Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0), TeleToStage
 #define MAXZONEGROUPS 11	// Maximum amount of zonegroups in a map
 #define MAXZONES 128		// Maximum amount of zones in a map
 
@@ -204,17 +206,18 @@ enum SaveLoc
 	Float:slRunTime
 }
 
-enum StageType
+enum ZoneType
 {
-	ST_Stop = 0,
-	ST_Start = 1,
-	ST_End = 2,
-	ST_Stage = 3,
-	ST_Checkpoint = 4,
-	ST_Speed = 5,
-	ST_TeleToStart = 6,
-	ST_Validator = 7,
-	ST_Checker = 8
+	ZT_Stop = 0,
+	ZT_Start = 1,
+	ZT_End = 2,
+	ZT_Stage = 3,
+	ZT_Checkpoint = 4,
+	ZT_Speed = 5,
+	ZT_TeleToStart = 6,
+	ZT_Validator = 7,
+	ZT_Checker = 8,
+	ZT_TeleToStage = 9
 }
 
 enum StageRecord
@@ -222,7 +225,8 @@ enum StageRecord
 	String:srPlayerName[45],
 	Float:srRunTime[16],
 	srCompletions,
-	bool:srLoaded
+	bool:srLoaded,
+	Float:srStartSpeed
 }
 
 
@@ -242,7 +246,7 @@ public Plugin myinfo =
 {
 	name = "Surf Timer",
 	author = "marcowmadeira",
-	description = "Nightimate's Surf Plugin",
+	description = "",
 	version = VERSION,
 	url = ""
 };
@@ -372,7 +376,7 @@ int beamColorT[] =  { 255, 0, 0, 255 };							// Zone team colors TODO: remove
 int beamColorCT[] =  { 0, 0, 255, 255 };
 int beamColorN[] =  { 255, 255, 0, 255 };
 int beamColorM[] =  { 0, 255, 0, 255 };
-char g_szZoneDefaultNames[ZONEAMOUNT][128] =  { "Stop", "Start", "End", "Stage", "Checkpoint", "SpeedStart", "TeleToStart", "Validator", "Checker" }; // Default zone names
+char g_szZoneDefaultNames[ZONEAMOUNT][128] =  { "Stop", "Start", "End", "Stage", "Checkpoint", "SpeedStart", "TeleToStart", "Validator", "Checker", "TeleToStage" }; // Default zone names
 int g_BeamSprite;												// Zone sprites
 int g_HaloSprite;
 
@@ -394,6 +398,8 @@ ConVar g_hSlopeFixEnable;
 Handle g_MapFinishForward;
 Handle g_BonusFinishForward;
 Handle g_PracticeFinishForward;
+Handle g_StageFinishedForward;
+Handle g_OnTimerStartedForward;
 
 /*----------  CVars  ----------*/
 // Zones
@@ -470,6 +476,7 @@ ConVar g_hDoubleRestartCommand;									// Double !r restart
 ConVar g_hStartPreSpeed = null; 								// Start zone speed cap
 ConVar g_hSpeedPreSpeed = null; 								// Speed Start zone speed cap
 ConVar g_hBonusPreSpeed = null; 								// Bonus start zone speed cap
+ConVar g_hStagePreSpeed = null;									// Maximum speed allowed to start stage runs
 ConVar g_hSoundEnabled = null; 									// Enable timer start sound
 ConVar g_hSoundPath = null;										// Define start sound
 //char sSoundPath[64];
@@ -481,6 +488,7 @@ float g_fLastChatMessage[MAXPLAYERS + 1]; 						// Last message time
 int g_messages[MAXPLAYERS + 1]; 								// Spam message count
 ConVar g_henableChatProcessing = null; 							// Is chat processing enabled
 ConVar g_hMultiServerMapcycle = null;							// Use multi server mapcycle
+ConVar g_hFreeVipAtRank	= null;									// Give free VIP access at a certain rank
 
 /*----------  SQL Variables  ----------*/
 Handle g_hDb = null; 											// SQL driver
@@ -500,6 +508,7 @@ float g_flastClientDecoy[MAXPLAYERS + 1];						// Throttle !decoy command
 float g_fLastCommandBack[MAXPLAYERS + 1];						// Throttle !back to prevent desync on record bots
 bool g_insertingInformation; 									// Used to check if a admin is inserting zone or maptier information, don't allow many at the same time
 bool g_bNoClip[MAXPLAYERS + 1]; 								// Client is noclipping
+bool g_bNoclipped[MAXPLAYERS + 1];
 
 /*----------  User Options  ----------*/
 // org variables track the original setting status, on disconnect, check if changed, if so, update new settings to database
@@ -535,8 +544,8 @@ bool g_bValidRun[MAXPLAYERS + 1];								// Used to check if a clients run is va
 bool g_bBonusFirstRecord[MAXPLAYERS + 1];						// First bonus time in map?
 bool g_bBonusPBRecord[MAXPLAYERS + 1];							// Personal best time in bonus
 bool g_bBonusSRVRecord[MAXPLAYERS + 1];							// New server record in bonus
-char g_szBonusTimeDifference[MAXPLAYERS + 1];					// How many seconds were improved / lost in that run
-char g_szBonusSRTimeDifference[MAXPLAYERS + 1];				// Difference between the run and the bonus record
+char g_szBonusTimeDifference[MAXPLAYERS + 1][54];				// How many seconds were improved / lost in that run
+char g_szBonusSRTimeDifference[MAXPLAYERS + 1][54];				// Difference between the run and the bonus record
 float g_fStartTime[MAXPLAYERS + 1]; 							// Time when run was started
 float g_fFinalTime[MAXPLAYERS + 1]; 							// Total time the run took
 char g_szFinalTime[MAXPLAYERS + 1][32]; 						// Total time the run took in 00:00:00 format
@@ -590,7 +599,6 @@ char g_szReplayTime[128]; 										// Replay bot time
 char g_szBonusName[128]; 										// Replay bot name
 char g_szBonusTime[128]; 										// Replay bot time
 int g_BonusBotCount;
-int g_iCurrentBonusReplayIndex;
 int g_iBonusToReplay[MAXZONEGROUPS + 1];
 float g_fReplayTimes[MAXZONEGROUPS];
 
@@ -633,7 +641,7 @@ char g_szCountryCode[MAXPLAYERS + 1][16];						// Country codes
 char g_szSteamID[MAXPLAYERS + 1][32];							// Client's steamID
 char g_BlockedChatText[256][256];								// Blocked chat commands
 float g_fLastOverlay[MAXPLAYERS + 1];							// Last time an overlay was displayed
-
+bool g_bShowZones[MAXPLAYERS+1];
 
 /*----------  Player location restoring  ----------*/
 bool g_bPositionRestored[MAXPLAYERS + 1]; 						// Clients location was restored this run
@@ -702,6 +710,7 @@ int g_PlayerRank[MAXPLAYERS + 1]; 								// Players server rank
 int g_MapRecordCount[MAXPLAYERS + 1];							// SR's the client has
 char g_pr_szName[MAX_PR_PLAYERS + 1][64];						// Used to update client's name in database
 char g_pr_szSteamID[MAX_PR_PLAYERS + 1][32];					// steamid of client being recalculated
+bool g_CalculatingPoints[MAXPLAYERS + 1];
 
 /*----------  Practice Mode  ----------*/
 float g_fCheckpointVelocity_undo[MAXPLAYERS + 1][3]; 			// Velocity at checkpoint that is on !undo
@@ -729,11 +738,15 @@ float g_fStagePlayerRecord[MAXPLAYERS + 1][64];
 bool g_bLoadingStages;
 int g_StageRecords[CPLIMIT][StageRecord];
 int g_StagePlayerRank[MAXPLAYERS+1][CPLIMIT];
+int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
+bool g_bStageIgnorePrehop[CPLIMIT];
+float g_fStageMaxVelocity[CPLIMIT];
+bool g_bStageAllowHighJumps[CPLIMIT];
 
 int g_PlayerJumpsInStage[MAXPLAYERS+1];
 bool g_bPlayerIsJumping[MAXPLAYERS+1];
 
-int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
+float g_vLastGroundTouch[MAXPLAYERS+1][3];
 
 
 
@@ -743,9 +756,33 @@ int g_CurrentReplay = -1;
 int g_ReplayRequester;
 char g_sReplayRequester[MAX_NAME_LENGTH];
 float g_fLastReplayRequested[MAXPLAYERS+1];
+bool g_bConfirmedReplayRestart[MAXPLAYERS+1];
+int g_ReplayCurrentStage = 0;
 
 
+/*--------- Custom chat tags -----------*/
+bool g_bHasChatTag[MAXPLAYERS + 1];
+char g_cChatTag[MAXPLAYERS + 1][64];
+char g_cCustomName[MAXPLAYERS + 1][64];
 
+
+/*--------- Stage replays --------------*/
+int g_StageRecStartFrame[MAXPLAYERS+1];	// Number of frames where the replay started being recorded
+int g_StageRecStartAT[MAXPLAYERS+1];	// Ammount of additional teleport when the replay started being recorded
+float g_fStageInitialPosition[MAXPLAYERS + 1][3]; 					// Replay start position
+float g_fStageInitialAngles[MAXPLAYERS + 1][3]; 						// Replay start angle
+
+
+/*--------- Start Speed ----------------*/
+float g_fRecordStartSpeed[MAXZONEGROUPS];
+float g_fPlayerRectStartSpeed[MAXPLAYERS+1][MAXZONEGROUPS];
+float g_fPlayerStageRecStartSpeed[MAXPLAYERS+1][CPLIMIT];
+float g_fPlayerCurrentStartSpeed[MAXPLAYERS+1][CPLIMIT];
+
+
+/*--------- Web Stats ------------------*/
+char g_cWebStatsUrl_Base[256];
+char g_cWebStatsUrl_Profile[256];
 
 
 /*=========================================
@@ -907,7 +944,10 @@ public void OnMapStart()
 	* 14. Get dynamic timelimit (db_GetDynamicTimelimit)
 	* -> loadAllClientSettings
 	*/
-	if (!g_bRenaming && !g_bInTransactionChain && IsServerProcessing())
+
+	ConVar cvHibernateWhenEmpty = FindConVar("sv_hibernate_when_empty");
+
+	if (!g_bRenaming && !g_bInTransactionChain && (IsServerProcessing() || !cvHibernateWhenEmpty.BoolValue))
 		db_selectMapZones();
 
 
@@ -1605,6 +1645,13 @@ public void OnSettingChanged(Handle convar, const char[] oldValue, const char[] 
 		else
 			g_AdminMenuFlag = FlagToBit(flag);
 	}
+	else if (convar == g_hStartPreSpeed) 
+	{
+		if (g_bhasStages) 
+		{
+			g_fStageMaxVelocity[1] = g_hStartPreSpeed.FloatValue;
+		}
+	}
 
 	if (g_hZoneTimer != INVALID_HANDLE)
 	{
@@ -1660,8 +1707,10 @@ public void OnPluginStart()
 	g_hZoneDisplayType = CreateConVar("ck_zone_drawstyle", "1", "0 = Do not display zones, 1 = display the lower edges of zones, 2 = display whole zones", FCVAR_NOTIFY);
 	g_hZonesToDisplay = CreateConVar("ck_zone_drawzones", "1", "Which zones are visible for players. 1 = draw start & end zones, 2 = draw start, end, stage and bonus zones, 3 = draw all zones.", FCVAR_NOTIFY);
 	g_hStartPreSpeed = CreateConVar("ck_pre_start_speed", "320.0", "The maximum prespeed for start zones. 0.0 = No cap", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
+	HookConVarChange(g_hStartPreSpeed, OnSettingChanged);
 	g_hSpeedPreSpeed = CreateConVar("ck_pre_speed_speed", "3000.0", "The maximum prespeed for speed start zones. 0.0 = No cap", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
 	g_hBonusPreSpeed = CreateConVar("ck_pre_bonus_speed", "320.0", "The maximum prespeed for bonus start zones. 0.0 = No cap", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
+	g_hStagePreSpeed = CreateConVar("ck_pre_stage_speed", "425.0", "The maximum prespeed for stage start zones.", FCVAR_NOTIFY, true, 0.0, true, 3500.0);
 	g_hSpawnToStartZone = CreateConVar("ck_spawn_to_start_zone", "1.0", "1 = Automatically spawn to the start zone when the client joins the team.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSoundEnabled = CreateConVar("ck_startzone_sound_enabled", "1.0", "Enable the sound after leaving the start zone.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSoundPath = CreateConVar("ck_startzone_sound_path", "buttons\\button3.wav", "The path to the sound file that plays after the client leaves the start zone..", FCVAR_NOTIFY);
@@ -1681,6 +1730,7 @@ public void OnPluginStart()
 	g_hReplaceReplayTime = 	CreateConVar("ck_replay_replace_faster", "1", "(1 / 0) Replace record bots if a players time is faster than the bot, even if the time is not a server record.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hAllowVipMute = CreateConVar("ck_vip_mute", "1", "(1 / 0) Allows VIP's to mute players", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTeleToStartWhenSettingsLoaded = CreateConVar("ck_teleportclientstostart", "1", "(1 / 0) Teleport players automatically back to the start zone, when their settings have been loaded.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hFreeVipAtRank = CreateConVar("ck_freevipatrank", "0", "Gives free VIP Access to players that achieve a certain rank", FCVAR_NOTIFY, true, 0.0, false, 0.0);
 
 	g_hRecordBotTrail = CreateConVar("ck_record_bot_trail", "1", "(1 / 0) Enables a trail on the record bot.", FCVAR_NOTIFY);
 	HookConVarChange(g_hRecordBotTrail, OnSettingChanged);
@@ -1830,7 +1880,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_goto", Client_GoTo, "[Surf Timer] teleports you to a selected player");
 	RegConsoleCmd("sm_sound", Client_QuakeSounds, "[Surf Timer] on/off quake sounds");
 	RegConsoleCmd("sm_surrender", Client_Surrender, "[Surf Timer] surrender your current challenge");
-	RegConsoleCmd("sm_help2", Client_RankingSystem, "[Surf Timer] Explanation of the Surf Timer ranking system");
+	//RegConsoleCmd("sm_help2", Client_RankingSystem, "[Surf Timer] Explanation of the Surf Timer ranking system");
 	RegConsoleCmd("sm_flashlight", Client_Flashlight, "[Surf Timer] on/off flashlight");
 	RegConsoleCmd("sm_maptop", Client_MapTop, "[Surf Timer] displays local map top for a given map");
 	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[Surf Timer] hides spectators from menu/panel");
@@ -1925,6 +1975,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_n", Command_normalMode, "[Surf Timer] Switches player back to normal mode.");
 	RegConsoleCmd("sm_saveloc", Command_saveLoc, "[Surf Timer] Saves current location.");
 	RegConsoleCmd("sm_loadloc", Command_loadLoc, "[Surf Timer] Loads a saved location.");
+	RegConsoleCmd("sm_showzones", Command_ShowZones, "[Surf Timer] Draws zones and shows them to the players.");
 
 
 	RegConsoleCmd("sm_specbot", Command_Replay, "[Surf Timer] Shows the replay menu.");
@@ -1956,9 +2007,14 @@ public void OnPluginStart()
 	RegAdminCmd("sm_addspawn", Admin_insertSpawnLocation, g_AdminMenuFlag, "[Surf Timer] Changes the position !r takes players to");
 	RegAdminCmd("sm_delspawn", Admin_deleteSpawnLocation, g_AdminMenuFlag, "[Surf Timer] Removes custom !r position");
 	RegAdminCmd("sm_clearassists", Admin_ClearAssists, g_AdminMenuFlag, "[Surf Timer] Clears assist points (map progress) from all players");
+	RegAdminCmd("sm_rct", Admin_ReloadChatTags, g_AdminMenuFlag, "[Surf Timer] Reloads custom chat tags for given player");
 
+	RegAdminCmd("sm_settag", Admin_SetTag, g_AdminMenuFlag, "[Surf Timer] Sets a custom tag to players");
+	RegAdminCmd("sm_setname", Admin_SetName, g_AdminMenuFlag, "[Surf Timer] Sets a custom player name");
 
-
+	RegServerCmd("sm_stagemaxvelocity", Command_StageMaxVelocity, "Sets max velocity on given stage. (Usage: sm_stagemaxvelocity <stage> <max velocity>");
+	RegServerCmd("sm_stageallowprehop", Command_StageAllowPrehop, "Toggle prehop on given stage. (Usage: sm_stageallowprehop <stage> <1|0>)");
+	RegServerCmd("sm_stageallowhighjumps", Command_AllowHighJumps, "Toggle high jump check on given stage. (Usage: sm_stageallowhighjumps <stage> <1|0>");
 
 
 	//chat command listener
@@ -2040,6 +2096,8 @@ public void OnPluginStart()
 	g_MapFinishForward = CreateGlobalForward("ckSurf_OnMapFinished", ET_Event, Param_Cell, Param_Float, Param_String, Param_Cell, Param_Cell, Param_Cell);
 	g_BonusFinishForward = CreateGlobalForward("ckSurf_OnBonusFinished", ET_Event, Param_Cell, Param_Float, Param_String, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
 	g_PracticeFinishForward = CreateGlobalForward("ckSurf_OnPracticeFinished", ET_Event, Param_Cell, Param_Float, Param_String);
+	g_StageFinishedForward = CreateGlobalForward("ckSurf_OnStageFinished", ET_Event, Param_Cell, Param_Float, Param_String, Param_Cell, Param_Cell);
+	g_OnTimerStartedForward = CreateGlobalForward("ckSurf_OnTimerStarted", ET_Event, Param_Cell, Param_Cell);
 
 	if (g_bLateLoaded)
 	{
@@ -2062,6 +2120,25 @@ public void OnPluginStart()
 	Format(szPINK, 12, "%c", PINK);
 	Format(szLIGHTRED, 12, "%c", LIGHTRED);
 	Format(szORANGE, 12, "%c", ORANGE);
+
+
+	KeyValues kv = new KeyValues("SurfTimer");
+	char cfgPath[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, cfgPath, sizeof(cfgPath), "configs/ckSurf/surftimer.txt");
+	kv.ImportFromFile(cfgPath);
+
+	if (kv.JumpToKey("webstats"))
+	{
+		kv.GetString("base", g_cWebStatsUrl_Base, sizeof(g_cWebStatsUrl_Base));
+		kv.GetString("profile", g_cWebStatsUrl_Profile, sizeof(g_cWebStatsUrl_Profile));
+	}
+	else
+	{
+		Format(g_cWebStatsUrl_Base, sizeof(g_cWebStatsUrl_Base), "http://marcowmadeira.com/surf/notsupported.html");
+		Format(g_cWebStatsUrl_Profile, sizeof(g_cWebStatsUrl_Profile), "http://marcowmadeira.com/surf/notsupported.html");
+	}
+
+	delete kv;
 }
 
 /*=====  End of Events  ======*/
@@ -2126,6 +2203,18 @@ public int Native_SafeTeleport(Handle plugin, int numParams)
 		return false;
 }
 
+public int Native_CountZones(Handle plugin, int numParams){
+	return g_mapZonesTypeCount[GetNativeCell(1)][GetNativeCell(2)] + 1;
+}
+
+public int Native_CountZoneGroups(Handle plugin, int numParams){
+	return g_mapZoneGroupCount;
+}
+
+public int Native_GetPlayerPoints(Handle plugin, int numParams) {
+	return g_pr_points[GetNativeCell(1)];
+}
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	RegPluginLibrary("ckSurf");
@@ -2137,6 +2226,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("ckSurf_ClientIsVIP", Native_ClientIsVIP);
 	CreateNative("ckSurf_GetServerRank", Native_GetServerRank);
 	CreateNative("ckSurf_SafeTeleport", Native_SafeTeleport);
+	CreateNative("ckSurf_CountZones", Native_CountZones);
+	CreateNative("ckSurf_CountZoneGroups", Native_CountZoneGroups);
+	CreateNative("ckSurf_GetPlayerPoints", Native_GetPlayerPoints);
 	g_bLateLoaded = late;
 	return APLRes_Success;
 }

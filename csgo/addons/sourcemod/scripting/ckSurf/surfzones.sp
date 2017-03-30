@@ -134,7 +134,7 @@ public Action EndTouchTrigger(int caller, int activator)
 	}
 
 	char sTargetName[256];
-	int action[3];
+	int action[4];
 	GetEntPropString(caller, Prop_Data, "m_iName", sTargetName, sizeof(sTargetName));
 	ReplaceString(sTargetName, sizeof(sTargetName), "sm_ckZone ", "");
 
@@ -143,6 +143,8 @@ public Action EndTouchTrigger(int caller, int activator)
 	action[0] = g_mapZones[id][zoneType];
 	action[1] = g_mapZones[id][zoneTypeId];
 	action[2] = g_mapZones[id][zoneGroup];
+	action[3] = id;
+
 
 	if (action[2] != g_iClientInZone[activator][2] || action[0] == 6 || action[0] == 8 || action[0] != g_iClientInZone[activator][0]) // Ignore end touches in other zonegroups, zones that teleports away or multiple zones on top of each other
 		return Plugin_Handled;
@@ -159,12 +161,12 @@ public void StartTouch(int client, int action[3])
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
 
-		if (action[0] == view_as<int>(ST_Stop)) // Stop Zone
+		if (action[0] == view_as<int>(ZT_Stop)) // Stop Zone
 		{
 			Client_Stop(client, 1);
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
 		}
-		else if (action[0] == view_as<int>(ST_Start) || action[0] == view_as<int>(ST_Speed)) // Start Zone or Speed Start
+		else if (action[0] == view_as<int>(ZT_Start) || action[0] == view_as<int>(ZT_Speed)) // Start Zone or Speed Start
 		{
 			if (g_Stage[g_iClientInZone[client][2]][client] == 1 && g_bPracticeMode[client]) // If practice mode is on
 				Command_goToPlayerCheckpoint(client, 1);
@@ -174,7 +176,7 @@ public void StartTouch(int client, int action[3])
 
 				Client_Stop(client, 1);
 				// Resetting last checkpoint
-				lastCheckpoint[g_iClientInZone[client][2]][client] = 1;
+				lastCheckpoint[g_iClientInZone[client][2]][client] = -1;
 
 
 				// Start recording
@@ -190,15 +192,18 @@ public void StartTouch(int client, int action[3])
 						if (g_hRecording[client] != null)
 							StopRecording(client);
 						StartRecording(client);
+
+						if (g_bhasStages)
+							Stage_StartRecording(client);
 					}
 				}
 			}
 		}
-		else if (action[0] == view_as<int>(ST_End)) // End Zone
+		else if (action[0] == view_as<int>(ZT_End)) // End Zone
 		{
 			if (g_iClientInZone[client][2] == action[2])
 			{ //  Cant end bonus timer in this zone && in the having the same timer on
-				if (g_bStageTimerRunning[client])
+				if (g_bStageTimerRunning[client] && !g_bPracticeMode[client])
 					EndStageTimer(client);
 
 				CL_OnEndTimerPress(client);
@@ -208,6 +213,10 @@ public void StartTouch(int client, int action[3])
 				Client_Stop(client, 1);
 			}
 
+			// Repeat stage
+			if (g_RepeatStage[client] != -1)
+				teleportClient(client, 0, g_RepeatStage[client], true);
+
 			if (g_bPracticeMode[client]) // Go back to normal mode if checkpoint mode is on
 			{
 				Command_normalMode(client, 1);
@@ -215,13 +224,8 @@ public void StartTouch(int client, int action[3])
 			}
 			// Resetting checkpoints
 			lastCheckpoint[g_iClientInZone[client][2]][client] = 999;
-
-			// Repeat stage
-			if (g_RepeatStage[client] != -1)
-				teleportClient(client, 0, g_RepeatStage[client], true);
-
 		}
-		else if (action[0] == view_as<int>(ST_Stage)) // Stage Zone
+		else if (action[0] == view_as<int>(ZT_Stage)) // Stage Zone
 		{
 			if (g_bPracticeMode[client]) // If practice mode is on
 			{
@@ -254,13 +258,14 @@ public void StartTouch(int client, int action[3])
 					g_bStageTimerRunning[client] = false;
 				}
 
+				Stage_StartRecording(client);
 			}
 
 			// Repeat stage
-			if (g_RepeatStage[client] != -1)
+			if (g_RepeatStage[client] != -1 && g_Stage[0][client] == action[1] + 2)
 				teleportClient(client, 0, g_RepeatStage[client], true);
 		}
-		else if (action[0] == view_as<int>(ST_Checkpoint)) // Checkpoint Zone
+		else if (action[0] == view_as<int>(ZT_Checkpoint)) // Checkpoint Zone
 		{
 			if (action[1] != lastCheckpoint[g_iClientInZone[client][2]][client] && g_iClientInZone[client][2] == action[2])
 			{
@@ -269,28 +274,35 @@ public void StartTouch(int client, int action[3])
 				lastCheckpoint[g_iClientInZone[client][2]][client] = action[1];
 			}
 		}
-		else if (action[0] == view_as<int>(ST_TeleToStart)) // TeleToStart Zone
+		else if (action[0] == view_as<int>(ZT_TeleToStart)) // TeleToStart Zone
 		{
 			teleportClient(client, g_iClientInZone[client][2], 1, true);
 		}
-		else if (action[0] == view_as<int>(ST_Validator)) // Validator Zone
+		else if (action[0] == view_as<int>(ZT_Validator)) // Validator Zone
 		{
 			g_bValidRun[client] = true;
 		}
-		else if (action[0] == view_as<int>(ST_Checker)) // Checker Zone
+		else if (action[0] == view_as<int>(ZT_Checker)) // Checker Zone
 		{
 			if (!g_bValidRun[client])
 				Command_Teleport(client, 1);
 		}
+		else if (action[0] == view_as<int>(ZT_TeleToStage))
+		{
+			if (g_Stage[g_iClientInZone[client][2]][client] == 1)
+				teleportClient(client, g_iClientInZone[client][2], 1, false);
+			else
+				teleportClient(client, g_iClientInZone[client][2], g_Stage[g_iClientInZone[client][2]][client], false);
+		}
 	}
 }
 
-public void EndTouch(int client, int action[3])
+public void EndTouch(int client, int action[4])
 {
 	if (IsValidClient(client))
 	{
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		if (action[0] == view_as<int>(ST_Start) || action[0] == view_as<int>(ST_Speed))
+		if (action[0] == view_as<int>(ZT_Start) || action[0] == view_as<int>(ZT_Speed))
 		{
 			if (g_bPracticeMode[client] && !g_bTimeractivated[client]) // If on practice mode, but timer isn't on - start timer
 			{
@@ -306,9 +318,9 @@ public void EndTouch(int client, int action[3])
 					float pauseDelay = GetGameTime() - g_fLastTimePauseUsed[client];
 
 					// NoClip check
-					if (g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
+					if (g_bNoclipped[client] || g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
 					{
-						PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
+						PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, please type !r first.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
 						ClientCommand(client, "play buttons\\button10.wav");
 					}
 					else if (pauseDelay < 5.0)
@@ -336,9 +348,21 @@ public void EndTouch(int client, int action[3])
 			GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
 			PrintToChat(client, "%f", CurVelVec[2]);*/
 		}
-		else if (action[0] == view_as<int>(ST_Stage))
+		else if (action[0] == view_as<int>(ZT_Stage))
 		{
-			StartStageTimer(client);
+			// Get lowest cornor of the zone
+			float vLowestCorner[3];
+			if (g_mapZones[action[3]][PointA][2] > g_mapZones[action[3]][PointB][2])
+				Array_Copy(g_mapZones[action[3]][PointB], vLowestCorner, 3);
+			else
+				Array_Copy(g_mapZones[action[3]][PointA], vLowestCorner, 3);
+
+			// Check if the player jumped from an high platform
+			if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 25.0) &&  !g_bStageAllowHighJumps[g_Stage[0][client]]) 
+				PrintToChat(client, "[%cSurf Timer%c] %cYou jumped from way too high.", MOSSGREEN, WHITE, LIGHTRED); 
+
+			else
+				StartStageTimer(client);
 		}
 
 		// Set client location
@@ -415,81 +439,45 @@ public Action BeamBox(Handle timer, any client)
 
 public Action BeamBoxAll(Handle timer, any data)
 {
-	int zColor[4], tzColor[4];
-	bool draw;
-
-	if (GetConVarInt(g_hZoneDisplayType) < 1)
-		return Plugin_Handled;
-
-	for (int i = 0; i < g_mapZonesCount; ++i)
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		draw = false;
-		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-		if (0 < g_mapZones[i][Vis] < 4)
-		{
-			draw = true;
-		}
-		else
-		{
-			if (GetConVarInt(g_hZonesToDisplay) == 1 && ((0 < g_mapZones[i][zoneType] < 3) || g_mapZones[i][zoneType] == 5))
-			{
-				draw = true;
-			}
-			else
-			{
-				if (GetConVarInt(g_hZonesToDisplay) == 2 && ((0 < g_mapZones[i][zoneType] < 4) || g_mapZones[i][zoneType] == 5))
-				{
-					draw = true;
-				}
-				else
-				{
-					if (GetConVarInt(g_hZonesToDisplay) == 3)
-					{
-						draw = true;
-					}
-				}
-			}
-		}
+		if (!IsValidClient(client))
+			continue;
 
-		if (draw)
+		// Make sure the zones are enabled
+		if (g_hZoneDisplayType.IntValue == 0 && !g_bShowZones[client])
+			continue;
+
+		// Loop through the zones
+		for (int i = 0; i < g_mapZonesCount; ++i)
 		{
-			getZoneDisplayColor(g_mapZones[i][zoneType], zColor, g_mapZones[i][zoneGroup]);
-			getZoneTeamColor(g_mapZones[i][Team], tzColor);
-			for (int p = 1; p <= MaxClients; p++)
+			// Ignore zone draw checks if the client wants to see all zones
+			if (!g_bShowZones[client])
 			{
-				if (IsValidClient(p))
-				{
-					if ( g_mapZones[i][Vis] == 2 ||  g_mapZones[i][Vis] == 3)
-					{
-						if (GetClientTeam(p) ==  g_mapZones[i][Vis] && g_ClientSelectedZone[p] != i)
-						{
-							float buffer_a[3], buffer_b[3];
-							for (int x = 0; x < 3; x++)
-							{
-								buffer_a[x] = g_mapZones[i][PointA][x];
-								buffer_b[x] = g_mapZones[i][PointB][x];
-							}
-							TE_SendBeamBoxToClient(p, buffer_a, buffer_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 5.0, 5.0, 2, 1.0, tzColor, 0, 0, i);
-						}
-					}
-					else
-					{
-						if (g_ClientSelectedZone[p] != i)
-						{
-							float buffer_a[3], buffer_b[3];
-							for (int x = 0; x < 3; x++)
-							{
-								buffer_a[x] = g_mapZones[i][PointA][x];
-								buffer_b[x] = g_mapZones[i][PointB][x];
-							}
-							TE_SendBeamBoxToClient(p, buffer_a, buffer_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 5.0, 5.0, 2, 1.0, zColor, 0, 0, i);
-						}
-					}
-				}
+				// Only draw Start, End and Speed
+				if (g_hZonesToDisplay.IntValue == 1 && !((0 < g_mapZones[i][zoneType] < 3) || g_mapZones[i][zoneType] == 5)) 
+					continue;
+
+				// Only draw Start, End, Speed and Stage
+				else if (g_hZonesToDisplay.IntValue == 2 && !((0 < g_mapZones[i][zoneType] < 4) || g_mapZones[i][zoneType] == 5))
+					continue;
 			}
+
+			// Do not display the current zone if the player is editing it
+			if (g_ClientSelectedZone[client] == i)
+				continue;
+
+			// Get the color of the zone
+			int color[4];
+			getZoneDisplayColor(g_mapZones[i][zoneType], color, g_mapZones[i][zoneGroup]);
+
+			float point_a[3], point_b[3];
+			Array_Copy(g_mapZones[i][PointA], point_a, sizeof(point_a));
+			Array_Copy(g_mapZones[i][PointB], point_b, sizeof(point_b));
+
+			TE_SendBeamBoxToClient(client, point_a, point_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 5.0, 5.0, 2, 1.0, color, 0, 0, i);
 		}
 	}
-	return Plugin_Continue;
 }
 
 public void getZoneDisplayColor(int type, int zColor[4], int zGrp)
@@ -583,10 +571,10 @@ public void BeamBox_OnPlayerRunCmd(int client)
 stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottomcorner[3], int ModelIndex, int HaloIndex, int StartFrame, int FrameRate, float Life, float Width, float EndWidth, int FadeLength, float Amplitude, const int Color[4], int Speed, int type, int zoneid = -1)
 {
 	//0 = Do not display zones, 1 = Display the lower edges of zones, 2 = Display whole zone
-	if (!IsValidClient(client) || GetConVarInt(g_hZoneDisplayType) < 1)
+	if (!IsValidClient(client) || (GetConVarInt(g_hZoneDisplayType) < 1 && !g_bShowZones[client] && g_ClientSelectedZone[client] != zoneid))
 		return;
 
-	if (GetConVarInt(g_hZoneDisplayType) > 1 || type == 1) // All sides
+	if (GetConVarInt(g_hZoneDisplayType) > 1 || type == 1 || g_bShowZones[client] || g_ClientSelectedZone[client] == zoneid) // All sides
 	{
 		float corners[8][3];
 		if (zoneid == -1)
@@ -1374,6 +1362,7 @@ public void SelectMiscZoneType(int client)
 	SelectZoneMenu.AddItem("7", "Validator");
 	SelectZoneMenu.AddItem("8", "Checker");
 	SelectZoneMenu.AddItem("0", "Stop");
+	SelectZoneMenu.AddItem("9", "TeleToStage");
 
 	SelectZoneMenu.ExitButton = true;
 	SelectZoneMenu.Display(client, MENU_TIME_FOREVER);

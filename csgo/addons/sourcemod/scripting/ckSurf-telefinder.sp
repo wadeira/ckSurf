@@ -1,9 +1,5 @@
+#pragma newdecls required
 #pragma semicolon 1
-
-#define DEBUG
-
-#define PLUGIN_AUTHOR "Elzi"
-#define PLUGIN_VERSION "1.00"
 
 #include <sourcemod>
 #include <sdktools>
@@ -12,16 +8,17 @@
 
 EngineVersion g_Game;
 
+
 Handle g_hEntity;
-int g_iEntIndex[MAXPLAYERS + 1];
+Handle g_hTMEntity;
 
 public Plugin myinfo = 
 {
-	name = "[ckSurf] Teleport Destination Finder",
-	author = PLUGIN_AUTHOR,
-	description = "Teleports clients using !cktele to info_teleport_destinations",
-	version = PLUGIN_VERSION,
-	url = ""
+	name = "[Surf Timer] Teleport Destination Finder",
+	author = "marcowmadeira",
+	description = "Shows a list of info_teleport_destination entities.",
+	version = "1.0",
+	url = "http://marcowmadeira.com/"
 };
 
 public void OnPluginStart()
@@ -29,23 +26,33 @@ public void OnPluginStart()
 	g_Game = GetEngineVersion();
 	if(g_Game != Engine_CSGO && g_Game != Engine_CSS)
 	{
-		SetFailState("This plugin is for CSGO/CSS only.");	
+		SetFailState("[Surf Timer][TDF] This plugin is for CSGO/CSS only.");	
 	}
 	
-	RegAdminCmd("sm_cktele", TeleToInfo, ADMFLAG_ROOT, "[ckSurf] Teleport client to a teleport destination in the map");
+	RegAdminCmd("sm_cktele", ShowTeleportDestinations, ADMFLAG_ROOT, "[Surf Timer] Shows a menu with all info_teleport_destination entities");
+	RegAdminCmd("sm_itd", ShowTeleportDestinations, ADMFLAG_ROOT, "[Surf Timer] Shows a menu with all info_teleport_destination entities");
+	RegAdminCmd("sm_triggerlocations", ShowTriggersLocations, ADMFLAG_ROOT, "[Surf Timer] Shows a menu with all trigger_multiple locations");
 
 }
 
 public void OnMapStart()
 {
-	for (int i = 0; i < MAXPLAYERS + 1; i++)
-		g_iEntIndex[i] = 0;
-	
 	int iEnt;
 	g_hEntity = CreateArray(12);
+	g_hTMEntity = CreateArray(12);
 
 	while ((iEnt = FindEntityByClassname(iEnt, "info_teleport_destination")) != -1)
 		PushArrayCell(g_hEntity, iEnt);
+
+	while ((iEnt = FindEntityByClassname(iEnt, "trigger_multiple")) != -1) {
+
+		char target_name[32];
+		GetEntPropString(iEnt, Prop_Data, "m_iName", target_name, sizeof(target_name));
+
+		
+		if (strlen(target_name) > 0 && StrContains(target_name, "sm_ckZone") == -1)
+			PushArrayCell(g_hTMEntity, iEnt);
+	}
 
 }
 
@@ -58,42 +65,76 @@ public void OnMapEnd()
 }
 
 
-public Action TeleToInfo(int client, int args)
+public Action ShowTeleportDestinations(int client, int args)
 {
-	if (g_hEntity == null)
+	Menu menu = new Menu(TD_MenuHandler);
+
+	menu.SetTitle("Teleport Destinations");
+
+
+
+	for (int i = 0; i < GetArraySize(g_hEntity); i++) 
 	{
-		ReplyToCommand(client, "[CK] g_hEntity was null!");
-		return Plugin_Handled;
-	}
-		
-	if (GetArraySize(g_hEntity) < 1)
-	{
-		ReplyToCommand(client, "[CK] No info_teleport_destinations found in map!");
-		return Plugin_Handled;
-	}
-	
-	if (g_iEntIndex[client] == GetArraySize(g_hEntity))
-	{
-		ReplyToCommand(client, "[CK] All info_teleport_destinations were looped, back to index 0");
-		g_iEntIndex[client] = 0;
-	}
-	
-	int iEnt = GetArrayCell(g_hEntity, g_iEntIndex[client]);
-	
-	if (IsValidEntity(iEnt))
-	{
+
+		// Get entity
+		int entity = GetArrayCell(g_hEntity, i);
+
+		// Get targetname
+		char target_name[32];
+		GetEntPropString(entity, Prop_Data, "m_iName", target_name, sizeof(target_name));
+
+		menu.AddItem(target_name, target_name);
+	} 
+
+	menu.Display(client, 30);
+}
+
+
+public int TD_MenuHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_Select) {
+
+		int entity = GetArrayCell(g_hEntity, param2);
+
 		float position[3];
-		GetEntPropVector(iEnt, Prop_Send, "m_vecOrigin", position);
+		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", position);
 
-		ckSurf_SafeTeleport(client, position, NULL_VECTOR, NULL_VECTOR, true);
-
-		ReplyToCommand(client, "[CK] Teleporting to entity at %f, %f, %f", position[0], position[1], position[2]);
+		ckSurf_SafeTeleport(param1, position, NULL_VECTOR, NULL_VECTOR, true);
 	}
-	else
-	
-		ReplyToCommand(client, "[CK] Entity was invalid!");
+}
 
 
-	g_iEntIndex[client]++;
-	return Plugin_Handled;
+public Action ShowTriggersLocations(int client, int args)
+{
+	Menu menu = new Menu(TM_MenuHandler);
+
+	menu.SetTitle("trigger_multiple entities");
+
+	for (int i = 0; i < GetArraySize(g_hTMEntity); i++)
+	{
+		// Get entity
+		int entity = GetArrayCell(g_hTMEntity, i);
+
+		// Get targetname
+		char target_name[32];
+		GetEntPropString(entity, Prop_Data, "m_iName", target_name, sizeof(target_name));
+
+		menu.AddItem(target_name, target_name);
+	}
+
+	menu.Display(client, 30);
+}
+
+
+public int TM_MenuHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_Select) {
+
+		int entity = GetArrayCell(g_hTMEntity, param2);
+
+		float position[3];
+		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", position);
+
+		ckSurf_SafeTeleport(param1, position, NULL_VECTOR, NULL_VECTOR, true);
+	}
 }

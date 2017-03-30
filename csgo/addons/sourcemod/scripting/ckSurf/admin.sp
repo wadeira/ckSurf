@@ -1371,3 +1371,105 @@ public Action Admin_DeleteCheckpoints(int client, int args)
 
 	db_deleteCheckpoints();
 }
+
+public Action Admin_ReloadChatTags(int client, int args)
+{
+	if (args < 1)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_rct < #userid|name|steamid|@aim|@all >");
+		return Plugin_Handled;
+	}
+
+	char search[MAX_NAME_LENGTH];
+	GetCmdArg(1, search, sizeof(search));
+
+	int targets[MAXPLAYERS];
+	char target_name[MAX_TARGET_LENGTH];
+	bool tn_is_ml;
+
+	int targets_found = ProcessTargetString(search, client, targets, sizeof(targets), COMMAND_FILTER_NO_IMMUNITY, target_name, sizeof(target_name), tn_is_ml);
+
+	if (targets_found <= COMMAND_TARGET_NONE)
+	{
+		ReplyToTargetError(client, targets_found);
+		return Plugin_Handled;
+	}
+
+	for (int i = 0; i < targets_found; i++)
+	{
+		db_getChatTags(targets[i]);
+	}
+
+	PrintToChat(client, "[%cSurf Timer%c] Reloading custom chat tags to %s.", MOSSGREEN, WHITE, target_name);
+	return Plugin_Handled;
+}
+
+public Action Admin_SetTag(int client, int args)
+{
+	if (args < 1)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_settag < #userid|name|steamid|@aim|@all > < tag >");
+		return Plugin_Handled;
+	}
+
+	char search[MAX_NAME_LENGTH];
+	GetCmdArg(1, search, sizeof(search));
+
+	char tag[64];
+	GetCmdArg(2, tag, sizeof(tag));
+
+	int targets[MAXPLAYERS];
+	char target_name[MAX_TARGET_LENGTH];
+	bool tn_is_ml;
+
+	int targets_found = ProcessTargetString(search, client, targets, sizeof(targets), COMMAND_FILTER_NO_IMMUNITY, target_name, sizeof(target_name), tn_is_ml);
+
+	if (targets_found <= COMMAND_TARGET_NONE)
+	{
+		ReplyToTargetError(client, targets_found);
+		return Plugin_Handled;
+	}
+
+	for (int i = 0; i < targets_found; i++)
+	{
+		db_setPlayerTag(targets[i], tag);
+	}
+
+	PrintToChat(client, "[%cSurf Timer%c] Setting custom chat tag to %s.", MOSSGREEN, WHITE, target_name);
+	return Plugin_Handled;
+}
+
+public Action Admin_SetName(int client, int args)
+{
+	if (args < 1)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_setname < #userid|name|steamid|@aim|@all > < name >");
+		return Plugin_Handled;
+	}
+
+	char search[MAX_NAME_LENGTH];
+	GetCmdArg(1, search, sizeof(search));
+
+	char name[64];
+	GetCmdArg(2, name, sizeof(name));
+
+	int targets[MAXPLAYERS];
+	char target_name[MAX_TARGET_LENGTH];
+	bool tn_is_ml;
+
+	int targets_found = ProcessTargetString(search, client, targets, sizeof(targets), COMMAND_FILTER_NO_IMMUNITY, target_name, sizeof(target_name), tn_is_ml);
+
+	if (targets_found <= COMMAND_TARGET_NONE)
+	{
+		ReplyToTargetError(client, targets_found);
+		return Plugin_Handled;
+	}
+
+	for (int i = 0; i < targets_found; i++)
+	{
+		db_setPlayerName(targets[i], name);
+	}
+
+	PrintToChat(client, "[%cSurf Timer%c] Setting custom name to %s.", MOSSGREEN, WHITE, target_name);
+	return Plugin_Handled;
+}

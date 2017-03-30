@@ -42,6 +42,22 @@ public void CL_OnStartTimerPress(int client)
 
 	if (!g_bSpectate[client] && !g_bNoClip[client] && ((GetGameTime() - g_fLastTimeNoClipUsed[client]) > 2.0))
 	{
+
+		Action result;
+		Call_StartForward(g_OnTimerStartedForward);
+		Call_PushCell(client);
+
+		if (g_iClientInZone[client][2] > 0)
+			Call_PushCell(RT_Bonus);
+		else
+			Call_PushCell(RT_Map);
+
+		Call_Finish(result);
+
+		if (result == Plugin_Handled)
+			return;
+
+
 		if (g_bActivateCheckpointsOnStart[client])
 			g_bCheckpointsEnabled[client] = true;
 
@@ -58,6 +74,67 @@ public void CL_OnStartTimerPress(int client)
 		g_bMissedMapBest[client] = true;
 		g_bMissedBonusBest[client] = true;
 		g_bTimeractivated[client] = true;
+		int zgroup = g_iClientInZone[client][2];
+
+		// Get player velocity
+		float vecPlayerVelocity[3], fPlayerVelocity;
+
+		GetEntPropVector(client, Prop_Data, "m_vecVelocity", vecPlayerVelocity);
+		fPlayerVelocity = GetVectorLength(vecPlayerVelocity);
+
+		// Build Speed difference message
+		char speedDiffMsg[128];
+		Format(speedDiffMsg, sizeof(speedDiffMsg), "[%cSurf Timer%c] Start: %c%d %cu/s", MOSSGREEN, WHITE, YELLOW, RoundToCeil(fPlayerVelocity), WHITE);
+
+
+		if (g_fPlayerRectStartSpeed[client][zgroup] != -1)
+		{
+			float fDiff = fPlayerVelocity - g_fPlayerRectStartSpeed[client][zgroup];
+			char srDiff[16];
+
+			if (fDiff < 0)
+				Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+			else
+				Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+			Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | PB: %s", speedDiffMsg, srDiff);
+		}
+
+
+
+		if (g_fRecordStartSpeed[zgroup] != -1)
+		{
+			// Get difference between server record 
+			float fDiff = fPlayerVelocity - g_fRecordStartSpeed[zgroup];
+			char srDiff[16];
+
+			if (fDiff < 0)
+				Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+			else
+				Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+			Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | SR: %s", speedDiffMsg, srDiff);
+		}
+
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (!IsClientInGame(i))
+				continue;
+
+			if (GetClientTeam(i) != CS_TEAM_SPECTATOR)
+				continue;
+
+			int ObserverMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
+			if (ObserverMode != 4 && ObserverMode != 5)
+				continue;
+
+			PrintToChat(client, speedDiffMsg);
+		}
+
+		PrintToChat(client, speedDiffMsg);
+
+
+		g_fPlayerCurrentStartSpeed[client][g_iClientInZone[client][2]] = fPlayerVelocity;
 
 		if (!IsFakeClient(client))
 		{
@@ -204,7 +281,7 @@ public void CL_OnEndTimerPress(int client)
 			{
 				g_fReplayTimes[0] = g_fFinalTime[client];
 				g_bNewReplay[client] = true;
-				CreateTimer(3.0, ReplayTimer, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+				SaveRecording(client, 0);
 			}
 		}
 
@@ -267,7 +344,7 @@ public void CL_OnEndTimerPress(int client)
 				{
 					g_bNewReplay[client] = true;
 					g_fReplayTimes[0] = g_fFinalTime[client];
-					CreateTimer(3.0, ReplayTimer, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+					SaveRecording(client, 0);
 				}
 			}
 		}
@@ -277,7 +354,7 @@ public void CL_OnEndTimerPress(int client)
 			{
 				g_fReplayTimes[0] = g_fFinalTime[client];
 				g_bNewReplay[client] = true;
-				CreateTimer(3.0, ReplayTimer, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+				SaveRecording(client, 0);
 			}
 			g_bMapSRVRecord[client] = true;
 			g_fRecordMapTime = g_fFinalTime[client];
@@ -405,7 +482,7 @@ public void CL_OnEndTimerPress(int client)
 
 
 		srdiff = g_fBonusFastest[zGroup] - g_fFinalTime[client];
-		FormatTimeFloat(client, diff, 3, szSRDiff, sizeof(szSRDiff));
+		FormatTimeFloat(client, srdiff, 3, szSRDiff, sizeof(szSRDiff));
 
 		if (srdiff > 0.0)
 			Format(g_szBonusSRTimeDifference[client], sizeof(szSRDiff), "%c-%s", GREEN, szSRDiff);
@@ -420,6 +497,7 @@ public void CL_OnEndTimerPress(int client)
 			{  // New fastest time in current bonus
 				g_fOldBonusRecordTime[zGroup] = g_fBonusFastest[zGroup];
 				g_fBonusFastest[zGroup] = g_fFinalTime[client];
+				g_fRecordStartSpeed[zGroup] = g_fPlayerCurrentStartSpeed[client][1];
 				Format(g_szBonusFastest[zGroup], MAX_NAME_LENGTH, "%s", szName);
 				FormatTimeFloat(1, g_fBonusFastest[zGroup], 3, g_szBonusFastestTime[zGroup], 64);
 
@@ -438,10 +516,7 @@ public void CL_OnEndTimerPress(int client)
 				{
 					g_bNewBonus[client] = true;
 					g_fReplayTimes[zGroup] = g_fFinalTime[client];
-					Handle pack;
-					CreateDataTimer(3.0, BonusReplayTimer, pack);
-					WritePackCell(pack, GetClientUserId(client));
-					WritePackCell(pack, zGroup);
+					SaveRecording(client, zGroup);
 				}
 			}
 		}
@@ -451,14 +526,12 @@ public void CL_OnEndTimerPress(int client)
 			{
 				g_bNewBonus[client] = true;
 				g_fReplayTimes[zGroup] = g_fFinalTime[client];
-				Handle pack;
-				CreateDataTimer(3.0, BonusReplayTimer, pack);
-				WritePackCell(pack, GetClientUserId(client));
-				WritePackCell(pack, zGroup);
+				SaveRecording(client, zGroup);
 			}
 
 			g_fOldBonusRecordTime[zGroup] = g_fBonusFastest[zGroup];
 			g_fBonusFastest[zGroup] = g_fFinalTime[client];
+			g_fRecordStartSpeed[zGroup] = g_fPlayerCurrentStartSpeed[client][1];
 			Format(g_szBonusFastest[zGroup], MAX_NAME_LENGTH, "%s", szName);
 			FormatTimeFloat(1, g_fBonusFastest[zGroup], 3, g_szBonusFastestTime[zGroup], 64);
 
@@ -484,6 +557,7 @@ public void CL_OnEndTimerPress(int client)
 		if (g_fPersonalRecordBonus[zGroup][client] == 0.0)
 		{  // Clients first record
 			g_fPersonalRecordBonus[zGroup][client] = g_fFinalTime[client];
+			g_fPlayerRectStartSpeed[client][zGroup] = g_fPlayerCurrentStartSpeed[client][1];
 			FormatTimeFloat(1, g_fPersonalRecordBonus[zGroup][client], 3, g_szPersonalRecordBonus[zGroup][client], 64);
 
 			g_bBonusFirstRecord[client] = true;
@@ -538,23 +612,95 @@ public void StartStageTimer(int client)
 		return;
 	}
 
+	if (g_bPracticeMode[client])
+		return;
+
+	int stage = g_Stage[0][client];
+
 	float vPlayerVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vPlayerVelocity);
 
-	if (g_fLastSpeed[client] > 360 || vPlayerVelocity[2] < -300.0)
+	if (g_fLastSpeed[client] > g_fStageMaxVelocity[stage] && g_fStageMaxVelocity[stage] > 0)
 	{
 		PrintToChat(client, "[%cSurf Timer%c] %cMax velocity exceeded to start stage %d.", MOSSGREEN, WHITE, LIGHTRED, g_Stage[0][client]);
 		return;
 	}
 
-	if (g_PlayerJumpsInStage[client] > 1)
+	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[stage])
 	{
 		PrintToChat(client, "[%cSurf Timer%c] %cPrehopping is not allowed on the stage records.", MOSSGREEN, WHITE, LIGHTRED);
 		return;
 	}
 
+	Action result;
+	Call_StartForward(g_OnTimerStartedForward);
+	Call_PushCell(client);
+	Call_PushCell(RT_Stage);
+
+	Call_Finish(result);
+
+	if (result == Plugin_Handled)
+		return;
+
 	g_bStageTimerRunning[client] = true;
 	g_fStageStartTime[client] = GetGameTime();
+
+	// Get player velocity
+	float vecPlayerVelocity[3], fPlayerVelocity;
+
+	GetEntPropVector(client, Prop_Data, "m_vecVelocity", vecPlayerVelocity);
+	fPlayerVelocity = GetVectorLength(vecPlayerVelocity);
+
+	g_fPlayerCurrentStartSpeed[client][stage] = fPlayerVelocity;
+
+	// Build Speed difference message
+	char speedDiffMsg[128];
+
+	Format(speedDiffMsg, sizeof(speedDiffMsg), "[%cSurf Timer%c] Stage: %c%d %cu/s", MOSSGREEN, WHITE, YELLOW, RoundToCeil(fPlayerVelocity), WHITE);
+
+	if (g_fPlayerStageRecStartSpeed[client][stage] != -1)
+	{
+		float fDiff = fPlayerVelocity - g_fPlayerStageRecStartSpeed[client][stage];
+		char srDiff[16];
+
+		if (fDiff < 0)
+			Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+		else
+			Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+		Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | PB: %s", speedDiffMsg, srDiff);
+	}
+
+	if (g_StageRecords[stage][srStartSpeed] != -1)
+	{
+		// Get difference between server record 
+		float fDiff = fPlayerVelocity - g_StageRecords[stage][srStartSpeed];
+		char srDiff[16];
+
+		if (fDiff < 0)
+			Format(srDiff, sizeof(srDiff), "%c%d%c u/s", RED, RoundToCeil(fDiff), WHITE);
+		else
+			Format(srDiff, sizeof(srDiff), "%c+%d%c u/s", LIMEGREEN, RoundToCeil(fDiff), WHITE);
+
+		Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | SR: %s", speedDiffMsg, srDiff);
+	}
+
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientInGame(i))
+			continue;
+			
+		if (GetClientTeam(i) != CS_TEAM_SPECTATOR)
+			continue;
+
+		int ObserverMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
+		if (ObserverMode != 4 && ObserverMode != 5)
+			continue;
+
+		PrintToChat(client, speedDiffMsg);
+	}
+
+	PrintToChat(client, speedDiffMsg);
 }
 
 
@@ -597,7 +743,8 @@ public void EndStageTimer(int client)
 
 	if (g_StageRecords[stage][srRunTime] != 9999999.0)
 	{
-		if (srdiff > 0)	Format(srdiff_str, sizeof(srdiff_str), "-%s", srdiff_str);
+		if (srdiff > 0)	
+			Format(srdiff_str, sizeof(srdiff_str), "-%s", srdiff_str);
 		else
 			Format(srdiff_str, sizeof(srdiff_str), "+%s", srdiff_str);
 	}
@@ -616,25 +763,22 @@ public void EndStageTimer(int client)
 			Format(pbdiff_str, sizeof(pbdiff_str), "+%s", pbdiff_str);
 	}
 	else
-	{
 		Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
-		g_StageRecords[stage][srCompletions]++;
-	}
 
-	// Get rank of current run
-	int rank = db_getStageRank(client, stage, runtime);
-
-	// Check if the player beated the record
+	// Check if the player beaten the record
 	if (g_StageRecords[stage][srRunTime] > runtime)
 	{
-		// Send message to all players
-		PrintToChatAll("[%cSurf Timer%c] %c%N %chas beated the %cstage %d %crecord!", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW);
-		PrintToChatAll("[%cSurf Timer%c] %c%N %chas finished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
+		
+		// Check if the stage records were loaded before sending the message
+		if (!g_bLoadingStages) {
+			// Send message to all players
+			PrintToChatAll("[%cSurf Timer%c] %c%N %chas beaten the %cstage %d record %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, LIMEGREEN, client, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
 
-		// Play sound to everyone
-		for (int i = 1; i <= MaxClients; i++)
-			if (IsClientConnected(i) && IsValidClient(i) && !IsFakeClient(i))
-				ClientCommand(i, "play buttons\\blip2");
+			// Play sound to everyone
+			for (int i = 1; i <= MaxClients; i++)
+				if (IsClientConnected(i) && IsValidClient(i) && !IsFakeClient(i))
+					ClientCommand(i, "play buttons\\blip2");
+		}
 
 		if (g_fStagePlayerRecord[client][stage] != 9999999.0)
 			db_updateStageRecord(client, stage, runtime);
@@ -648,17 +792,20 @@ public void EndStageTimer(int client)
 		strcopy(g_StageRecords[stage][srPlayerName], sizeof(name), name);
 		g_StageRecords[stage][srRunTime] = runtime;
 		g_StageRecords[stage][srLoaded] = true;
+		g_StageRecords[stage][srStartSpeed] = g_fPlayerCurrentStartSpeed[client][stage];
 
 		g_fStagePlayerRecord[client][stage] = runtime;
-		g_StagePlayerRank[client][stage] = rank;
+
+		Stage_SaveRecording(client, stage, runtime_str);
+
+		g_fPlayerStageRecStartSpeed[client][stage] = g_fPlayerCurrentStartSpeed[client][stage];
 
 	}
 	else if (g_fStagePlayerRecord[client][stage] > runtime)
 	{
-		// Player beated his own record
+		// Player beaten his own record
 
 		PrintToChat(client, "[%cSurf Timer%c] %cFinished the %cstage %d %cin %c%s %c(PB: %s) (SR: %s) ", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, stage, YELLOW, LIMEGREEN, runtime_str, YELLOW, pbdiff_str, srdiff_str);
-		PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
 
 		if (g_fStagePlayerRecord[client][stage] != 9999999.0)
 			db_updateStageRecord(client, stage, runtime);
@@ -666,7 +813,7 @@ public void EndStageTimer(int client)
 			db_insertStageRecord(client, stage, runtime);
 
 		g_fStagePlayerRecord[client][stage] = runtime;
-		g_StagePlayerRank[client][stage] = rank;
+		g_fPlayerStageRecStartSpeed[client][stage] = g_fPlayerCurrentStartSpeed[client][stage];
 	}
 	else
 	{

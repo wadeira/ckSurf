@@ -1,0 +1,8 @@
+"SurfTimer"
+{
+	"webstats"
+	{
+		"base"	"http://marcowmadeira.com/"
+		"profile"	"http://2gcrew.space/surf_stats/players/view/{steamid}"
+	}
+}

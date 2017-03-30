@@ -12,7 +12,7 @@ public Action Command_Vip(int client, int args)
 	if (!IsValidClient(client))
 		return Plugin_Handled;
 
-	if (!g_bflagTitles[client][0])
+	if (!g_bflagTitles[client][0] && g_hFreeVipAtRank.IntValue < g_PlayerRank[client])
 	{
 		PrintToChat(client, "[%cSurf Timer%c] This command requires the VIP title.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
@@ -92,7 +92,7 @@ public Action Command_MutePlayer (int client, int args)
 	}
 
 
-	if (!g_bflagTitles[client][0])
+	if (!g_bflagTitles[client][0] && g_hFreeVipAtRank.IntValue < g_PlayerRank[client])
 	{
 		ReplyToCommand(client, "[%cSurf Timer%c] This command requires the VIP title.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
@@ -262,7 +262,7 @@ public Action Command_VoteExtend(int client, int args)
 	if(!IsValidClient(client))
 		return Plugin_Handled;
 
-	if (!g_bflagTitles[client][0])
+	if (!g_bflagTitles[client][0] && g_hFreeVipAtRank.IntValue < g_PlayerRank[client])
 	{
 		ReplyToCommand(client, "[Surf Timer] This command requires the VIP title.");
 		return Plugin_Handled;
@@ -499,7 +499,7 @@ public Action Command_GoBack(int client, int args)
 
 public Action Command_HowTo(int client, int args)
 {
-	ShowMOTDPanel(client, "ckSurf - How To Surf", "http://nightimate.pt/motd.php?u=https://www.youtube.com/v/lYc52kwTNb8", MOTDPANEL_TYPE_URL);
+	OpenMOTD(client, "https://www.youtube.com/embed/lYc52kwTNb8");
 	return Plugin_Handled;
 }
 
@@ -717,6 +717,10 @@ public Action Command_ToStage(int client, int args)
 {
 	if (!IsValidClient(client))
 		return Plugin_Handled;
+
+	if (g_RepeatStage[client] != -1)
+		Command_Repeat(client, 0);
+
 	if (args < 1)
 	{
 		// Remove chat output to reduce chat spam
@@ -731,8 +735,6 @@ public Action Command_ToStage(int client, int args)
 
 		teleportClient(client, g_iClientInZone[client][2], StageId, true);
 	}
-
-
 
 	return Plugin_Handled;
 }
@@ -770,7 +772,6 @@ public Action Command_Restart(int client, int args)
 	}
 
 	g_bClientRestarting[client] = false;
-
 	teleportClient(client, 0, 1, true);
 	return Plugin_Handled;
 }
@@ -2248,6 +2249,9 @@ public Action Client_Stop(int client, int args)
 		g_bStageTimerRunning[client] = false;
 		g_fStageStartTime[client] = -1.0;
 	}
+
+	StopRecording(client);
+
 	return Plugin_Handled;
 }
 
@@ -2272,6 +2276,7 @@ public void Action_NoClip(int client)
 				SetEntityRenderMode(client, RENDER_NONE);
 				SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 				g_bNoClip[client] = true;
+				g_bNoclipped[client] = true;
 			}
 		}
 	}
@@ -2761,7 +2766,8 @@ public void InfoPanel(int client)
 
 public Action Command_ViewStats(int client, int args)
 {
-	ShowMOTDPanel(client, "Surf statistics", "http://nightimate.pt/motd.php?u=http://surf.nightimate.pt/", MOTDPANEL_TYPE_URL);
+	//ShowMOTDPanel(client, "Surf statistics", "http://2gcrew.space/motd.php?u=http://2gcrew.space/surf_stats/", MOTDPANEL_TYPE_URL);
+	OpenMOTD(client, g_cWebStatsUrl_Base);
 }
 
 public Action Command_saveLoc(int client, int args)
@@ -2887,25 +2893,43 @@ public Action Command_loadLoc(int client, int args)
 
 public Action Command_Replay(int client, int args)
 {
-	// TODO: Check if there are spectators
-
 	if (!g_RecordBot)
 	{
 		PrintToChat(client, "[%cSurf Timer%c] No replay bots available.", MOSSGREEN, WHITE);
 		return Plugin_Handled;
 	}
 
-	if (g_bIsPlayingReplay)
+	// Only restrict use if the player is not an admin or more people are watching the replay
+	int spectators = CountSpectators(g_RecordBot);
+	bool isSpectatingBot = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") == g_RecordBot;
+
+	AdminId admin = GetUserAdmin(client);
+
+	if (admin == INVALID_ADMIN_ID || !admin.HasFlag(Admin_Generic) || (spectators == 1 && isSpectatingBot)) 
 	{
-		PrintToChat(client, "[%cSurf Timer%c] The replay bot is currently busy. Wait for the current replay to finish.", MOSSGREEN, WHITE);
-		return Plugin_Handled;
+		if (g_bIsPlayingReplay)
+		{
+			PrintToChat(client, "[%cSurf Timer%c] The replay bot is currently busy. Wait for the current replay to finish.", MOSSGREEN, WHITE);
+			return Plugin_Handled;
+		}
+
+
+		float requestDelay = GetGameTime() - g_fLastReplayRequested[client];
+		if (requestDelay < 15.0)
+		{
+			PrintToChat(client, "[%cSurf Timer%c] Please wait %d seconds before requesting a new replay", MOSSGREEN, WHITE, RoundToCeil(15.0 - requestDelay));
+			return Plugin_Handled;
+		}
 	}
-
-
-	float requestDelay = GetGameTime() - g_fLastReplayRequested[client];
-	if (requestDelay < 15.0 && CountSpectators(g_RecordBot) > 1)
+	else if (g_bIsPlayingReplay && !g_bConfirmedReplayRestart[client])
 	{
-		PrintToChat(client, "[%cSurf Timer%c] Please wait %d seconds before requesting a new replay", MOSSGREEN, WHITE, RoundToCeil(15.0 - requestDelay));
+		Menu menu_confirm = CreateMenu(ReplayMenu_Confirm_Handler);
+
+		menu_confirm.SetTitle("The replay bot is currently being in use");
+		menu_confirm.AddItem("restart", "Change replay");
+		menu_confirm.AddItem("replay", "Spectate");
+
+		menu_confirm.Display(client, 60);
 		return Plugin_Handled;
 	}
 
@@ -2914,12 +2938,19 @@ public Action Command_Replay(int client, int args)
 
 	SetMenuTitle(menu, "[Surf Timer] Replay");
 
-	menu.AddItem("map", "Map");
+	char sPath[256];
 
-	for (int i = 1; i < g_mapZoneGroupCount; i++)
-	{
-		menu.AddItem(g_szZoneGroupName[i], g_szZoneGroupName[i]);
-	}
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s.rec", CK_REPLAY_PATH, g_szMapName);
+
+	menu.AddItem("0", "Map", !FileExists(sPath));
+
+	if (g_bhasStages)
+		menu.AddItem("stages", "Stages");
+
+	if (g_bhasBonus)
+		menu.AddItem("bonus", "Bonus");
+
+	
 
 	menu.Display(client, 60);
 
@@ -2934,16 +2965,103 @@ public int ReplayMenu_Handler(Menu tMenu, MenuAction action, int client, int ite
 	g_ReplayRequester = client;
 	Format(g_sReplayRequester, sizeof(g_sReplayRequester), "%N", client);
 
-	g_CurrentReplay = item;
+	char id[8];
 
-	PlayRecord(g_RecordBot, item);
+	tMenu.GetItem(item, id, sizeof(id));
+
+
+	if (StrEqual(id, "stages")) 
+	{
+		Menu menu = CreateMenu(ReplayMenu_Handler);
+		menu.SetTitle("[Surf Timer] Replay - Stages");
+
+		for (int i = 1; i <= (g_mapZonesTypeCount[g_iClientInZone[client][2]][3] + 1); i++)
+		{
+			char sPath[256];
+
+			// Check if file exists
+			BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_stage_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+
+			char sri[4], name[16];
+			IntToString((i * -1), sri, sizeof(sri));
+
+			Format(name, sizeof(name), "Stage %d", i);
+
+			// Check if file exists
+			menu.AddItem(sri, name, !FileExists(sPath));
+		}
+
+		menu.AddItem("back", "Go back");
+
+		menu.Display(client, 60);
+		return 0;
+	}
+
+
+	// Go to bonus menu
+	if (StrEqual(id, "bonus"))
+	{
+		Menu menu = CreateMenu(ReplayMenu_Handler);
+		menu.SetTitle("[Surf Timer] Replay - Bonus");
+
+		for (int i = 1; i < g_mapZoneGroupCount; i++)
+		{
+			char sPath[256];
+
+			// Check if file exists
+			BuildPath(Path_SM, sPath, sizeof(sPath), "%s%s_bonus_%d.rec", CK_REPLAY_PATH, g_szMapName, i);
+
+			char bri[4];
+			IntToString(i, bri, sizeof(bri));
+			menu.AddItem(bri, g_szZoneGroupName[i], !FileExists(sPath));
+		}
+
+		menu.AddItem("back", "Go back");
+
+		menu.Display(client, 60);
+		return 0;
+	}
+
+	// Go back to main replay menu
+	if (StrEqual(id, "back"))
+	{
+		Command_Replay(client, 0);
+		return 0;
+	}
+
+
+
+	g_CurrentReplay = StringToInt(id);
+
+	PlayRecord(g_RecordBot, id);
 
 	ChangeClientTeam(client, 1);
 	SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_RecordBot);
 	SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+	g_bConfirmedReplayRestart[client] = false;
 
 	return 0;
 }
+
+
+public int ReplayMenu_Confirm_Handler(Menu menu, MenuAction action, int client, int item)
+{
+	 if (action != MenuAction_Select) return 0;
+
+	 if (item == 0)
+	 {
+	 	g_bConfirmedReplayRestart[client] = true;
+	 	Command_Replay(client, 0);
+	 } 
+	 else if (item == 1)
+	 {
+	 	SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_RecordBot);
+		SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+	 }
+
+	 return 0;
+}
+
 
 public Action Command_Repeat(int client, int args) {
 	if (g_RepeatStage[client] != -1) {
@@ -2968,4 +3086,141 @@ public Action Command_Repeat(int client, int args) {
 	g_RepeatStage[client] = g_Stage[0][client];
 	PrintToChat(client, "[%cSurf Timer%c] Repeating mode is now enabled, repeating stage %d", MOSSGREEN, WHITE, g_RepeatStage[client]);
 	return Plugin_Handled;
+}
+
+
+public Action Command_StageMaxVelocity(int args)
+{
+	if (args < 2)
+	{
+		LogError("[Surf Timer] Missing arguments. Usage sm_stagemaxvelocity <stage> <max velocity>");
+		return Plugin_Handled;
+	}
+
+	char szStage[5], szMaxVel[8];
+
+	// Get arguments value
+	GetCmdArg(1, szStage, sizeof(szStage));
+	GetCmdArg(2, szMaxVel, sizeof(szMaxVel));
+
+	int stage = StringToInt(szStage);
+	float maxvelocity = StringToFloat(szMaxVel);
+
+	// Check if the map has stages
+	if (!g_bhasStages)
+	{
+		LogError("[Surf Timer] sm_stagemaxvelocity: %s is a linear map.", g_szMapName);
+		return Plugin_Handled;
+	}
+
+	// Check if the stage is valid
+	if (stage == 0 || stage >= CPLIMIT)
+	{
+		LogError("[Surf Timer] sm_stagemaxvelocity: Invalid stage (%s).", szStage);
+		return Plugin_Handled;
+	}
+	
+	// Check if the stage exists
+	if (stage > g_mapZonesTypeCount[0][3] + 1)
+	{
+		LogError("[Surf Timer] sm_stagemaxvelocity: Stage %d does not exist on map %s", stage, g_szMapName);
+		return Plugin_Handled;
+	}
+
+	g_fStageMaxVelocity[stage] = maxvelocity;
+	return Plugin_Handled;
+}
+
+
+public Action Command_StageAllowPrehop(int args)
+{
+	if (args < 2)
+	{
+		LogError("[Surf Timer] Missing arguments. Usage sm_stageallowprehop <stage> <1|0>");
+		return Plugin_Handled;
+	}
+
+	char szStage[5], szAllow[8];
+
+	// Get arguments value
+	GetCmdArg(1, szStage, sizeof(szStage));
+	GetCmdArg(2, szAllow, sizeof(szAllow));
+
+	int stage = StringToInt(szStage);
+	int allow = StringToInt(szAllow);
+
+	// Check if the map has stages
+	if (!g_bhasStages)
+	{
+		LogError("[Surf Timer] sm_stageallowprehop: %s is a linear map. ", g_szMapName, stage);
+		return Plugin_Handled;
+	}
+
+	// Check if the stage is valid
+	if (stage == 0 || stage >= CPLIMIT)
+	{
+		LogError("[Surf Timer] sm_stageallowprehop: Invalid stage %s.", szStage);
+		return Plugin_Handled;
+	}
+	
+	// Check if the stage exists
+	if (stage > g_mapZonesTypeCount[0][3] + 1)
+	{
+		LogError("[Surf Timer] sm_stageallowprehop: Stage %d does not exist on map %s", stage, g_szMapName);
+		return Plugin_Handled;
+	}
+
+	g_bStageIgnorePrehop[stage] = (allow == 1);
+	return Plugin_Handled;
+}
+
+public Action Command_AllowHighJumps(int args)
+{
+	if (args < 2)
+	{
+		LogError("[Surf Timer] Missing arguments. Usage sm_stageallowhighjumps <stage> <1|0>");
+		return Plugin_Handled;
+	}
+
+	char szStage[5], szAllow[8];
+
+	// Get arguments value
+	GetCmdArg(1, szStage, sizeof(szStage));
+	GetCmdArg(2, szAllow, sizeof(szAllow));
+
+	int stage = StringToInt(szStage);
+	int allow = StringToInt(szAllow);
+
+	// Check if the map has stages
+	if (!g_bhasStages)
+	{
+		LogError("[Surf Timer] sm_stageallowhighjumps: %s is a linear map. ", g_szMapName, stage);
+		return Plugin_Handled;
+	}
+
+	// Check if the stage is valid
+	if (stage == 0 || stage >= CPLIMIT)
+	{
+		LogError("[Surf Timer] sm_stageallowhighjumps: Invalid stage %s.", szStage);
+		return Plugin_Handled;
+	}
+
+
+	
+	// Check if the stage exists
+	if (stage > g_mapZonesTypeCount[0][3] + 1)
+	{
+		LogError("[Surf Timer] sm_stageallowhighjumps: Stage %d does not exist on map %s", stage, g_szMapName);
+		return Plugin_Handled;
+	}
+
+	g_bStageAllowHighJumps[stage] = (allow == 1);
+	return Plugin_Handled;
+}
+
+public Action Command_ShowZones(int client, int args)
+{	
+	g_bShowZones[client] = !g_bShowZones[client];
+
+	PrintToChat(client, "[%cSurf Timer%c] Zone display is now %s.", MOSSGREEN, WHITE, (g_bShowZones[client] ? "enabled" : "disabled"));
 }

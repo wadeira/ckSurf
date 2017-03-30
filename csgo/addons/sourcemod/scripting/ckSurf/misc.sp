@@ -125,6 +125,10 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 		return;
 	}
 
+	if (!g_bNoClip[client]) {
+		g_bNoclipped[client] = false;
+	}
+
 	if (g_bPracticeMode[client])
 		Command_normalMode(client, 1);
 
@@ -1021,14 +1025,14 @@ public void SetServerTags()
 	CvarHandle = FindConVar("sv_tags");
 	char szServerTags[2048];
 	GetConVarString(CvarHandle, szServerTags, 2048);
-	if (StrContains(szServerTags, "ckSurf", true) == -1)
+	if (StrContains(szServerTags, "surftimer", true) == -1)
 	{
-		Format(szServerTags, 2048, "%s, ckSurf", szServerTags);
+		Format(szServerTags, 2048, "%s, surftimer", szServerTags);
 		SetConVarString(CvarHandle, szServerTags);
 	}
 	if (StrContains(szServerTags, "ckSurf 1.", true) == -1 && StrContains(szServerTags, "Tickrate", true) == -1)
 	{
-		Format(szServerTags, 2048, "%s, ckSurf %s, Tickrate %i", szServerTags, VERSION, g_Server_Tickrate);
+		Format(szServerTags, 2048, "%s, SurfTimer %s, Tickrate %i", szServerTags, VERSION, g_Server_Tickrate);
 		SetConVarString(CvarHandle, szServerTags);
 	}
 	if (CvarHandle != null)
@@ -1263,7 +1267,10 @@ public void LimitSpeed(int client)
 		speedCap = GetConVarFloat(g_hBonusPreSpeed);
 	else
 		if (g_iClientInZone[client][0] == 1)
-			speedCap = GetConVarFloat(g_hStartPreSpeed);
+			if (g_bhasStages)
+				speedCap = g_fStageMaxVelocity[1];
+			else
+				speedCap = GetConVarFloat(g_hStartPreSpeed);
 		else
 			if (g_iClientInZone[client][0] == 5)
 			{
@@ -1275,6 +1282,13 @@ public void LimitSpeed(int client)
 
 	if (speedCap == 0.0)
 		return;
+
+	// Do not cap speed if player didn't jump from an high spot or prehopped
+	float vLowestCorner[3];
+	if (g_mapZones[g_iClientInZone[client][3]][PointA][2] > g_mapZones[g_iClientInZone[client][3]][PointB][2])
+		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointB], vLowestCorner, 3);
+	else
+		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointA], vLowestCorner, 3);
 
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
 
@@ -1289,20 +1303,41 @@ public void LimitSpeed(int client)
 
 	// Limit the player velocity
 	bool limitZVel = false;
-	if (CurVelVec[2] < -300.0)
+	if (CurVelVec[2] < -300.0 && !g_bStageAllowHighJumps[1]) 
 	{
-		limitZVel = true;
-		CurVelVec[2] = -300.0;
-		//PrintToChat(client, "[%cSurf Timer%c] %cYou have too much vertical velocity.", MOSSGREEN, WHITE, LIGHTRED);
+		// Check if the player jumped from an high platform
+		if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 15.0)) 
+		{
+			limitZVel = true;
+			CurVelVec[2] = -300.0;
+		}
 	}
 
-	if (currentspeed > speedCap || limitZVel)
+	
+	
+	// Limit speed to 280 u/s if player is prehopping
+	if (g_PlayerJumpsInStage[client] > 1 && !g_bStageIgnorePrehop[1] && currentspeed > 280.0)
+	{
+		NormalizeVector(CurVelVec, CurVelVec);
+		ScaleVector(CurVelVec, 280.0);
+		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+		return;
+	} 
+
+	if (limitZVel)
+	{	
+		// Apply changes to the Z speed limit
+		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+		return;
+	}
+
+	if (currentspeed > speedCap)
 	{
 		NormalizeVector(CurVelVec, CurVelVec);
 		ScaleVector(CurVelVec, speedCap);
 		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
 	}
-}
+}	
 
 public void changeTrailColor(int client)
 {
@@ -1555,6 +1590,8 @@ public void SetClientDefaults(int client)
 			g_fCheckpointTimesNew[x][client][i] = 0.0;
 			g_fCheckpointTimesRecord[x][client][i] = 0.0;
 		}
+
+		g_fPlayerRectStartSpeed[client][x] = -1.0;
 	}
 
 	for (int i = 0; i < TITLE_COUNT; i++)
@@ -1584,12 +1621,22 @@ public void SetClientDefaults(int client)
 
 	g_fStageStartTime[client] = 0.0;
 	g_bStageTimerRunning[client] = false;
-
-	for (int i = 0; i < 64; i++)
-		g_fStagePlayerRecord[client][i] = 9999999.0;
-
-
 	g_RepeatStage[client] = -1;
+
+	for (int i = 0; i < CPLIMIT; i++) {
+		g_fStagePlayerRecord[client][i] = 9999999.0;
+		g_StagePlayerRank[client][i] = 9999999;
+		g_fPlayerCurrentStartSpeed[client][i] = -1.0;
+		g_fPlayerStageRecStartSpeed[client][i] = -1.0;
+	}
+
+	g_bHasChatTag[client] = false;
+	Format(g_cChatTag[client], sizeof(g_cChatTag[]), "");
+	Format(g_cCustomName[client], sizeof(g_cCustomName[]), "");
+
+	g_fLastReplayRequested[client] = 0.0;
+	g_bConfirmedReplayRestart[client] = false;
+	g_bShowZones[client] = false;
 }
 
 public void clearPlayerCheckPoints(int client)
@@ -1854,7 +1901,7 @@ stock void MapFinishedMsgs(int client, int rankThisRun = 0)
 		Call_PushString(g_szFinalTime[client]);
 		Call_PushCell(g_MapRank[client]);
 		Call_PushCell(count);
-		Call_PushCell(g_bMapPBRecord[client]);
+		Call_PushCell(g_bMapPBRecord[client] || g_bMapFirstRecord[client]);
 
 		/* Finish the call, get the result */
 		Call_Finish();
@@ -1967,7 +2014,7 @@ stock void PrintChatBonus (int client, int zGroup, int rank = 0)
 	Call_PushCell(rank);
 	Call_PushCell(g_iBonusCount[zGroup]);
 	Call_PushCell(zGroup);
-	Call_PushCell(g_bBonusPBRecord[client]);
+	Call_PushCell(g_bBonusPBRecord[client] || g_bBonusFirstRecord[client]);
 
 	/* Finish the call, get the result */
 	Call_Finish();
@@ -2295,7 +2342,7 @@ public void SetPlayerRank(int client)
 		{
 			GetArrayArray(g_hSkillGroups, index, RankValue[0]);
 
-			Format(g_pr_rankname[client], 128, "[%s]", RankValue[RankName]);
+			Format(g_pr_rankname[client], 128, "%s", RankValue[RankName]);
 			Format(g_pr_chat_coloredrank[client], 128, "[%s%c]", RankValue[RankNameColored], WHITE);
 			g_PlayerChatRank[client] = RankValue[NameColor];
 		}
@@ -2699,6 +2746,8 @@ public void SpecListMenuDead(int client) // What Spectators see
 							{
 								if (g_CurrentReplay == 0)
 									Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
+								else if (g_ReplayCurrentStage > 0)
+									Format(g_szPlayerPanelText[client], 512, "[Stage Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);
 								else if (g_CurrentReplay > 0)
 									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTime, szTick, count, szStage);
 							}
@@ -2710,8 +2759,10 @@ public void SpecListMenuDead(int client) // What Spectators see
 						{
 							if (g_CurrentReplay == 0)
 								Format(g_szPlayerPanelText[client], 512, "[Map Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTick, count, szStage);
+							else if (g_ReplayCurrentStage > 0)
+								Format(g_szPlayerPanelText[client], 512, "[Stage Replay]\n%s\nTickrate: %s\nSpecs: %i\n\nStage: %s\n", szTime, szTick, count, szStage);	
 							else if (g_CurrentReplay > 0)
-									Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: Bonus\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTick, count);
+								Format(g_szPlayerPanelText[client], 512, "[%s Record Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i\n\nStage: Bonus\n", g_szZoneGroupName[g_iClientInZone[g_RecordBot][2]], szTick, count);
 						}
 					}
 				}
@@ -2732,10 +2783,12 @@ public void SpecListMenuDead(int client) // What Spectators see
 					else
 					{
 						if (g_CurrentReplay == 0)
-							Format(g_szPlayerPanelText[client], 512, "Record replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: %s\n", g_szReplayName, szTick, count, sSpecs, szStage);
-						else
-							if (g_CurrentReplay > 0)
-							Format(g_szPlayerPanelText[client], 512, "Bonus replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: Bonus\n", g_szBonusName, szTick, count, sSpecs);
+							Format(g_szPlayerPanelText[client], 512, "Record replay\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: %s\n", g_szReplayName, szTick, count, sSpecs, szStage);
+						else if (g_ReplayCurrentStage > 0)
+							Format(g_szPlayerPanelText[client], 512, "Stage Replay\n\nTickrate: %s\nSpecs (%i):\n%s\nStage: %s\n", szTick, count, sSpecs, szStage);
+						else if (g_CurrentReplay > 0)
+							Format(g_szPlayerPanelText[client], 512, "Bonus replay\n%s\n \nTickrate: %s\nSpecs (%i):\n%s\n\nStage: Bonus\n", g_szBonusName, szTick, count, sSpecs);
+
 
 					}
 				}
@@ -2746,15 +2799,23 @@ public void SpecListMenuDead(int client) // What Spectators see
 					else
 					{
 						if (g_CurrentReplay == 0)
-							Format(g_szPlayerPanelText[client], 512, "Record replay of\n%s\n \nTickrate: %s\n\nStage: %s\n", g_szReplayName, szTick, szStage);
-						else
-							if (g_CurrentReplay > 0)
-							Format(g_szPlayerPanelText[client], 512, "Bonus replay of\n%s\n \nTickrate: %s\n\nStage: Bonus\n", g_szBonusName, szTick, szStage);
+							Format(g_szPlayerPanelText[client], 512, "Record replay\n%s\n \nTickrate: %s\n\nStage: %s\n", g_szReplayName, szTick, szStage);
+						else if (g_ReplayCurrentStage > 0)
+							Format(g_szPlayerPanelText[client], 512, "Stage Replay\nTickrate: %s\nStage: %s\n", szTick, szStage);
+						else if (g_CurrentReplay > 0)
+							Format(g_szPlayerPanelText[client], 512, "Bonus replay\n%s\n \nTickrate: %s\n\nStage: Bonus\n", g_szBonusName, szTick, szStage);
 
 					}
 				}
+
+					
+				if (ObservedUser == g_RecordBot && !g_bIsPlayingReplay)
+				{
+					Format(g_szPlayerPanelText[client], 512, "Press E to select a replay");
+				}
 				SpecList(client);
 			}
+
 		}
 	}
 	else
@@ -2953,7 +3014,13 @@ public void CenterHudDead(int client)
 			{
 				obsTimer = GetGameTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];
 				FormatTimeFloat(client, obsTimer, 3, obsAika, sizeof(obsAika));
-			} else
+			}
+			else if (g_bStageTimerRunning[ObservedUser])
+			{
+				obsTimer = GetGameTime() - g_fStageStartTime[ObservedUser];
+				FormatTimeFloat(client, obsTimer, 3, obsAika, sizeof(obsAika));
+			}
+			else
 			{
 				obsAika = "<font color='#FF0000'>Stopped</font>";
 			}
@@ -3002,6 +3069,9 @@ public void CenterHudAlive(int client)
 	// Check if timer is paused
 	else if (g_bPause[client])
 		Format(sTime, sizeof(sTime), "Paused");
+
+	else if (g_bPracticeMode[client])
+		Format(sTime, sizeof(sTime), "Practicing");
 
 	// Display current time
 	else
@@ -3171,8 +3241,8 @@ public void LeftHudAlive(int client)
 		Format(buffer, sizeof(buffer), "%sStage: %d/%d\n", buffer, stage, (g_mapZonesTypeCount[zgroup][3] + 1));
 
 		// player rank
-		//if (g_StagePlayerRank[client][stage] > 0)
-			//Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
+		if (g_StagePlayerRank[client][stage] != 9999999)
+			Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
 		//else
 		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage][srCompletions]);
 
@@ -3410,6 +3480,9 @@ public void CheckpointToSpec(int client, char[] buffer)
 
 public int CountSpectators(int client)
 {
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
+		return 0;
+
 	int specCount = 0;
 	for (int x = 1; x <= MaxClients; x++)
 	{
@@ -3428,4 +3501,23 @@ public int CountSpectators(int client)
 	}
 
 	return specCount;
+}
+
+
+// Credits to boomix for the JS injection (https://forums.alliedmods.net/showthread.php?t=292478)
+void OpenMOTD(int client, const char[] url)
+{
+	int len = strlen(url) + 256;
+	char[] urlJs = new char[len];
+
+	// Inject javascript to the url
+	Format(urlJs, len, "javascript: window.open('%s','Surf Timer','scrollbars=yes, width='+screen.width*.9+',height='+screen.height*.9)", url);
+
+	
+	if (StrContains(url, "{steamid}") != -1)
+		ReplaceString(urlJs, len, "{steamid}", g_szProfileSteamId[client]);
+
+	// Open motd to client
+	ShowMOTDPanel(client, "Surf Timer", urlJs, MOTDPANEL_TYPE_URL);
+	PrintToConsole(client, urlJs);
 }
