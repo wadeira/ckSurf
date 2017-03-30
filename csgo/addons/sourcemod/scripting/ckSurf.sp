@@ -1898,6 +1898,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_p", Client_Profile, "[Surf Timer] opens a player profile");
 	RegConsoleCmd("sm_rank", Client_Profile, "[Surf Timer] opens a player profile");
 	RegConsoleCmd("sm_options", Client_OptionMenu, "[Surf Timer] opens options menu");
+	RegConsoleCmd("sm_mapstats", Client_MapStats, "[ckSurf] displays panel with map ranks information");
+	RegConsoleCmd("sm_ms", Client_MapStats, "[ckSurf] displays panel with map ranks information");
 	RegConsoleCmd("sm_top", Client_Top, "[Surf Timer] displays top rankings (Top 100 Players, Top 50 overall)");
 	RegConsoleCmd("sm_topSurfers", Client_Top, "[Surf Timer] displays top rankings (Top 100 Players, Top 50 overall)");
 	RegConsoleCmd("sm_bonustop", Client_BonusTop, "[Surf Timer] displays top rankings of the bonus");
