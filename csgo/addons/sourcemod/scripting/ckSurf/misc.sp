@@ -3161,7 +3161,7 @@ public void CenterHudAlive(int client)
 	if (GetGameTime() - g_fLastDifferenceTime[client] <= 5.0)
 	{
 		if (g_fPersonalRecord[client] > 0.0)
-			Format(sPBest, sizeof(sPBest), "%s", g_szLastPBDifference[client]);
+			Format(sPBest, sizeof(sPBest), "%s\t", g_szLastPBDifference[client]);
 
 		if (g_fRecordMapTime > 0.0)
 			Format(sSRec, sizeof(sSRec), "%s", g_szLastSRDifference[client]);
