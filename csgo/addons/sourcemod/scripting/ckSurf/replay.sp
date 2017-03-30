@@ -661,7 +661,7 @@ public void RecordReplay (int client, int &buttons, int &subtype, int &seed, int
 		iFrame[playerSeed] = seed;
 
 		// Save the current position
-		if (g_OriginSnapshotInterval[client] > ORIGIN_SNAPSHOT_INTERVAL  || (GetSpeed(client) > g_previousSpeedSnapshot[client] + 1000))
+		if (g_OriginSnapshotInterval[client] > ORIGIN_SNAPSHOT_INTERVAL  || g_createAdditionalTeleport[client])
 		{
 			int iAT[AdditionalTeleport];
 			float fBuffer[3];
@@ -677,7 +677,7 @@ public void RecordReplay (int client, int &buttons, int &subtype, int &seed, int
 			iAT[atFlags] = ADDITIONAL_FIELD_TELEPORTED_ORIGIN;
 			PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT[0], view_as<int>(AdditionalTeleport));
 			g_OriginSnapshotInterval[client] = 0;
-			g_previousSpeedSnapshot[client] = 0.0;
+			g_createAdditionalTeleport[client] = false;
 		}
 
 		g_OriginSnapshotInterval[client]++;

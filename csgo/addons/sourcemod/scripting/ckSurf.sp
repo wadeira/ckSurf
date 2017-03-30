@@ -589,7 +589,7 @@ int g_CurrentAdditionalTeleportIndex[MAXPLAYERS + 1];
 int g_RecordedTicks[MAXPLAYERS + 1];
 int g_RecordPreviousWeapon[MAXPLAYERS + 1];
 int g_OriginSnapshotInterval[MAXPLAYERS + 1];
-float g_previousSpeedSnapshot[MAXPLAYERS + 1];					// Previous speed snapshot
+bool g_createAdditionalTeleport[MAXPLAYERS+1];					// If set to true, creates additional teleport for the recording once.
 int g_BotMimicTick[MAXPLAYERS + 1] =  { 0, ... };
 int g_RecordBot = -1; 											// Record bot client ID
 int g_InfoBot = -1; 											// Info bot client ID

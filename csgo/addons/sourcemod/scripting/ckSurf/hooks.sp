@@ -504,6 +504,12 @@ public Action OnTouchPushTrigger(int entity, int other)
 {
 	if (IsValidClient(other) && GetConVarBool(g_hTriggerPushFixEnable) == true)
 	{
+		//Takes a new additional teleport to increase acuraccy for bot recordings.
+		if (g_hRecording[client] != null && !IsFakeClient(client))
+		{
+			g_createAdditionalTeleport[client] = true;
+		}
+		
 		if (IsValidEntity(entity))
 		{
 			float m_vecPushDir[3];
