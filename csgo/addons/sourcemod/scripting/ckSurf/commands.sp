@@ -3237,7 +3237,7 @@ public Action Client_MapStats(int client, int args)
 		// char szTime[32];
 		char szSteamId[32];
 		getSteamIDFromClient(client, szSteamId, 32);
-		int i,b;
+		int i;
 
 		Menu mapInfoMenu = new Menu(MapMenuHandler1);
 		mapInfoMenu.Pagination = 10;
@@ -3268,15 +3268,14 @@ public Action Client_MapStats(int client, int args)
 		int stageCount = (g_mapZonesTypeCount[g_iClientInZone[client][2]][3]) + 1;
 		Handle stringArray = CreateArray(stageCount);
 	
-		for (i= 1; i<=stageCount; i++){
-			float stageTime = g_fPersonalRecordStage[i][client];
+		for (i= 1; i<=stageCount; i++) {
+			float stageTime = g_fStagePlayerRecord[client][i];
 			// Format(szTime, 32, "Time: %f", stageTime);
 			if (stageTime>0){
 				Format(szValue, 128, "[Stage %i Rank]: %i/%i", (i), i, g_fStagePlayerRecord[client][i], g_StageRecords[i][srCompletions]);
 				mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
 			}
 			PushArrayString(stringArray, szValue);
-			b=i;
 		}
 
 		char title[64];

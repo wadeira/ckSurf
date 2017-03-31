@@ -681,7 +681,6 @@ public void RecordReplay (int client, int &buttons, int &subtype, int &seed, int
 		}
 
 		g_OriginSnapshotInterval[client]++;
-		g_previousSpeedSnapshot[client] = GetSpeed(client);
 
 		// Check for additional Teleports
 		if (GetArraySize(g_hRecordingAdditionalTeleport[client]) > g_CurrentAdditionalTeleportIndex[client])
