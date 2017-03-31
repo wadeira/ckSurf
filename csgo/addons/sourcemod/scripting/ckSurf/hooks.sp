@@ -504,6 +504,12 @@ public Action OnTouchPushTrigger(int entity, int other)
 {
 	if (IsValidClient(other) && GetConVarBool(g_hTriggerPushFixEnable) == true)
 	{
+		//Takes a new additional teleport to increase acuraccy for bot recordings.
+		if (g_hRecording[client] != null && !IsFakeClient(client))
+		{
+			g_createAdditionalTeleport[client] = true;
+		}
+		
 		if (IsValidEntity(entity))
 		{
 			float m_vecPushDir[3];
@@ -804,8 +810,6 @@ public MRESReturn DHooks_OnTeleport(int client, Handle hParams)
 		return MRES_Ignored;
 	}
 
-	g_vLastGroundTouch[client][2] = -99999.0;
-
 	// This one is currently mimicing something.
 	if (g_hBotMimicsRecord[client] != null)
 	{
@@ -826,8 +830,10 @@ public MRESReturn DHooks_OnTeleport(int client, Handle hParams)
 
 	float origin[3], angles[3], velocity[3];
 
-	if (!bOriginNull)
+	if (!bOriginNull) {
 		DHookGetParamVector(hParams, 1, origin);
+		DHookGetParamVector(hParams, 1, g_vLastGroundTouch[client]);
+	}
 
 	if (!bAnglesNull)
 	{

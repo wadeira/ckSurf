@@ -589,7 +589,7 @@ int g_CurrentAdditionalTeleportIndex[MAXPLAYERS + 1];
 int g_RecordedTicks[MAXPLAYERS + 1];
 int g_RecordPreviousWeapon[MAXPLAYERS + 1];
 int g_OriginSnapshotInterval[MAXPLAYERS + 1];
-float g_previousSpeedSnapshot[MAXPLAYERS + 1];					// Previous speed snapshot
+bool g_createAdditionalTeleport[MAXPLAYERS+1];					// If set to true, creates additional teleport for the recording once.
 int g_BotMimicTick[MAXPLAYERS + 1] =  { 0, ... };
 int g_RecordBot = -1; 											// Record bot client ID
 int g_InfoBot = -1; 											// Info bot client ID
@@ -1898,6 +1898,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_p", Client_Profile, "[Surf Timer] opens a player profile");
 	RegConsoleCmd("sm_rank", Client_Profile, "[Surf Timer] opens a player profile");
 	RegConsoleCmd("sm_options", Client_OptionMenu, "[Surf Timer] opens options menu");
+	RegConsoleCmd("sm_mapstats", Client_MapStats, "[ckSurf] displays panel with map ranks information");
+	RegConsoleCmd("sm_ms", Client_MapStats, "[ckSurf] displays panel with map ranks information");
 	RegConsoleCmd("sm_top", Client_Top, "[Surf Timer] displays top rankings (Top 100 Players, Top 50 overall)");
 	RegConsoleCmd("sm_topSurfers", Client_Top, "[Surf Timer] displays top rankings (Top 100 Players, Top 50 overall)");
 	RegConsoleCmd("sm_bonustop", Client_BonusTop, "[Surf Timer] displays top rankings of the bonus");
