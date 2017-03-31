@@ -61,12 +61,11 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 		{
 			StripAllWeapons(client);
 			if (!IsFakeClient(client))
-				GivePlayerItem(client, "weapon_usp_silencer");
-			if (!g_bStartWithUsp[client])
 			{
-				int weapon = GetPlayerWeaponSlot(client, 2);
-				if (weapon != -1 && !IsFakeClient(client))
-					SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+				if (GetClientTeam(client) == CS_TEAM_T)
+					GivePlayerItem(client, "weapon_glock");
+				else
+					GivePlayerItem(client, "weapon_usp_silencer");
 			}
 		}
 

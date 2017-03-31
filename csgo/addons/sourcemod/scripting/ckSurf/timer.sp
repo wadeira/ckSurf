@@ -66,25 +66,6 @@ public Action RefreshZoneSettings(Handle timer, any client)
 	return Plugin_Handled;
 }
 
-public Action SetPlayerWeapons(Handle timer, any client)
-{
-	if ((GetClientTeam(client) > 1) && IsValidClient(client))
-	{
-		StripAllWeapons(client);
-		if (!IsFakeClient(client))
-			GivePlayerItem(client, "weapon_usp_silencer");
-		if (!g_bStartWithUsp[client])
-		{
-			int weapon;
-			weapon = GetPlayerWeaponSlot(client, 2);
-			if (weapon != -1 && !IsFakeClient(client))
-				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-		}
-	}
-
-	return Plugin_Handled;
-}
-
 public Action PlayerRanksTimer(Handle timer)
 {
 	for (int i = 1; i <= MaxClients; i++)

@@ -2037,20 +2037,6 @@ public void HideSpecs(int client)
 	g_bShowSpecs[client] = !g_bShowSpecs[client];
 }
 
-public Action Client_Showtime(int client, int args)
-{
-	ShowTime(client);
-	if (g_bShowTime[client])
-		PrintToChat(client, "%t", "Showtime1", MOSSGREEN, WHITE);
-	else
-		PrintToChat(client, "%t", "Showtime2", MOSSGREEN, WHITE);
-	return Plugin_Handled;
-}
-
-public void ShowTime(int client)
-{
-	g_bShowTime[client] = !g_bShowTime[client];
-}
 
 public int GoToMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 {
@@ -2639,46 +2625,26 @@ public void OptionMenu(int client)
 	else
 		AddMenuItem(optionmenu, "Quake sounds - Disabled", "Quake sounds - Disabled");
 	// #2
-	if (g_bShowTime[client])
-		AddMenuItem(optionmenu, "Show Timer  -  Enabled", "Show timer text  -  Enabled");
-	else
-		AddMenuItem(optionmenu, "Show Timer  -  Disabled", "Show timer text  -  Disabled");
-	// #3
 	if (g_bShowSpecs[client])
 		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Enabled");
 	else
 		AddMenuItem(optionmenu, "Spectator list  -  Disabled", "Spectator list  -  Disabled");
-	// #4
-	if (g_bInfoPanel[client])
-		AddMenuItem(optionmenu, "Speed/Stage panel  -  Enabled", "Speed/Stage panel  -  Enabled");
-	else
-		AddMenuItem(optionmenu, "Speed/Stage panel  -  Disabled", "Speed/Stage panel  -  Disabled");
-	// #5
-	if (g_bStartWithUsp[client])
-		AddMenuItem(optionmenu, "Active start weapon  -  Usp", "Start weapon  -  USP");
-	else
-		AddMenuItem(optionmenu, "Active start weapon  -  Knife", "Start weapon  -  Knife");
-	// #6
-	if (g_bGoToClient[client])
-		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
-	else
-		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");
-	// #8
+	// #3
 	if (g_bHideChat[client])
 		AddMenuItem(optionmenu, "Hide Chat - Hidden", "Hide Chat - Hidden");
 	else
 		AddMenuItem(optionmenu, "Hide Chat - Visible", "Hide Chat - Visible");
-	// #9
+	// #4
 	if (g_bViewModel[client])
 		AddMenuItem(optionmenu, "Hide Weapon - Visible", "Hide Weapon - Visible");
 	else
 		AddMenuItem(optionmenu, "Hide Weapon - Hidden", "Hide Weapon - Hidden");
-	// #10
+	// #5
 	if (g_bCheckpointsEnabled[client])
 		AddMenuItem(optionmenu, "Checkpoints - Enabled", "Checkpoints - Enabled");
 	else
 		AddMenuItem(optionmenu, "Checkpoints - Disabled", "Checkpoints - Disabled");
-
+	// #6
 	if (g_bHideLeftHud[client])
 		AddMenuItem(optionmenu, "Left Hud - Disabled", "Left Hud - Disabled");
 	else
@@ -2704,15 +2670,11 @@ public int OptionMenuHandler(Menu menu, MenuAction action, int param1, int param
 		{
 			case 0:HideMethod(param1);
 			case 1:QuakeSounds(param1);
-			case 2:ShowTime(param1);
-			case 3:HideSpecs(param1);
-			case 4:InfoPanel(param1);
-			case 5:SwitchStartWeapon(param1);
-			case 6:DisableGoTo(param1);
-			case 7:HideChat(param1);
-			case 8:HideViewModel(param1);
-			case 9:ToggleCheckpoints(param1, 1);
-			case 10: g_bHideLeftHud[param1] = !g_bHideLeftHud[param1];
+			case 2:HideSpecs(param1);
+			case 3:HideChat(param1);
+			case 4:HideViewModel(param1);
+			case 5:ToggleCheckpoints(param1, 1);
+			case 6: g_bHideLeftHud[param1] = !g_bHideLeftHud[param1];
 		}
 		g_OptionsMenuLastPage[param1] = param2;
 		OptionMenu(param1);
@@ -2723,46 +2685,6 @@ public int OptionMenuHandler(Menu menu, MenuAction action, int param1, int param
 		CloseHandle(menu);
 	}
 }
-
-
-
-public void SwitchStartWeapon(int client)
-{
-	g_bStartWithUsp[client] = !g_bStartWithUsp[client];
-}
-
-public Action Client_DisableGoTo(int client, int args)
-{
-	DisableGoTo(client);
-	if (g_bGoToClient[client])
-		PrintToChat(client, "%t", "DisableGoto1", MOSSGREEN, WHITE);
-	else
-		PrintToChat(client, "%t", "DisableGoto2", MOSSGREEN, WHITE);
-	return Plugin_Handled;
-}
-
-
-public void DisableGoTo(int client)
-{
-	g_bGoToClient[client] = !g_bGoToClient[client];
-}
-
-public Action Client_InfoPanel(int client, int args)
-{
-	InfoPanel(client);
-	if (g_bInfoPanel[client] == true)
-		PrintToChat(client, "%t", "Info1", MOSSGREEN, WHITE);
-	else
-		PrintToChat(client, "%t", "Info2", MOSSGREEN, WHITE);
-	return Plugin_Handled;
-}
-
-public void InfoPanel(int client)
-{
-	g_bInfoPanel[client] = !g_bInfoPanel[client];
-}
-
-
 
 public Action Command_ViewStats(int client, int args)
 {

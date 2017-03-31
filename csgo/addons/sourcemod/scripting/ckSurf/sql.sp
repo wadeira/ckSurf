@@ -78,10 +78,10 @@ char sql_insertLatestRecords[] = "INSERT INTO ck_latestrecords (steamid, name, r
 char sql_selectLatestRecords[] = "SELECT name, runtime, map, date FROM ck_latestrecords ORDER BY date DESC LIMIT 50";
 
 //TABLE PLAYEROPTIONS
-char sql_createPlayerOptions[] = "CREATE TABLE IF NOT EXISTS ck_playeroptions (steamid VARCHAR(32), speedmeter INT(12) DEFAULT '0', quake_sounds INT(12) DEFAULT '1', shownames INT(12) DEFAULT '1', goto INT(12) DEFAULT '1', showtime INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', knife VARCHAR(32) DEFAULT 'weapon_knife', new1 INT(12) DEFAULT '0', new2 INT(12) DEFAULT '0', new3 INT(12) DEFAULT '0', checkpoints INT(12) DEFAULT '1', hidelefthud INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
-char sql_insertPlayerOptions[] = "INSERT INTO ck_playeroptions (steamid, speedmeter, quake_sounds, shownames, goto, showtime, hideplayers, showspecs, knife, new1, new2, new3, checkpoints, hidelefthud) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%i');";
-char sql_selectPlayerOptions[] = "SELECT speedmeter, quake_sounds, shownames, goto, showtime, hideplayers, showspecs, knife, new1, new2, new3, checkpoints, hidelefthud FROM ck_playeroptions where steamid = '%s'";
-char sql_updatePlayerOptions[] = "UPDATE ck_playeroptions SET speedmeter ='%i', quake_sounds ='%i', shownames ='%i', goto ='%i', showtime ='%i', hideplayers ='%i', showspecs ='%i', knife ='%s', new1 = '%i', new2 = '%i', new3 = '%i', checkpoints = '%i', hidelefthud = '%i' where steamid = '%s'";
+char sql_createPlayerOptions[] = "CREATE TABLE IF NOT EXISTS ck_playeroptions (steamid VARCHAR(32), quake_sounds INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', hidechat INT(12) DEFAULT '0', viewmodel INT(12) DEFAULT '0', checkpoints INT(12) DEFAULT '1', hidelefthud INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
+char sql_insertPlayerOptions[] = "INSERT INTO ck_playeroptions (steamid, quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i');";
+char sql_selectPlayerOptions[] = "SELECT quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud FROM ck_playeroptions where steamid = '%s'";
+char sql_updatePlayerOptions[] = "UPDATE ck_playeroptions SET quake_sounds ='%i', hideplayers ='%i', showspecs ='%i', hidechat = '%i', viewmodel = '%i', checkpoints = '%i', hidelefthud = '%i' where steamid = '%s'";
 
 //TABLE PLAYERRANK
 char sql_createPlayerRank[] = "CREATE TABLE IF NOT EXISTS ck_playerrank (steamid VARCHAR(32), name VARCHAR(32), country VARCHAR(32), points INT(12)  DEFAULT '0', winratio INT(12)  DEFAULT '0', pointsratio INT(12)  DEFAULT '0',finishedmaps INT(12) DEFAULT '0', multiplier INT(12) DEFAULT '0', finishedmapspro INT(12) DEFAULT '0', lastseen DATE, PRIMARY KEY(steamid));";
@@ -6300,33 +6300,24 @@ public void db_viewPlayerOptionsCallback(Handle owner, Handle hndl, const char[]
 
 	if (SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
-		//"SELECT speedmeter, quake_sounds, shownames, goto, showtime, hideplayers, showspecs, knife, new1, new2, new3, checkpoints FROM ck_playeroptions where steamid = '%s'";
+		// quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud
 
-		g_bInfoPanel[client] = view_as<bool>(SQL_FetchInt(hndl, 0));
-		g_bEnableQuakeSounds[client] = view_as<bool>(SQL_FetchInt(hndl, 1));
-		g_bShowNames[client] = view_as<bool>(SQL_FetchInt(hndl, 2));
-		g_bGoToClient[client] = view_as<bool>(SQL_FetchInt(hndl, 3));
-		g_bShowTime[client] = view_as<bool>(SQL_FetchInt(hndl, 4));
-		g_bHide[client] = view_as<bool>(SQL_FetchInt(hndl, 5));
-		g_bShowSpecs[client] = view_as<bool>(SQL_FetchInt(hndl, 6));
-		g_bStartWithUsp[client] = view_as<bool>(SQL_FetchInt(hndl, 7));
-		g_bHideChat[client] = view_as<bool>(SQL_FetchInt(hndl,9));
-		g_bViewModel[client] = view_as<bool>(SQL_FetchInt(hndl, 10));
-		g_bCheckpointsEnabled[client] = view_as<bool>(SQL_FetchInt(hndl, 11));
-		g_bHideLeftHud[client] = view_as<bool>(SQL_FetchInt(hndl, 12));
+		g_bEnableQuakeSounds[client] = view_as<bool>(SQL_FetchInt(hndl, 0));
+		g_bHide[client] = view_as<bool>(SQL_FetchInt(hndl, 1));
+		g_bShowSpecs[client] = view_as<bool>(SQL_FetchInt(hndl, 2));
+		g_bHideChat[client] = view_as<bool>(SQL_FetchInt(hndl, 3));
+		g_bViewModel[client] = view_as<bool>(SQL_FetchInt(hndl, 4));
+		g_bCheckpointsEnabled[client] = view_as<bool>(SQL_FetchInt(hndl, 5));
+		g_bHideLeftHud[client] = view_as<bool>(SQL_FetchInt(hndl, 6));
 
 		//org
-		g_borg_InfoPanel[client] = g_bInfoPanel[client];
 		g_borg_EnableQuakeSounds[client] = g_bEnableQuakeSounds[client];
-		g_borg_ShowNames[client] = g_bShowNames[client];
-		g_borg_GoToClient[client] = g_bGoToClient[client];
-		g_borg_ShowTime[client] = g_bShowTime[client];
 		g_borg_Hide[client] = g_bHide[client];
-		g_borg_StartWithUsp[client] = g_bStartWithUsp[client];
 		g_borg_ShowSpecs[client] = g_bShowSpecs[client];
 		g_borg_HideChat[client] = g_bHideChat[client];
 		g_borg_ViewModel[client] = g_bViewModel[client];
 		g_borg_CheckpointsEnabled[client] = g_bCheckpointsEnabled[client];
+		g_borg_HideLeftHud[client] = g_bHideLeftHud[client];
 	}
 	else
 	{
@@ -6334,22 +6325,17 @@ public void db_viewPlayerOptionsCallback(Handle owner, Handle hndl, const char[]
 		if (!IsValidClient(client))
 			return;
 
-		//"INSERT INTO ck_playeroptions (steamid, speedmeter, quake_sounds, shownames, goto, showtime, hideplayers, showspecs, knife, new1, new2, new3) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i');";
+		// steamid, quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud
 
-		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1, 1, 1, 1, 1, 0, 0, 1, "weapon_knife", 0, 0, 1, 1, 0);
+		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1, 0, 1, 0, 0, 1, 1);
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low);
-		g_borg_InfoPanel[client] = true;
 		g_borg_EnableQuakeSounds[client] = true;
-		g_borg_ShowNames[client] = true;
-		g_borg_GoToClient[client] = true;
-		g_borg_ShowTime[client] = false;
 		g_borg_Hide[client] = false;
 		g_borg_ShowSpecs[client] = true;
-		// weapon_knife
-		g_borg_StartWithUsp[client] = false;
 		g_borg_HideChat[client] = false;
 		g_borg_ViewModel[client] = true;
 		g_borg_CheckpointsEnabled[client] = true;
+		g_borg_HideLeftHud[client] = true;
 	}
 	if (!g_bSettingsLoaded[client])
 		db_viewPersonalFlags(client, g_szSteamID[client]);
@@ -6358,11 +6344,16 @@ public void db_viewPlayerOptionsCallback(Handle owner, Handle hndl, const char[]
 
 public void db_updatePlayerOptions(int client)
 {
-	if (g_borg_ViewModel[client] != g_bViewModel[client] || g_borg_HideChat[client] != g_bHideChat[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CheckpointsEnabled[client] != g_bCheckpointsEnabled[client])
+	if (g_borg_ViewModel[client] != g_bViewModel[client] 
+		|| g_borg_HideChat[client] != g_bHideChat[client]
+		|| g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] 
+		|| g_borg_Hide[client] != g_bHide[client] 
+		|| g_borg_ShowSpecs[client] != g_bShowSpecs[client] 
+		|| g_borg_CheckpointsEnabled[client] != g_bCheckpointsEnabled[client] 
+		|| g_borg_HideLeftHud[client] != g_bHideLeftHud[client])
 	{
 		char szQuery[1024];
-
-		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bInfoPanel[client]), BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bShowNames[client]), BooltoInt(g_bGoToClient[client]), BooltoInt(g_bShowTime[client]), BooltoInt(g_bHide[client]), BooltoInt(g_bShowSpecs[client]), "weapon_knife", BooltoInt(g_bStartWithUsp[client]), BooltoInt(g_bHideChat[client]), BooltoInt(g_bViewModel[client]), BooltoInt(g_bCheckpointsEnabled[client]), BooltoInt(g_bHideLeftHud[client]), g_szSteamID[client]);
+		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bHide[client]), BooltoInt(g_bShowSpecs[client]), BooltoInt(g_bHideChat[client]), BooltoInt(g_bViewModel[client]), BooltoInt(g_bCheckpointsEnabled[client]), BooltoInt(g_bHideLeftHud[client]), g_szSteamID[client]);
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client, DBPrio_Low);
 	}
 }
