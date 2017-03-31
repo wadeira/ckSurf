@@ -3224,3 +3224,65 @@ public Action Command_ShowZones(int client, int args)
 
 	PrintToChat(client, "[%cSurf Timer%c] Zone display is now %s.", MOSSGREEN, WHITE, (g_bShowZones[client] ? "enabled" : "disabled"));
 }
+
+/**
+* Displays client map stats panel, shows rank for each stage, bonus and map itself.
+*/
+public Action Client_MapStats(int client, int args)
+{
+	if (IsValidClient(client))
+	{
+		char szValue[128];
+		// char szTime[32];
+		char szSteamId[32];
+		getSteamIDFromClient(client, szSteamId, 32);
+		int i;
+
+		Menu mapInfoMenu = new Menu(MapMenuHandler1);
+		mapInfoMenu.Pagination = 10;
+
+		//Adds map time
+
+		if (g_fPersonalRecord[client] > 0.0) {
+			Format(szValue, 128, "[Map Time]: %s | Rank: %i/%i", g_szPersonalRecord[client] ,g_MapRank[client] ,g_MapTimesCount);
+			mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
+		}
+
+		int bonusCount = g_totalBonusCount;
+		for (i= 1; i<=bonusCount; i++){
+			float bonusTime = g_fPersonalRecordBonus[i-1][client];
+			if (bonusTime>0) {
+				Format(szValue, 128, "[Bonus %i Time]: %s | Rank: %i/%i", i, g_szPersonalRecordBonus[i][client] ,g_MapRankBonus[i][client] ,g_iBonusCount[i]);
+				mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
+			} else{
+				Format(szValue, 128, "No times for Bonus %i", (i));
+				mapInfoMenu.AddItem(szValue, szValue);
+			}
+			
+		}
+
+		
+
+		// Counts stages and creates strings
+		int stageCount = (g_mapZonesTypeCount[g_iClientInZone[client][2]][3]) + 1;
+		Handle stringArray = CreateArray(stageCount);
+	
+		for (i= 1; i<=stageCount; i++) {
+			float stageTime = g_fStagePlayerRecord[client][i];
+			// Format(szTime, 32, "Time: %f", stageTime);
+			if (stageTime < 99999.0){
+				Format(szValue, 128, "[Stage %i Time]: %.2f | Rank: %i/%i", (i), stageTime, g_StagePlayerRank[client][i], g_StageRecords[i][srCompletions]);
+				mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
+			}
+			PushArrayString(stringArray, szValue);
+		}
+
+		char title[64];
+		Format(title, 64, "Map Statistics");
+		mapInfoMenu.SetTitle(title);
+		mapInfoMenu.OptionFlags = MENUFLAG_BUTTON_EXIT;
+		mapInfoMenu.Display(client, MENU_TIME_FOREVER);
+		CloseHandle(stringArray);
+	}
+	return Plugin_Handled;
+}
