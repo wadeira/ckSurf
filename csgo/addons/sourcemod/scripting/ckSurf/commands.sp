@@ -3244,23 +3244,17 @@ public Action Client_MapStats(int client, int args)
 		//Adds map time
 
 		if (g_fPersonalRecord[client] > 0.0) {
-			Format(szValue, 128, "[Map Time]: %s | Rank: %i/%i", g_szPersonalRecord[client] ,g_MapRank[client] ,g_MapTimesCount);
+			Format(szValue, 128, "[Map Time]: %s | Rank: %i/%i", g_szPersonalRecord[client], g_MapRank[client], g_MapTimesCount);
 			mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
 		}
 
-		int bonusCount = g_totalBonusCount;
-		for (i= 1; i<=bonusCount; i++){
-			float bonusTime = g_fPersonalRecordBonus[i-1][client];
+		for (i = 1; i < g_mapZoneGroupCount; i++) {
+			float bonusTime = g_fPersonalRecordBonus[i][client];
 			if (bonusTime>0) {
-				Format(szValue, 128, "[Bonus %i Time]: %s | Rank: %i/%i", i, g_szPersonalRecordBonus[i][client] ,g_MapRankBonus[i][client] ,g_iBonusCount[i]);
+				Format(szValue, 128, "[Bonus %i Time]: %s | Rank: %i/%i", i, g_szPersonalRecordBonus[i][client], g_MapRankBonus[i][client], g_iBonusCount[i]);
 				mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
-			} else{
-				Format(szValue, 128, "No times for Bonus %i", (i));
-				mapInfoMenu.AddItem(szValue, szValue);
 			}
-			
 		}
-
 		
 
 		// Counts stages and creates strings
