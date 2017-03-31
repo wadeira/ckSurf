@@ -3231,44 +3231,59 @@ public Action Command_ShowZones(int client, int args)
 public Action Client_MapStats(int client, int args)
 {
 	if (IsValidClient(client))
-	{
+	{	
+		char szItem[4];
 		char szValue[128];
 		// char szTime[32];
 		char szSteamId[32];
 		getSteamIDFromClient(client, szSteamId, 32);
 		int i;
 
-		Menu mapInfoMenu = new Menu(MapMenuHandler1);
+		Menu mapInfoMenu = new Menu(MapStatsHandler);
 		mapInfoMenu.Pagination = 10;
 
 		//Adds map time
 
 		if (g_fPersonalRecord[client] > 0.0) {
 			Format(szValue, 128, "[Map Time]: %s | Rank: %i/%i", g_szPersonalRecord[client], g_MapRank[client], g_MapTimesCount);
-			mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
+			mapInfoMenu.AddItem("0", szValue, ITEMDRAW_DEFAULT);
 		}
-
-		for (i = 1; i < g_mapZoneGroupCount; i++) {
-			float bonusTime = g_fPersonalRecordBonus[i][client];
-			if (bonusTime>0) {
-				Format(szValue, 128, "[Bonus %i Time]: %s | Rank: %i/%i", i, g_szPersonalRecordBonus[i][client], g_MapRankBonus[i][client], g_iBonusCount[i]);
-				mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
-			}
-		}
-		
+		else
+			mapInfoMenu.AddItem("0", "Map Time: None", ITEMDRAW_DISABLED);
 
 		// Counts stages and creates strings
 		int stageCount = (g_mapZonesTypeCount[g_iClientInZone[client][2]][3]) + 1;
 		Handle stringArray = CreateArray(stageCount);
 	
-		for (i= 1; i<=stageCount; i++) {
-			float stageTime = g_fStagePlayerRecord[client][i];
-			// Format(szTime, 32, "Time: %f", stageTime);
-			if (stageTime < 99999.0){
-				Format(szValue, 128, "[Stage %i Time]: %.2f | Rank: %i/%i", (i), stageTime, g_StagePlayerRank[client][i], g_StageRecords[i][srCompletions]);
-				mapInfoMenu.AddItem(szSteamId, szValue, ITEMDRAW_DEFAULT);
+		if (g_bhasStages) {
+			for (i= 1; i<=stageCount; i++) {
+				Format(szItem, sizeof(szItem), "%d", i);
+				float stageTime = g_fStagePlayerRecord[client][i];
+				// Format(szTime, 32, "Time: %f", stageTime);
+				if (stageTime < 99999.0) {
+					Format(szValue, 128, "Stage %i: %.2f | Rank: %i/%i", (i), stageTime, g_StagePlayerRank[client][i], g_StageRecords[i][srCompletions]);
+					mapInfoMenu.AddItem(szItem, szValue, ITEMDRAW_DEFAULT);
+				}
+				else {
+					Format(szValue, 128, "Stage %i: None", i);
+					mapInfoMenu.AddItem(szItem, szValue, ITEMDRAW_DISABLED);
+				}
+				PushArrayString(stringArray, szValue);
 			}
-			PushArrayString(stringArray, szValue);
+		}
+
+
+		for (i = 1; i < g_mapZoneGroupCount; i++) {
+			Format(szItem, sizeof(szItem), "-%d", i);
+			float bonusTime = g_fPersonalRecordBonus[i][client];
+			if (bonusTime>0) {
+				Format(szValue, 128, "Bonus %i: %s | Rank: %i/%i", i, g_szPersonalRecordBonus[i][client], g_MapRankBonus[i][client], g_iBonusCount[i]);
+				mapInfoMenu.AddItem(szItem, szValue, ITEMDRAW_DEFAULT);
+			}
+			else {
+				Format(szValue, 128, "Bonus %i: None", i);
+				mapInfoMenu.AddItem(szItem, szValue, ITEMDRAW_DISABLED);
+			}
 		}
 
 		char title[64];
@@ -3279,4 +3294,26 @@ public Action Client_MapStats(int client, int args)
 		CloseHandle(stringArray);
 	}
 	return Plugin_Handled;
+}
+
+
+public int MapStatsHandler(Menu menu, MenuAction action, int param1, int param2) {
+	if (action != MenuAction_Select)
+		return 0;
+
+	char szItem[4];
+	menu.GetItem(param2, szItem, sizeof(szItem));
+	int id = StringToInt(szItem);
+
+
+	PrintToChat(param1, "item: %d id: %d", szItem, id);
+	// Map records
+	if (id == 0)
+		db_selectMapTopSurfers(param1, g_szMapName);
+	else if (id > 0)
+		db_viewStageRecords(param1, id);
+	else if (id < 0)
+		db_viewStageRecords(param1, id * -1);
+
+	return 0;
 }
