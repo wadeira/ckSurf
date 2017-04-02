@@ -128,7 +128,7 @@ public void CL_OnStartTimerPress(int client)
 			if (ObserverMode != 4 && ObserverMode != 5)
 				continue;
 
-			PrintToChat(client, speedDiffMsg);
+			PrintToChat(i, speedDiffMsg);
 		}
 
 		PrintToChat(client, speedDiffMsg);
@@ -697,7 +697,7 @@ public void StartStageTimer(int client)
 		if (ObserverMode != 4 && ObserverMode != 5)
 			continue;
 
-		PrintToChat(client, speedDiffMsg);
+		PrintToChat(i, speedDiffMsg);
 	}
 
 	PrintToChat(client, speedDiffMsg);
