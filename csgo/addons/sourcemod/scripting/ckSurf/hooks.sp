@@ -48,7 +48,7 @@ public Action Event_OnFire(Handle event, const char[] name, bool dontBroadcast)
 public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (client != 0)
+	if (client != 0 && !IsFakeClient(client))
 	{
 		g_SpecTarget[client] = -1;
 		g_bPause[client] = false;
@@ -57,7 +57,7 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 		SetEntityRenderMode(client, RENDER_NORMAL);
 
 		//strip weapons
-		if ((GetClientTeam(client) > 1) && IsValidClient(client))
+		if ((GetClientTeam(client) > 1) && CheckHideBotWeapon(client))
 		{
 			StripAllWeapons(client);
 			if (!IsFakeClient(client))
