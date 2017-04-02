@@ -470,6 +470,7 @@ ConVar g_hExtraPoints2 = null; 									// How many extra points for finishing a
 ConVar g_hReplayBotColor = null; 								// Replay bot color
 int g_ReplayBotColor[3];
 ConVar g_hRecordBotTrail = null; 								// Record bot trail?
+ConVar g_hReplayBotWeapons = null; 								// Hides bot weapons if set on 0
 ConVar g_hReplayBotTrailColor = null; 							// Replay bot trail color
 int g_ReplayBotTrailColor[4];
 ConVar g_hDoubleRestartCommand;									// Double !r restart
@@ -1761,6 +1762,8 @@ public void OnPluginStart()
 	GetRGBColor(0, szRBotColor);
 
 	g_hReplayBotTrailColor = CreateConVar("ck_replay_bot_trail_color", "52 91 248", "The trail color for the replay bot - Format: \"red green blue\" from 0 - 255.", FCVAR_NOTIFY);
+	g_hReplayBotWeapons = CreateConVar("ck_replay_bot_weapons", "1", "Hides bot weapons if set on 0.", FCVAR_NOTIFY);
+
 	HookConVarChange(g_hReplayBotTrailColor, OnSettingChanged);
 	char szTrailColor[24];
 	GetConVarString(g_hReplayBotTrailColor, szTrailColor, 24);

@@ -756,7 +756,9 @@ public void PlayReplay(int client, int &buttons, int &subtype, int &seed, int &i
 
 			return;
 		}
-
+		if (CheckHideBotWeapon(client))
+			StripAllWeapons(g_RecordBot);
+		
 		int iFrame[15];
 		GetArrayArray(g_hBotMimicsRecord[client],
 						g_BotMimicTick[client],

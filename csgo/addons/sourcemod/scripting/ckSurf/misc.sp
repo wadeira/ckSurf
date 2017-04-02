@@ -1191,7 +1191,7 @@ stock void StripAllWeapons(int client)
 			RemoveEdict(iEnt);
 		}
 	}
-	if (GetPlayerWeaponSlot(client, 2) == -1)
+	if (GetPlayerWeaponSlot(client, 2) == -1 && CheckHideBotWeapon(client))
 		GivePlayerItem(client, "weapon_knife");
 }
 
@@ -3511,4 +3511,12 @@ void OpenMOTD(int client, const char[] url)
 	// Open motd to client
 	ShowMOTDPanel(client, "Surf Timer", urlJs, MOTDPANEL_TYPE_URL);
 	PrintToConsole(client, urlJs);
+}
+
+//Used on misc.StripAllWeapons() to check if the bot should have a knife.
+public bool CheckHideBotWeapon(int client) {
+	if (GetConVarInt(g_hReplayBotWeapons) == 0 && IsFakeClient(client)) { 
+		return true;
+	}
+	return false;
 }

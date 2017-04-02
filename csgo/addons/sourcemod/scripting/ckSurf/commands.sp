@@ -1202,8 +1202,9 @@ public Action Client_Knife(int client, int args)
 		FakeClientCommand(client, "use %s", weapon);
 		InstantSwitch(client, weapon);
 	}
-	else
+	else {
 		GivePlayerItem(client, "weapon_knife");
+	}
 
 	return Plugin_Handled;
 }
