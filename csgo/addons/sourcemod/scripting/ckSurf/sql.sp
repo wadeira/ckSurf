@@ -79,7 +79,7 @@ char sql_selectLatestRecords[] = "SELECT name, runtime, map, date FROM ck_latest
 
 //TABLE PLAYEROPTIONS
 char sql_createPlayerOptions[] = "CREATE TABLE IF NOT EXISTS ck_playeroptions (steamid VARCHAR(32), quake_sounds INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', hidechat INT(12) DEFAULT '0', viewmodel INT(12) DEFAULT '0', checkpoints INT(12) DEFAULT '1', hidelefthud INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
-char sql_insertPlayerOptions[] = "INSERT INTO ck_playeroptions (steamid, quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i');";
+char sql_insertPlayerOptions[] = "INSERT INTO ck_playeroptions (steamid, quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i');";
 char sql_selectPlayerOptions[] = "SELECT quake_sounds, hideplayers, showspecs, hidechat, viewmodel, checkpoints, hidelefthud FROM ck_playeroptions where steamid = '%s'";
 char sql_updatePlayerOptions[] = "UPDATE ck_playeroptions SET quake_sounds ='%i', hideplayers ='%i', showspecs ='%i', hidechat = '%i', viewmodel = '%i', checkpoints = '%i', hidelefthud = '%i' where steamid = '%s'";
 
