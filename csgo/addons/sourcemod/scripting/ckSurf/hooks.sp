@@ -70,7 +70,7 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 		}
 
 		//NoBlock
-		if (GetConVarBool(g_hCvarNoBlock) || IsFakeClient(client))
+		if (GetConVarBool(g_hCvarNoBlock))
 			SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 		else
 			SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
@@ -175,6 +175,11 @@ public Action Event_OnPlayerSpawn(Handle event, const char[] name, bool dontBroa
 
 		//get speed & origin
 		g_fLastSpeed[client] = GetSpeed(client);
+	}
+
+	else if (IsFakeClient(client)) 
+	{
+		SetEntData(client, FindSendPropInfo("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 	}
 	return Plugin_Continue;
 }
