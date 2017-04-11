@@ -128,6 +128,10 @@ public void CL_OnStartTimerPress(int client)
 			if (ObserverMode != 4 && ObserverMode != 5)
 				continue;
 
+			int ObserverTarget = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");
+			if (ObserverTarget != client)
+				continue;
+
 			PrintToChat(i, speedDiffMsg);
 		}
 
@@ -696,6 +700,10 @@ public void StartStageTimer(int client)
 		int ObserverMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
 		if (ObserverMode != 4 && ObserverMode != 5)
 			continue;
+			
+		int ObserverTarget = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");
+			if (ObserverTarget != client)
+				continue;
 
 		PrintToChat(i, speedDiffMsg);
 	}
