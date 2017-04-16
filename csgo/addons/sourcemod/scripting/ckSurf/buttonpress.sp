@@ -610,9 +610,9 @@ public void StartStageTimer(int client)
 	if (IsFakeClient(client) || !g_bhasStages)
 		return;
 
-	if (g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
+	if (g_bNoclipped[client] || g_bNoClip[client] || (!g_bNoClip[client] && (GetGameTime() - g_fLastTimeNoClipUsed[client]) < 3.0))
 	{
-		PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, stage timer disabled.", MOSSGREEN, WHITE, LIGHTRED, WHITE);
+		PrintToChat(client, "[%cSurf Timer%c] %cYou are noclipping or have noclipped recently%c, stage timer disabled. Type %c!back %cto enable timer again.", MOSSGREEN, WHITE, LIGHTRED, WHITE, LIMEGREEN, WHITE);
 		return;
 	}
 
