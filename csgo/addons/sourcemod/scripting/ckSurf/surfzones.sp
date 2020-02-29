@@ -3,15 +3,15 @@ public void CreateZoneEntity(int zoneIndex)
 	float fMiddle[3], fMins[3], fMaxs[3];
 	char sZoneName[64];
 
-	if (g_mapZones[zoneIndex][PointA][0] == -1.0 && g_mapZones[zoneIndex][PointA][1] == -1.0 && g_mapZones[zoneIndex][PointA][2] == -1.0)
+	if (g_mapZones[zoneIndex].PointA[0] == -1.0 && g_mapZones[zoneIndex].PointA[1] == -1.0 && g_mapZones[zoneIndex].PointA[2] == -1.0)
 	{
 		return;
 	}
 
-	Array_Copy(g_mapZones[zoneIndex][PointA], fMins, 3);
-	Array_Copy(g_mapZones[zoneIndex][PointB], fMaxs, 3);
+	Array_Copy(g_mapZones[zoneIndex].PointA, fMins, 3);
+	Array_Copy(g_mapZones[zoneIndex].PointB, fMaxs, 3);
 
-	Format(sZoneName, sizeof(sZoneName), "%s", g_mapZones[zoneIndex][zoneName]);
+	Format(sZoneName, sizeof(sZoneName), "%s", g_mapZones[zoneIndex].zoneName);
 
 	int iEnt = CreateEntityByName("trigger_multiple");
 
@@ -88,9 +88,9 @@ public Action StartTouchTrigger(int caller, int activator)
 
 	int id = StringToInt(sTargetName);
 
-	action[0] = g_mapZones[id][zoneType];
-	action[1] = g_mapZones[id][zoneTypeId];
-	action[2] = g_mapZones[id][zoneGroup];
+	action[0] = g_mapZones[id].zoneType;
+	action[1] = g_mapZones[id].zoneTypeId;
+	action[2] = g_mapZones[id].zoneGroup;
 
 	if (action[2] == g_iClientInZone[activator][2]) // Is touching zone in right zonegroup
 	{
@@ -140,9 +140,9 @@ public Action EndTouchTrigger(int caller, int activator)
 
 	int id = StringToInt(sTargetName);
 
-	action[0] = g_mapZones[id][zoneType];
-	action[1] = g_mapZones[id][zoneTypeId];
-	action[2] = g_mapZones[id][zoneGroup];
+	action[0] = g_mapZones[id].zoneType;
+	action[1] = g_mapZones[id].zoneTypeId;
+	action[2] = g_mapZones[id].zoneGroup;
 	action[3] = id;
 
 
@@ -352,10 +352,10 @@ public void EndTouch(int client, int action[4])
 		{
 			// Get lowest cornor of the zone
 			float vLowestCorner[3];
-			if (g_mapZones[action[3]][PointA][2] > g_mapZones[action[3]][PointB][2])
-				Array_Copy(g_mapZones[action[3]][PointB], vLowestCorner, 3);
+			if (g_mapZones[action[3]].PointA[2] > g_mapZones[action[3]].PointB[2])
+				Array_Copy(g_mapZones[action[3]].PointB, vLowestCorner, 3);
 			else
-				Array_Copy(g_mapZones[action[3]][PointA], vLowestCorner, 3);
+				Array_Copy(g_mapZones[action[3]].PointA, vLowestCorner, 3);
 
 			// Check if the player jumped from an high platform
 			if (g_vLastGroundTouch[client][2] > (vLowestCorner[2] + 25.0) &&  !g_bStageAllowHighJumps[g_Stage[0][client]]) 
@@ -378,16 +378,22 @@ public void InitZoneVariables()
 	g_mapZonesCount = 0;
 	for (int i = 0; i < MAXZONES; i++)
 	{
-		g_mapZones[i][zoneId] = -1;
-		g_mapZones[i][PointA] = -1.0;
-		g_mapZones[i][PointB] = -1.0;
-		g_mapZones[i][zoneId] = -1;
-		g_mapZones[i][zoneType] = -1;
-		g_mapZones[i][zoneTypeId] = -1;
-		g_mapZones[i][zoneGroup] = -1;
-		g_mapZones[i][zoneName] = 0;
-		g_mapZones[i][Vis] = 0;
-		g_mapZones[i][Team] = 0;
+		g_mapZones[i].zoneId = -1;
+		g_mapZones[i].zoneId = -1;
+		g_mapZones[i].zoneType = -1;
+		g_mapZones[i].zoneTypeId = -1;
+		g_mapZones[i].zoneGroup = -1;
+		g_mapZones[i].zoneName[0] = '\0';
+		g_mapZones[i].Vis = 0;
+		g_mapZones[i].Team = 0;
+
+		for (int x = 0; x < 3; x++)
+		{
+			g_mapZones[i].PointA[x] = -1.0;
+			g_mapZones[i].PointB[x] = -1.0;
+			g_mapZones[i].TeleportPosition[x] = -1.0;
+			g_mapZones[i].TeleportAngles[x] = -1.0;
+		}
 	}
 }
 
@@ -455,11 +461,11 @@ public Action BeamBoxAll(Handle timer, any data)
 			if (!g_bShowZones[client])
 			{
 				// Only draw Start, End and Speed
-				if (g_hZonesToDisplay.IntValue == 1 && !((0 < g_mapZones[i][zoneType] < 3) || g_mapZones[i][zoneType] == 5)) 
+				if (g_hZonesToDisplay.IntValue == 1 && !((0 < g_mapZones[i].zoneType < 3) || g_mapZones[i].zoneType == 5)) 
 					continue;
 
 				// Only draw Start, End, Speed and Stage
-				else if (g_hZonesToDisplay.IntValue == 2 && !((0 < g_mapZones[i][zoneType] < 4) || g_mapZones[i][zoneType] == 5))
+				else if (g_hZonesToDisplay.IntValue == 2 && !((0 < g_mapZones[i].zoneType < 4) || g_mapZones[i].zoneType == 5))
 					continue;
 			}
 
@@ -469,11 +475,11 @@ public Action BeamBoxAll(Handle timer, any data)
 
 			// Get the color of the zone
 			int color[4];
-			getZoneDisplayColor(g_mapZones[i][zoneType], color, g_mapZones[i][zoneGroup]);
+			getZoneDisplayColor(g_mapZones[i].zoneType, color, g_mapZones[i].zoneGroup);
 
 			float point_a[3], point_b[3];
-			Array_Copy(g_mapZones[i][PointA], point_a, sizeof(point_a));
-			Array_Copy(g_mapZones[i][PointB], point_b, sizeof(point_b));
+			Array_Copy(g_mapZones[i].PointA, point_a, sizeof(point_a));
+			Array_Copy(g_mapZones[i].PointB, point_b, sizeof(point_b));
 
 			TE_SendBeamBoxToClient(client, point_a, point_b, g_BeamSprite, g_HaloSprite, 0, 30, GetConVarFloat(g_hChecker), 0.7, 0.7, 2, 1.0, color, 0, 0, i);
 		}
@@ -619,20 +625,20 @@ stock void TE_SendBeamBoxToClient(int client, float uppercorner[3], float bottom
 		{
 			float corners[4][3], fTop[3];
 
-			if (g_mapZones[zoneid][PointA][2] > g_mapZones[zoneid][PointB][2]) // Make sure bottom corner is always the lowest
+			if (g_mapZones[zoneid].PointA[2] > g_mapZones[zoneid].PointB[2]) // Make sure bottom corner is always the lowest
 			{
 				for(int i = 0; i < 3; i++)
 				{
-					corners[0][i] = g_mapZones[zoneid][PointB][i];
-					fTop[i] = g_mapZones[zoneid][PointA][i];
+					corners[0][i] = g_mapZones[zoneid].PointB[i];
+					fTop[i] = g_mapZones[zoneid].PointA[i];
 				}
 			}
 			else
 			{
 				for(int i = 0; i < 3; i++)
 				{
-					corners[0][i] = g_mapZones[zoneid][PointA][i];
-					fTop[i] = g_mapZones[zoneid][PointB][i];
+					corners[0][i] = g_mapZones[zoneid].PointA[i];
+					fTop[i] = g_mapZones[zoneid].PointB[i];
 				}
 			}
 
@@ -953,9 +959,9 @@ public void listZonesInGroup(int client)
 		char listZoneName[256], ZoneId[64], Id[64];
 		for (int i = 0; i < g_mapZonesCount; ++i)
 		{
-			if (g_mapZones[i][zoneGroup] == g_CurrentSelectedZoneGroup[client])
+			if (g_mapZones[i].zoneGroup == g_CurrentSelectedZoneGroup[client])
 			{
-				Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i][zoneType]], g_mapZones[i][zoneTypeId]);
+				Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i].zoneType], g_mapZones[i].zoneTypeId);
 				IntToString(i, Id, sizeof(Id));
 				Format(listZoneName, sizeof(listZoneName), ZoneId);
 				h_listBonusZones.AddItem(Id, ZoneId);
@@ -980,7 +986,7 @@ public int Handler_listBonusZones(Handle tMenu, MenuAction action, int client, i
 			char aID[64];
 			GetMenuItem(tMenu, item, aID, sizeof(aID));
 			g_ClientSelectedZone[client] = StringToInt(aID);
-			g_CurrentZoneType[client] = g_mapZones[g_ClientSelectedZone[client]][zoneType];
+			g_CurrentZoneType[client] = g_mapZones[g_ClientSelectedZone[client]].zoneType;
 			DrawBeamBox(client);
 			g_Editing[client] = 2;
 			if (g_ClientSelectedZone[client] != -1)
@@ -1430,13 +1436,13 @@ public void ListZones(int client, bool mapzones)
 		{
 			for (int i = 0; i < g_mapZonesCount; ++i)
 			{
-				if (g_mapZones[i][zoneGroup] == 0 && 0 < g_mapZones[i][zoneType] < 6)
+				if (g_mapZones[i].zoneGroup == 0 && 0 < g_mapZones[i].zoneType < 6)
 				{
 					// Make stages match the stage number, rather than the ID, to make it more clear for the user
-					if (g_mapZones[i][zoneType] == 3)
-						Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i][zoneType]], (g_mapZones[i][zoneTypeId] + 2));
+					if (g_mapZones[i].zoneType == 3)
+						Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i].zoneType], (g_mapZones[i].zoneTypeId + 2));
 					else
-						Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i][zoneType]], g_mapZones[i][zoneTypeId]);
+						Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i].zoneType], g_mapZones[i].zoneTypeId);
 					IntToString(i, Id, sizeof(Id));
 					Format(listZoneName, sizeof(listZoneName), ZoneId);
 					ZoneList.AddItem(Id, ZoneId);
@@ -1447,9 +1453,9 @@ public void ListZones(int client, bool mapzones)
 		{
 			for (int i = 0; i < g_mapZonesCount; ++i)
 			{
-				if (g_mapZones[i][zoneGroup] == 0 && (g_mapZones[i][zoneType] == 0 || g_mapZones[i][zoneType] > 5))
+				if (g_mapZones[i].zoneGroup == 0 && (g_mapZones[i].zoneType == 0 || g_mapZones[i].zoneType > 5))
 				{
-					Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i][zoneType]], g_mapZones[i][zoneTypeId]);
+					Format(ZoneId, sizeof(ZoneId), "%s-%i", g_szZoneDefaultNames[g_mapZones[i].zoneType], g_mapZones[i].zoneTypeId);
 					IntToString(i, Id, sizeof(Id));
 					Format(listZoneName, sizeof(listZoneName), ZoneId);
 					ZoneList.AddItem(Id, ZoneId);
@@ -1474,7 +1480,7 @@ public int MenuHandler_ZoneModify(Handle tMenu, MenuAction action, int client, i
 			char aID[64];
 			GetMenuItem(tMenu, item, aID, sizeof(aID));
 			g_ClientSelectedZone[client] = StringToInt(aID);
-			g_CurrentZoneType[client] = g_mapZones[g_ClientSelectedZone[client]][zoneType];
+			g_CurrentZoneType[client] = g_mapZones[g_ClientSelectedZone[client]].zoneType;
 			DrawBeamBox(client);
 			g_Editing[client] = 2;
 			if (g_ClientSelectedZone[client] != -1)
@@ -1517,7 +1523,7 @@ public void EditorMenu(int client)
 	Menu editMenu = new Menu(MenuHandler_Editor);
 	// If a zone is selected
 	if (g_ClientSelectedZone[client] != -1)
-		editMenu.SetTitle("Editing Zone: %s-%i", g_szZoneDefaultNames[g_CurrentZoneType[client]], g_mapZones[g_ClientSelectedZone[client]][zoneTypeId]);
+		editMenu.SetTitle("Editing Zone: %s-%i", g_szZoneDefaultNames[g_CurrentZoneType[client]], g_mapZones[g_ClientSelectedZone[client]].zoneTypeId);
 	else
 		editMenu.SetTitle("Creating a New %s Zone", g_szZoneDefaultNames[g_CurrentZoneType[client]]);
 
@@ -1633,7 +1639,7 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					// Delete
 					if (g_ClientSelectedZone[client] != -1)
 					{
-						db_deleteZone(client, g_mapZones[g_ClientSelectedZone[client]][zoneId]);
+						db_deleteZone(client, g_mapZones[g_ClientSelectedZone[client]].zoneId);
 					}
 					resetSelection(client);
 					ZoneMenu(client);
@@ -1644,9 +1650,9 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					if (g_ClientSelectedZone[client] != -1)
 					{
 						if (!g_bEditZoneType[client])
-							db_updateZone(g_mapZones[g_ClientSelectedZone[client]][zoneId], g_mapZones[g_ClientSelectedZone[client]][zoneType], g_mapZones[g_ClientSelectedZone[client]][zoneTypeId], g_Positions[client][0], g_Positions[client][1], g_CurrentZoneVis[client], g_CurrentZoneTeam[client], g_CurrentSelectedZoneGroup[client]);
+							db_updateZone(g_mapZones[g_ClientSelectedZone[client]].zoneId, g_mapZones[g_ClientSelectedZone[client]].zoneType, g_mapZones[g_ClientSelectedZone[client]].zoneTypeId, g_Positions[client][0], g_Positions[client][1], g_CurrentZoneVis[client], g_CurrentZoneTeam[client], g_CurrentSelectedZoneGroup[client]);
 						else
-							db_updateZone(g_mapZones[g_ClientSelectedZone[client]][zoneId], g_CurrentZoneType[client], g_CurrentZoneTypeId[client], g_Positions[client][0], g_Positions[client][1], g_CurrentZoneVis[client], g_CurrentZoneTeam[client], g_CurrentSelectedZoneGroup[client]);
+							db_updateZone(g_mapZones[g_ClientSelectedZone[client]].zoneId, g_CurrentZoneType[client], g_CurrentZoneTypeId[client], g_Positions[client][0], g_Positions[client][1], g_CurrentZoneVis[client], g_CurrentZoneTeam[client], g_CurrentSelectedZoneGroup[client]);
 						g_bEditZoneType[client] = false;
 					}
 					else
@@ -1672,9 +1678,9 @@ public int MenuHandler_Editor(Handle tMenu, MenuAction action, int client, int i
 					float ZonePos[3];
 					ckSurf_StopTimer(client);
 					AddVectors(g_Positions[client][0], g_Positions[client][1], ZonePos);
-					ZonePos[0] = FloatDiv(ZonePos[0], 2.0);
-					ZonePos[1] = FloatDiv(ZonePos[1], 2.0);
-					ZonePos[2] = FloatDiv(ZonePos[2], 2.0);
+					ZonePos[0] = ZonePos[0] / 2.0;
+					ZonePos[1] = ZonePos[1] / 2.0;
+					ZonePos[2] = ZonePos[2] / 2.0;
 
 					TeleportEntity(client, ZonePos, NULL_VECTOR, NULL_VECTOR);
 					EditorMenu(client);
@@ -1787,27 +1793,27 @@ public int MenuHandler_Scale(Handle tMenu, MenuAction action, int client, int it
 				}
 				case 1:
 				{
-					g_Positions[client][g_ClientSelectedPoint[client]][0] = FloatAdd(g_Positions[client][g_ClientSelectedPoint[client]][0], g_AvaliableScales[g_ClientSelectedScale[client]]);
+					g_Positions[client][g_ClientSelectedPoint[client]][0] = g_Positions[client][g_ClientSelectedPoint[client]][0] + g_AvaliableScales[g_ClientSelectedScale[client]];
 				}
 				case 2:
 				{
-					g_Positions[client][g_ClientSelectedPoint[client]][0] = FloatSub(g_Positions[client][g_ClientSelectedPoint[client]][0], g_AvaliableScales[g_ClientSelectedScale[client]]);
+					g_Positions[client][g_ClientSelectedPoint[client]][0] = g_Positions[client][g_ClientSelectedPoint[client]][0] - g_AvaliableScales[g_ClientSelectedScale[client]];
 				}
 				case 3:
 				{
-					g_Positions[client][g_ClientSelectedPoint[client]][1] = FloatAdd(g_Positions[client][g_ClientSelectedPoint[client]][1], g_AvaliableScales[g_ClientSelectedScale[client]]);
+					g_Positions[client][g_ClientSelectedPoint[client]][1] = g_Positions[client][g_ClientSelectedPoint[client]][1] + g_AvaliableScales[g_ClientSelectedScale[client]];
 				}
 				case 4:
 				{
-					g_Positions[client][g_ClientSelectedPoint[client]][1] = FloatSub(g_Positions[client][g_ClientSelectedPoint[client]][1], g_AvaliableScales[g_ClientSelectedScale[client]]);
+					g_Positions[client][g_ClientSelectedPoint[client]][1] = g_Positions[client][g_ClientSelectedPoint[client]][1] - g_AvaliableScales[g_ClientSelectedScale[client]];
 				}
 				case 5:
 				{
-					g_Positions[client][g_ClientSelectedPoint[client]][2] = FloatAdd(g_Positions[client][g_ClientSelectedPoint[client]][2], g_AvaliableScales[g_ClientSelectedScale[client]]);
+					g_Positions[client][g_ClientSelectedPoint[client]][2] = g_Positions[client][g_ClientSelectedPoint[client]][2] + g_AvaliableScales[g_ClientSelectedScale[client]];
 				}
 				case 6:
 				{
-					g_Positions[client][g_ClientSelectedPoint[client]][2] = FloatSub(g_Positions[client][g_ClientSelectedPoint[client]][2], g_AvaliableScales[g_ClientSelectedScale[client]]);
+					g_Positions[client][g_ClientSelectedPoint[client]][2] = g_Positions[client][g_ClientSelectedPoint[client]][2] - g_AvaliableScales[g_ClientSelectedScale[client]];
 				}
 				case 7:
 				{
@@ -1833,11 +1839,11 @@ public void GetClientSelectedZone(int client, int &team, int &vis)
 {
 	if (g_ClientSelectedZone[client] != -1)
 	{
-		Format(g_CurrentZoneName[client], 32, "%s", g_mapZones[g_ClientSelectedZone[client]][zoneName]);
-		Array_Copy(g_mapZones[g_ClientSelectedZone[client]][PointA], g_Positions[client][0], 3);
-		Array_Copy(g_mapZones[g_ClientSelectedZone[client]][PointB], g_Positions[client][1], 3);
-		team = g_mapZones[g_ClientSelectedZone[client]][Team];
-		vis = g_mapZones[g_ClientSelectedZone[client]][Vis];
+		Format(g_CurrentZoneName[client], 32, "%s", g_mapZones[g_ClientSelectedZone[client]].zoneName);
+		Array_Copy(g_mapZones[g_ClientSelectedZone[client]].PointA, g_Positions[client][0], 3);
+		Array_Copy(g_mapZones[g_ClientSelectedZone[client]].PointB, g_Positions[client][1], 3);
+		team = g_mapZones[g_ClientSelectedZone[client]].Team;
+		vis = g_mapZones[g_ClientSelectedZone[client]].Vis;
 	}
 }
 
@@ -1863,15 +1869,21 @@ public int MenuHandler_ClearZones(Handle tMenu, MenuAction action, int client, i
 			{
 				for (int i = 0; i < MAXZONES; i++)
 				{
-					g_mapZones[i][zoneId] = -1;
-					g_mapZones[i][PointA] = -1.0;
-					g_mapZones[i][PointB] = -1.0;
-					g_mapZones[i][zoneId] = -1;
-					g_mapZones[i][zoneType] = -1;
-					g_mapZones[i][zoneTypeId] = -1;
-					g_mapZones[i][zoneName] = 0;
-					g_mapZones[i][Vis] = 0;
-					g_mapZones[i][Team] = 0;
+					g_mapZones[i].zoneId = -1;
+					g_mapZones[i].zoneId = -1;
+					g_mapZones[i].zoneType = -1;
+					g_mapZones[i].zoneTypeId = -1;
+					g_mapZones[i].zoneName[0] = '\0';
+					g_mapZones[i].Vis = 0;
+					g_mapZones[i].Team = 0;
+
+					for (int x = 0; x < 3; x++)
+					{
+						g_mapZones[i].PointA[x] = -1.0;
+						g_mapZones[i].PointB[x] = -1.0;
+						g_mapZones[i].TeleportPosition[x] = -1.0;
+						g_mapZones[i].TeleportAngles[x] = -1.0;
+					}
 				}
 				g_mapZonesCount = 0;
 				db_deleteMapZones();

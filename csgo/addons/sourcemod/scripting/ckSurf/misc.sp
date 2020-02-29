@@ -176,10 +176,10 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 						Client_Stop(client, 0);
 
 					// Set spawn location to the destination zone:
-					if (g_mapZones[destinationZoneId][TeleportPosition] != -1.0)
-						Array_Copy(g_mapZones[destinationZoneId][TeleportPosition], g_fTeleLocation[client], 3);
+					if (g_mapZones[destinationZoneId].TeleportPosition[0] != -1.0 && g_mapZones[destinationZoneId].TeleportPosition[1] != -1.0 && g_mapZones[destinationZoneId].TeleportPosition[2] != -1.0)
+						Array_Copy(g_mapZones[destinationZoneId].TeleportPosition, g_fTeleLocation[client], 3);
 					else
-						Array_Copy(g_mapZones[destinationZoneId][CenterPoint], g_fTeleLocation[client], 3);
+						Array_Copy(g_mapZones[destinationZoneId].CenterPoint, g_fTeleLocation[client], 3);
 
 					// Set specToStage flag
 					g_bRespawnPosition[client] = false;
@@ -195,15 +195,15 @@ public void teleportClient(int client, int zonegroup, int zone, bool stopTime)
 
 					float fLocation[3];
 
-					if (g_mapZones[destinationZoneId][TeleportPosition] != -1.0)
-						Array_Copy(g_mapZones[destinationZoneId][TeleportPosition], fLocation, 3);
+					if (g_mapZones[destinationZoneId].TeleportPosition[0] != -1.0 && g_mapZones[destinationZoneId].TeleportPosition[1] != -1.0 && g_mapZones[destinationZoneId].TeleportPosition[2] != -1.0)
+						Array_Copy(g_mapZones[destinationZoneId].TeleportPosition, fLocation, 3);
 					else
-						Array_Copy(g_mapZones[destinationZoneId][CenterPoint], fLocation, 3);
+						Array_Copy(g_mapZones[destinationZoneId].CenterPoint, fLocation, 3);
 
 					float ang[3];
 
-					if (g_mapZones[destinationZoneId][TeleportAngles] != -1.0)
-						Array_Copy(g_mapZones[destinationZoneId][TeleportAngles], ang, 3);
+					if (g_mapZones[destinationZoneId].TeleportAngles[0] != -1.0 && g_mapZones[destinationZoneId].TeleportAngles[1] != -1.0 && g_mapZones[destinationZoneId].TeleportAngles[2] != -1.0)
+						Array_Copy(g_mapZones[destinationZoneId].TeleportAngles, ang, 3);
 					else
 						ang = NULL_VECTOR;
 
@@ -227,7 +227,7 @@ void teleportEntitySafe(int client, float fDestination[3], float fAngles[3], flo
 
 	int zId = setClientLocation(client, fDestination); // Set new location
 
-	if (zId > -1 && g_bTimeractivated[client] && g_mapZones[zId][zoneType] == 2) // If teleporting to the end zone, stop timer
+	if (zId > -1 && g_bTimeractivated[client] && g_mapZones[zId].zoneType == 2) // If teleporting to the end zone, stop timer
 		Client_Stop(client, 0);
 
 	// Teleport
@@ -245,9 +245,9 @@ int setClientLocation(int client, float fDestination[3])
 
 		if (zId > -1)
 		{
-			g_iClientInZone[client][0] = g_mapZones[zId][zoneType];
-			g_iClientInZone[client][1] = g_mapZones[zId][zoneTypeId];
-			g_iClientInZone[client][2] = g_mapZones[zId][zoneGroup];
+			g_iClientInZone[client][0] = g_mapZones[zId].zoneType;
+			g_iClientInZone[client][1] = g_mapZones[zId].zoneTypeId;
+			g_iClientInZone[client][2] = g_mapZones[zId].zoneGroup;
 			g_iClientInZone[client][3] = zId;
 		}
 		else
@@ -273,9 +273,9 @@ void performTeleport(int client, float pos[3], float ang[3], float vel[3])
 
 		if (destinationZoneId > -1)
 		{
-			g_iClientInZone[client][0] = g_mapZones[destinationZoneId][zoneType];
-			g_iClientInZone[client][1] = g_mapZones[destinationZoneId][zoneTypeId];
-			g_iClientInZone[client][2] = g_mapZones[destinationZoneId][zoneGroup];
+			g_iClientInZone[client][0] = g_mapZones[destinationZoneId].zoneType;
+			g_iClientInZone[client][1] = g_mapZones[destinationZoneId].zoneTypeId;
+			g_iClientInZone[client][2] = g_mapZones[destinationZoneId].zoneGroup;
 			g_iClientInZone[client][3] = destinationZoneId;
 		}
 		else
@@ -461,12 +461,12 @@ public int getZoneID(int zoneGrp, int stage)
 	{
 		for (int i = 0; i < g_mapZonesCount; i++)
 		{
-			if (g_mapZones[i][zoneGroup] == zoneGrp && (g_mapZones[i][zoneType] == 1 || g_mapZones[i][zoneType] == 5) && g_mapZones[i][zoneTypeId] == 0)
+			if (g_mapZones[i].zoneGroup == zoneGrp && (g_mapZones[i].zoneType == 1 || g_mapZones[i].zoneType == 5) && g_mapZones[i].zoneTypeId == 0)
 				return i;
 		}
 		for (int i = 0; i < g_mapZonesCount; i++) // If no start zone with typeId 0 found, return any start zone
 		{
-			if (g_mapZones[i][zoneGroup] == zoneGrp && (g_mapZones[i][zoneType] == 1 || g_mapZones[i][zoneType] == 5))
+			if (g_mapZones[i].zoneGroup == zoneGrp && (g_mapZones[i].zoneType == 1 || g_mapZones[i].zoneType == 5))
 				return i;
 		}
 	}
@@ -474,7 +474,7 @@ public int getZoneID(int zoneGrp, int stage)
 	{
 		for (int i = 0; i < g_mapZonesCount; i++)
 		{
-			if (g_mapZones[i][zoneGroup] == zoneGrp && g_mapZones[i][zoneType] == 3 && g_mapZones[i][zoneTypeId] == (stage - 2))
+			if (g_mapZones[i].zoneGroup == zoneGrp && g_mapZones[i].zoneType == 3 && g_mapZones[i].zoneTypeId == (stage - 2))
 			{
 				return i;
 			}
@@ -484,7 +484,7 @@ public int getZoneID(int zoneGrp, int stage)
 	{
 		for (int i = 0; i < g_mapZonesCount; i++)
 		{
-			if (g_mapZones[i][zoneType] == 2 && g_mapZones[i][zoneGroup] == zoneGrp)
+			if (g_mapZones[i].zoneType == 2 && g_mapZones[i].zoneGroup == zoneGrp)
 			{
 				return i;
 			}
@@ -1095,10 +1095,11 @@ public void PrintConsoleInfo(int client)
 	PrintToConsole(client, "");
 	PrintToConsole(client, "Skill groups:");
 	char ChatLine[512];
-	int i, RankValue[SkillGroup];
+	int i;
+	SkillGroup RankValue;
 	for (i = 0; i < GetArraySize(g_hSkillGroups); i++)
 	{
-		GetArrayArray(g_hSkillGroups, i, RankValue[0]);
+		GetArrayArray(g_hSkillGroups, i, RankValue);
 
 		if (i != 0 && i % 5 == 0)
 		{
@@ -1106,7 +1107,7 @@ public void PrintConsoleInfo(int client)
 			Format(ChatLine, 512, "");
 		}
 
-		Format(ChatLine, 512, "%s%s (%ip)   ", ChatLine, RankValue[RankName], RankValue[PointReq]);
+		Format(ChatLine, 512, "%s%s (%ip)   ", ChatLine, RankValue.RankName, RankValue.PointReq);
 	}
 	PrintToConsole(client, ChatLine);
 
@@ -1285,10 +1286,10 @@ public void LimitSpeed(int client)
 
 	// Do not cap speed if player didn't jump from an high spot or prehopped
 	float vLowestCorner[3];
-	if (g_mapZones[g_iClientInZone[client][3]][PointA][2] > g_mapZones[g_iClientInZone[client][3]][PointB][2])
-		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointB], vLowestCorner, 3);
+	if (g_mapZones[g_iClientInZone[client][3]].PointA[2] > g_mapZones[g_iClientInZone[client][3]].PointB[2])
+		Array_Copy(g_mapZones[g_iClientInZone[client][3]].PointB, vLowestCorner, 3);
 	else
-		Array_Copy(g_mapZones[g_iClientInZone[client][3]][PointA], vLowestCorner, 3);
+		Array_Copy(g_mapZones[g_iClientInZone[client][3]].PointA, vLowestCorner, 3);
 
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
 
@@ -1679,7 +1680,7 @@ public void PlayRecordSound(int iRecordtype)
 	char buffer[255];
 	if (iRecordtype == 1)
 	{
-		for (int i = 1; i <= GetMaxClients(); i++)
+		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (IsValidClient(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true)
 			{
@@ -1691,7 +1692,7 @@ public void PlayRecordSound(int iRecordtype)
 	else
 		if (iRecordtype == 2)
 	{
-		for (int i = 1; i <= GetMaxClients(); i++)
+		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (IsValidClient(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true)
 			{
@@ -1819,7 +1820,7 @@ stock void MapFinishedMsgs(int client, int rankThisRun = 0)
 			(GetConVarInt(g_hAnnounceRecord) == 2 && g_bMapSRVRecord[client])) &&
 			(rankThisRun <= GetConVarInt(g_hAnnounceRank) || GetConVarInt(g_hAnnounceRank) == 0))
 		{
-			for (int i = 1; i <= GetMaxClients(); i++)
+			for (int i = 1; i <= MaxClients; i++)
 			{
 				if (IsValidClient(i) && !IsFakeClient(i))
 				{
@@ -2264,10 +2265,10 @@ public void SetSkillGroups()
 		Handle hKeyValues = CreateKeyValues("ckSurf.SkillGroups");
 		if (FileToKeyValues(hKeyValues, sPath) && KvGotoFirstSubKey(hKeyValues))
 		{
-			int RankValue[SkillGroup];
+			SkillGroup RankValue;
 
 			if (g_hSkillGroups == null)
-				g_hSkillGroups = CreateArray(sizeof(RankValue));
+				g_hSkillGroups = CreateArray(sizeof(SkillGroup));
 			else
 				ClearArray(g_hSkillGroups);
 
@@ -2289,22 +2290,22 @@ public void SetSkillGroups()
 				else
 					points = RoundToCeil(MaxPoints * fPercentage);
 
-				RankValue[PointReq] = points;
+				RankValue.PointReq = points;
 
 				// Replace colors on name
 				addColorToString(sRankNameColored, 128);
 
 				// Get player name color
-				RankValue[NameColor] = getFirstColor(sRankName);
+				RankValue.NameColor = getFirstColor(sRankName);
 
 				// Remove colors from rank name
 				parseColorsFromString(sRankName, 128);
 
-				Format(RankValue[RankName], 128, "%s", sRankName);
+				Format(RankValue.RankName, 128, "%s", sRankName);
 
-				Format(RankValue[RankNameColored], 128, "%s", sRankNameColored);
+				Format(RankValue.RankNameColored, 128, "%s", sRankNameColored);
 
-				PushArrayArray(g_hSkillGroups, RankValue[0]);
+				PushArrayArray(g_hSkillGroups, RankValue);
 
 			} while (KvGotoNextKey(hKeyValues));
 		}
@@ -2327,7 +2328,7 @@ public void SetPlayerRank(int client)
 		return;
 	}
 
-	int RankValue[SkillGroup];
+	SkillGroup RankValue;
 	int index = GetSkillgroupFromPoints(g_pr_points[client]);
 
 	if (g_iTitleInUse[client] == -1)
@@ -2335,11 +2336,11 @@ public void SetPlayerRank(int client)
 		// Player is not using a title
 		if (GetConVarBool(g_hPointSystem))
 		{
-			GetArrayArray(g_hSkillGroups, index, RankValue[0]);
+			GetArrayArray(g_hSkillGroups, index, RankValue);
 
-			Format(g_pr_rankname[client], 128, "%s", RankValue[RankName]);
-			Format(g_pr_chat_coloredrank[client], 128, "[%s%c]", RankValue[RankNameColored], WHITE);
-			g_PlayerChatRank[client] = RankValue[NameColor];
+			Format(g_pr_rankname[client], 128, "%s", RankValue.RankName);
+			Format(g_pr_chat_coloredrank[client], 128, "[%s%c]", RankValue.RankNameColored, WHITE);
+			g_PlayerChatRank[client] = RankValue.NameColor;
 		}
 	}
 	else
@@ -2347,7 +2348,7 @@ public void SetPlayerRank(int client)
 		// Player is using a title
 		if (GetConVarBool(g_hPointSystem))
 		{
-			g_PlayerChatRank[client] = RankValue[NameColor];
+			g_PlayerChatRank[client] = RankValue.NameColor;
 		}
 		Format(g_pr_rankname[client], 128, "[%s]", g_szflagTitle[g_iTitleInUse[client]]);
 		Format(g_pr_chat_coloredrank[client], 128, "[%s%c]", g_szflagTitle_Colored[g_iTitleInUse[client]], WHITE);
@@ -2369,28 +2370,28 @@ public int GetSkillgroupFromPoints(int points)
 	int size = GetArraySize(g_hSkillGroups);
 	for (int i = 0; i < size; i++)
 	{
-		int RankValue[SkillGroup];
-		GetArrayArray(g_hSkillGroups, i, RankValue[0]);
+		SkillGroup RankValue;
+		GetArrayArray(g_hSkillGroups, i, RankValue);
 
 		if (i == (size-1)) // Last rank
 		{
-			if (points >= RankValue[PointReq])
+			if (points >= RankValue.PointReq)
 			{
 				return i;
 			}
 		}
 		else if (i == 0) // First rank
 		{
-			if (points <= RankValue[PointReq])
+			if (points <= RankValue.PointReq)
 			{
 				return i;
 			}
 		}
 		else // Mid ranks
 		{
-			int RankValueNext[SkillGroup];
-			GetArrayArray(g_hSkillGroups, (i+1), RankValueNext[0]);
-			if (points > RankValue[PointReq] && points <= RankValueNext[PointReq])
+			SkillGroup RankValueNext;
+			GetArrayArray(g_hSkillGroups, (i+1), RankValueNext);
+			if (points > RankValue.PointReq && points <= RankValueNext.PointReq)
 			{
 				return i;
 			}
@@ -3233,9 +3234,9 @@ public void LeftHudAlive(int client)
 
 		// player rank
 		if (g_StagePlayerRank[client][stage] != 9999999)
-			Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage][srCompletions]);
+			Format(buffer, sizeof(buffer), "%sRank: %d/%d\n", buffer, g_StagePlayerRank[client][stage], g_StageRecords[stage].srCompletions);
 		//else
-		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage][srCompletions]);
+		//	Format(buffer, sizeof(buffer), "%sCompletions: %d\n", buffer, g_StageRecords[stage].srCompletions);
 
 		// stage player record
 		if (g_fStagePlayerRecord[client][stage] != 9999999.0)
@@ -3248,11 +3249,11 @@ public void LeftHudAlive(int client)
 		//	Format(buffer, sizeof(buffer), "%sPB: N/A\n", buffer);
 
 		// stage server record
-		if (g_StageRecords[stage][srLoaded])
+		if (g_StageRecords[stage].srLoaded)
 		{
 			char srcp[16];
-			FormatTimeFloat(client, g_StageRecords[stage][srRunTime], 5, srcp, sizeof(srcp));
-			Format(buffer, sizeof(buffer), "%sSR: %s\n    by %s\n", buffer, srcp, g_StageRecords[stage][srPlayerName]);
+			FormatTimeFloat(client, g_StageRecords[stage].srRunTime, 5, srcp, sizeof(srcp));
+			Format(buffer, sizeof(buffer), "%sSR: %s\n    by %s\n", buffer, srcp, g_StageRecords[stage].srPlayerName);
 		}
 		//else
 		//	Format(buffer, sizeof(buffer), "%sSR: N/A\n", buffer);

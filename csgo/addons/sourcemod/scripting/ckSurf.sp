@@ -138,72 +138,72 @@
 =            Enumerations            =
 ====================================*/
 
-enum FrameInfo
+enum struct FrameInfo
 {
-	playerButtons = 0,
-	playerImpulse,
-	Float:actualVelocity[3],
-	Float:predictedVelocity[3],
-	Float:predictedAngles[2],
-	CSWeaponID:newWeapon,
-	playerSubtype,
-	playerSeed,
-	additionalFields,
-	pause,
+	int playerButtons;
+	int playerImpulse;
+	float actualVelocity[3];
+	float predictedVelocity[3];
+	float predictedAngles[2];
+	CSWeaponID newWeapon;
+	int playerSubtype;
+	int playerSeed;
+	int additionalFields;
+	int pause;
 }
 
-enum AdditionalTeleport
+enum struct AdditionalTeleport
 {
-	Float:atOrigin[3],
-	Float:atAngles[3],
-	Float:atVelocity[3],
-	atFlags
+	float atOrigin[3];
+	float atAngles[3];
+	float atVelocity[3];
+	int atFlags;
 }
 
-enum FileHeader
+enum struct FileHeader
 {
-	FH_binaryFormatVersion = 0,
-	String:FH_Time[32],
-	String:FH_Playername[32],
-	FH_Checkpoints,
-	FH_tickCount,
-	Float:FH_initialPosition[3],
-	Float:FH_initialAngles[3],
-	Handle:FH_frames
+	int FH_binaryFormatVersion;
+	char FH_Time[32];
+	char FH_Playername[32];
+	int FH_Checkpoints;
+	int FH_tickCount;
+	float FH_initialPosition[3];
+	float FH_initialAngles[3];
+	Handle FH_frames;
 }
 
-enum MapZone
+enum struct MapZone
 {
-	zoneId,  				// ID within the map
-	zoneType,  				// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
-	zoneTypeId, 			// ID of the same type eg. Start-1, Start-2, Start-3...
-	Float:PointA[3],
-	Float:PointB[3],
-	Float:CenterPoint[3],
-	String:zoneName[128],
-	zoneGroup,
-	Vis,
-	Team,
-	Float:TeleportPosition[3],
-	Float:TeleportAngles[3]
+	int zoneId;  				// ID within the map
+	int zoneType;  				// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
+	int zoneTypeId;				// ID of the same type eg. Start-1, Start-2, Start-3...
+	float PointA[3];
+	float PointB[3];
+	float CenterPoint[3];
+	char zoneName[128];
+	int zoneGroup;
+	int Vis;
+	int Team;
+	float TeleportPosition[3];
+	float TeleportAngles[3];
 }
 
-enum SkillGroup
+enum struct SkillGroup
 {
-	PointReq,				// Points required for next skillgroup
-	NameColor,				// Color to use for name if colored chatnames is turned on
-	String:RankName[32],	// Skillgroup name without colors
-	String:RankNameColored[32], // Skillgroup name with colors
+	int PointReq;				// Points required for next skillgroup
+	int NameColor;				// Color to use for name if colored chatnames is turned on
+	char RankName[32]; 			// Skillgroup name without colors
+	char RankNameColored[32];	// Skillgroup name with colors
 }
 
-enum SaveLoc
+enum struct SaveLoc
 {
-	Float:slOrigin[3],
-	Float:slAngles[3],
-	Float:slVelocity[3],
-	String:slCreator[32],
-	String:slPlayer[32],
-	Float:slRunTime
+	float origin[3];
+	float angles[3];
+	float velocity[3];
+	char creator[32];
+	char player[32];
+	float runTime;
 }
 
 enum ZoneType
@@ -220,13 +220,13 @@ enum ZoneType
 	ZT_TeleToStage = 9
 }
 
-enum StageRecord
+enum struct StageRecord
 {
-	String:srPlayerName[45],
-	Float:srRunTime[16],
-	srCompletions,
-	bool:srLoaded,
-	Float:srStartSpeed
+	char srPlayerName[45];
+	float srRunTime;
+	int srCompletions;
+	bool srLoaded;
+	float srStartSpeed;
 }
 
 
@@ -348,7 +348,7 @@ int g_iClientInZone[MAXPLAYERS + 1][4];							// Which zone the client is in 0 =
 // Zone Counts & Data
 int g_mapZonesTypeCount[MAXZONEGROUPS][ZONEAMOUNT];				// Zone type count in each zoneGroup
 char g_szZoneGroupName[MAXZONEGROUPS][128];						// Zone group's name
-int g_mapZones[MAXZONES][MapZone];								// Map Zone array
+MapZone g_mapZones[MAXZONES];									// Map Zone array
 int g_mapZonesCount;											// The total amount of zones in the map
 int g_mapZoneCountinGroup[MAXZONEGROUPS];						// Map zone count in zonegroups
 int g_mapZoneGroupCount;										// Zone group cound
@@ -718,7 +718,7 @@ bool g_bPracticeMode[MAXPLAYERS + 1]; 							// Client is in the practice mode
 
 
 /*--------- Save Location ------------*/
-float g_SavedLocations[1024][SaveLoc];
+SaveLoc g_SavedLocations[1024];
 int g_SavedLocationsCount = 0;
 int g_LastSaveLocUsed[MAXPLAYERS+1];
 
@@ -729,7 +729,7 @@ bool g_bStageTimerRunning[MAXPLAYERS + 1];
 float g_fStageStartTime[MAXPLAYERS + 1];
 float g_fStagePlayerRecord[MAXPLAYERS + 1][64];
 bool g_bLoadingStages;
-int g_StageRecords[CPLIMIT][StageRecord];
+StageRecord g_StageRecords[CPLIMIT];
 int g_StagePlayerRank[MAXPLAYERS+1][CPLIMIT];
 int g_RepeatStage[MAXPLAYERS+1] = {-1, ...};
 bool g_bStageIgnorePrehop[CPLIMIT];
@@ -1126,7 +1126,7 @@ public void OnClientPutInServer(int client)
 
 	if (IsFakeClient(client))
 	{
-		g_hRecordingAdditionalTeleport[client] = CreateArray(view_as<int>(AdditionalTeleport));
+		g_hRecordingAdditionalTeleport[client] = CreateArray(sizeof(AdditionalTeleport));
 		CS_SetMVPCount(client, 1);
 		return;
 	}

@@ -474,7 +474,7 @@ public void db_createTables()
 	SQL_AddQuery(createTableTnx, sql_createSpawnLocations);
 	SQL_AddQuery(createTableTnx, sql_createPlayerFlags);
 	SQL_AddQuery(createTableTnx, sql_createStageRecordsTable);
-
+	SQL_AddQuery(createTableTnx, "CREATE TABLE IF NOT EXISTS `ck_playerchat` (`steamid` VARCHAR(32) NOT NULL, `tag` VARCHAR(64), `name` VARCHAR(64), PRIMARY KEY(steamid))");
 	SQL_ExecuteTransaction(g_hDb, createTableTnx, SQLTxn_CreateDatabaseSuccess, SQLTxn_CreateDatabaseFailed);
 
 }
@@ -2014,10 +2014,11 @@ public void SQL_ViewRankedPlayerCallback5(Handle owner, Handle hndl, const char[
 		finishedmapspro = g_pr_MapCount;
 
 
-	int index = GetSkillgroupFromPoints(points), RankValue[SkillGroup];
-	GetArrayArray(g_hSkillGroups, index, RankValue[0]);
+	int index = GetSkillgroupFromPoints(points);
+	SkillGroup RankValue;
+	GetArrayArray(g_hSkillGroups, index, RankValue);
 
-	Format(szSkillGroup, 32, "%s", RankValue[RankName]);
+	Format(szSkillGroup, 32, "%s", RankValue.RankName);
 
 	if (index == (GetArraySize(g_hSkillGroups)-1))
 	{
@@ -2027,9 +2028,9 @@ public void SQL_ViewRankedPlayerCallback5(Handle owner, Handle hndl, const char[
 	}
 	else
 	{
-		GetArrayArray(g_hSkillGroups, (index+1), RankValue[0]);
-		RankDifference = RankValue[PointReq] - points;
-		Format(szNextRank, 32, " (%s)", RankValue[RankName]);
+		GetArrayArray(g_hSkillGroups, (index+1), RankValue);
+		RankDifference = RankValue.PointReq - points;
+		Format(szNextRank, 32, " (%s)", RankValue.RankName);
 	}
 
 	char szRank[32];
@@ -4486,7 +4487,7 @@ public void SQL_selectBonusTotalCountCallback(Handle owner, Handle hndl, const c
 }
 
 
-public void db_insertBonus(int client, char szSteamId[32], char szUName[32], float FinalTime, int zoneGrp)
+public void db_insertBonus(int client, char szSteamId[32], char szUName[MAX_NAME_LENGTH], float FinalTime, int zoneGrp)
 {
 	char szQuery[1024];
 	char szName[MAX_NAME_LENGTH * 2 + 1];
@@ -4516,7 +4517,7 @@ public void SQL_insertBonusCallback(Handle owner, Handle hndl, const char[] erro
 	CalculatePlayerRank(client);
 }
 
-public void db_updateBonus(int client, char szSteamId[32], char szUName[32], float FinalTime, int zoneGrp)
+public void db_updateBonus(int client, char szSteamId[32], char szUName[MAX_NAME_LENGTH], float FinalTime, int zoneGrp)
 {
 	char szQuery[1024];
 	char szName[MAX_NAME_LENGTH * 2 + 1];
@@ -4642,8 +4643,8 @@ public void sql_setZoneNamesCallback(Handle owner, Handle hndl, const char[] err
 
 	for (int i = 0; i < g_mapZonesCount; i++)
 	{
-		if (g_mapZones[i][zoneGroup] == zonegrp)
-			Format(g_mapZones[i][zoneName], 64, szName);
+		if (g_mapZones[i].zoneGroup == zonegrp)
+			Format(g_mapZones[i].zoneName, 64, szName);
 	}
 
 	if (IsValidClient(client))
@@ -4813,9 +4814,9 @@ public void SQL_saveZonesCallBack(Handle owner, Handle hndl, const char[] error,
 	char szzone[128];
 	for (int i = 0; i < g_mapZonesCount; i++)
 	{
-		Format(szzone, 128, "%s", g_szZoneGroupName[g_mapZones[i][zoneGroup]]);
-		if (g_mapZones[i][PointA][0] != -1.0 && g_mapZones[i][PointA][1] != -1.0 && g_mapZones[i][PointA][2] != -1.0)
-			db_insertZoneCheap(g_mapZones[i][zoneId], g_mapZones[i][zoneType], g_mapZones[i][zoneTypeId], g_mapZones[i][PointA][0], g_mapZones[i][PointA][1], g_mapZones[i][PointA][2], g_mapZones[i][PointB][0], g_mapZones[i][PointB][1], g_mapZones[i][PointB][2], g_mapZones[i][Vis], g_mapZones[i][Team], g_mapZones[i][zoneGroup], szzone, i);
+		Format(szzone, 128, "%s", g_szZoneGroupName[g_mapZones[i].zoneGroup]);
+		if (g_mapZones[i].PointA[0] != -1.0 && g_mapZones[i].PointA[1] != -1.0 && g_mapZones[i].PointA[2] != -1.0)
+			db_insertZoneCheap(g_mapZones[i].zoneId, g_mapZones[i].zoneType, g_mapZones[i].zoneTypeId, g_mapZones[i].PointA[0], g_mapZones[i].PointA[1], g_mapZones[i].PointA[2], g_mapZones[i].PointB[0], g_mapZones[i].PointB[1], g_mapZones[i].PointB[2], g_mapZones[i].Vis, g_mapZones[i].Team, g_mapZones[i].zoneGroup, szzone, i);
 	}
 }
 
@@ -5101,18 +5102,22 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 
 		for (int i = 0; i < MAXZONES; i++)
 		{
-			g_mapZones[i][zoneId] = -1;
-			g_mapZones[i][PointA] = -1.0;
-			g_mapZones[i][PointB] = -1.0;
-			g_mapZones[i][zoneId] = -1;
-			g_mapZones[i][zoneType] = -1;
-			g_mapZones[i][zoneTypeId] = -1;
-			g_mapZones[i][zoneName] = 0;
-			g_mapZones[i][Vis] = 0;
-			g_mapZones[i][Team] = 0;
-			g_mapZones[i][zoneGroup] = 0;
-			g_mapZones[i][TeleportPosition] = -1.0;
-			g_mapZones[i][TeleportAngles] = -1.0;
+			g_mapZones[i].zoneId = -1;
+			g_mapZones[i].zoneId = -1;
+			g_mapZones[i].zoneType = -1;
+			g_mapZones[i].zoneTypeId = -1;
+			g_mapZones[i].zoneName[0] = '\0';
+			g_mapZones[i].Vis = 0;
+			g_mapZones[i].Team = 0;
+			g_mapZones[i].zoneGroup = 0;
+
+			for (int x = 0; x < 3; x++)
+			{
+				g_mapZones[i].PointA[x] = -1.0;
+				g_mapZones[i].PointB[x] = -1.0;
+				g_mapZones[i].TeleportPosition[x] = -1.0;
+				g_mapZones[i].TeleportAngles[x] = -1.0;
+			}
 		}
 
 		for (int x = 0; x < MAXZONEGROUPS; x++)
@@ -5127,18 +5132,18 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		// Types: Start(1), End(2), Stage(3), Checkpoint(4), Speed(5), TeleToStart(6), Validator(7), Chekcer(8), Stop(0)
 		while (SQL_FetchRow(hndl))
 		{
-			g_mapZones[g_mapZonesCount][zoneId] = SQL_FetchInt(hndl, 0);
-			g_mapZones[g_mapZonesCount][zoneType] = SQL_FetchInt(hndl, 1);
-			g_mapZones[g_mapZonesCount][zoneTypeId] = SQL_FetchInt(hndl, 2);
-			g_mapZones[g_mapZonesCount][PointA][0] = SQL_FetchFloat(hndl, 3);
-			g_mapZones[g_mapZonesCount][PointA][1] = SQL_FetchFloat(hndl, 4);
-			g_mapZones[g_mapZonesCount][PointA][2] = SQL_FetchFloat(hndl, 5);
-			g_mapZones[g_mapZonesCount][PointB][0] = SQL_FetchFloat(hndl, 6);
-			g_mapZones[g_mapZonesCount][PointB][1] = SQL_FetchFloat(hndl, 7);
-			g_mapZones[g_mapZonesCount][PointB][2] = SQL_FetchFloat(hndl, 8);
-			g_mapZones[g_mapZonesCount][Vis] = SQL_FetchInt(hndl, 9);
-			g_mapZones[g_mapZonesCount][Team] = SQL_FetchInt(hndl, 10);
-			g_mapZones[g_mapZonesCount][zoneGroup] = SQL_FetchInt(hndl, 11);
+			g_mapZones[g_mapZonesCount].zoneId = SQL_FetchInt(hndl, 0);
+			g_mapZones[g_mapZonesCount].zoneType = SQL_FetchInt(hndl, 1);
+			g_mapZones[g_mapZonesCount].zoneTypeId = SQL_FetchInt(hndl, 2);
+			g_mapZones[g_mapZonesCount].PointA[0] = SQL_FetchFloat(hndl, 3);
+			g_mapZones[g_mapZonesCount].PointA[1] = SQL_FetchFloat(hndl, 4);
+			g_mapZones[g_mapZonesCount].PointA[2] = SQL_FetchFloat(hndl, 5);
+			g_mapZones[g_mapZonesCount].PointB[0] = SQL_FetchFloat(hndl, 6);
+			g_mapZones[g_mapZonesCount].PointB[1] = SQL_FetchFloat(hndl, 7);
+			g_mapZones[g_mapZonesCount].PointB[2] = SQL_FetchFloat(hndl, 8);
+			g_mapZones[g_mapZonesCount].Vis = SQL_FetchInt(hndl, 9);
+			g_mapZones[g_mapZonesCount].Team = SQL_FetchInt(hndl, 10);
+			g_mapZones[g_mapZonesCount].zoneGroup = SQL_FetchInt(hndl, 11);
 
 
 			/**
@@ -5149,82 +5154,82 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			* IDs must be in order 0, 1, 2.... n
 			* Duplicate zoneids not possible due to primary key
 			*/
-			zoneIdChecker[g_mapZones[g_mapZonesCount][zoneId]]++;
-			if (zoneGroupChecker[g_mapZones[g_mapZonesCount][zoneGroup]] != 1)
+			zoneIdChecker[g_mapZones[g_mapZonesCount].zoneId]++;
+			if (zoneGroupChecker[g_mapZones[g_mapZonesCount].zoneGroup] != 1)
 			{
 				// 1 = No Bonus, 2 = Bonus, >2 = Multiple bonuses
 				g_mapZoneGroupCount++;
-				zoneGroupChecker[g_mapZones[g_mapZonesCount][zoneGroup]] = 1;
+				zoneGroupChecker[g_mapZones[g_mapZonesCount].zoneGroup] = 1;
 			}
 
 			// You can have the same zonetype and zonetypeid values in different zonegroups
-			zoneTypeIdChecker[g_mapZones[g_mapZonesCount][zoneGroup]][g_mapZones[g_mapZonesCount][zoneType]][g_mapZones[g_mapZonesCount][zoneTypeId]]++;
-			zoneTypeIdCheckerCount[g_mapZones[g_mapZonesCount][zoneGroup]][g_mapZones[g_mapZonesCount][zoneType]]++;
+			zoneTypeIdChecker[g_mapZones[g_mapZonesCount].zoneGroup][g_mapZones[g_mapZonesCount].zoneType][g_mapZones[g_mapZonesCount].zoneTypeId]++;
+			zoneTypeIdCheckerCount[g_mapZones[g_mapZonesCount].zoneGroup][g_mapZones[g_mapZonesCount].zoneType]++;
 
-			SQL_FetchString(hndl, 12, g_mapZones[g_mapZonesCount][zoneName], 128);
+			SQL_FetchString(hndl, 12, g_mapZones[g_mapZonesCount].zoneName, 128);
 
-			if (!g_mapZones[g_mapZonesCount][zoneName][0])
+			if (!g_mapZones[g_mapZonesCount].zoneName[0])
 			{
-				switch (g_mapZones[g_mapZonesCount][zoneType])
+				switch (g_mapZones[g_mapZonesCount].zoneType)
 				{
 					case 0:
 					{
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Stop-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Stop-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 1:
 					{
-						if (g_mapZones[g_mapZonesCount][zoneGroup] > 0)
+						if (g_mapZones[g_mapZonesCount].zoneGroup > 0)
 						{
 							g_bhasBonus = true;
-							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "BonusStart-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
-							Format(g_szZoneGroupName[g_mapZones[g_mapZonesCount][zoneGroup]], 128, "BONUS %i", g_mapZones[g_mapZonesCount][zoneGroup]);
+							Format(g_mapZones[g_mapZonesCount].zoneName, 128, "BonusStart-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
+							Format(g_szZoneGroupName[g_mapZones[g_mapZonesCount].zoneGroup], 128, "BONUS %i", g_mapZones[g_mapZonesCount].zoneGroup);
 						}
 						else
-							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Start-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+							Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Start-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 2:
 					{
-						if (g_mapZones[g_mapZonesCount][zoneGroup] > 0)
-							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "BonusEnd-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						if (g_mapZones[g_mapZonesCount].zoneGroup > 0)
+							Format(g_mapZones[g_mapZonesCount].zoneName, 128, "BonusEnd-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 						else
-							Format(g_mapZones[g_mapZonesCount][zoneName], 128, "End-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+							Format(g_mapZones[g_mapZonesCount].zoneName, 128, "End-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 3:
 					{
 						g_bhasStages = true;
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Stage-%i", (g_mapZones[g_mapZonesCount][zoneTypeId] + 2));
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Stage-%i", (g_mapZones[g_mapZonesCount].zoneTypeId + 2));
 					}
 					case 4:
 					{
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Checkpoint-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Checkpoint-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 5:
 					{
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Speed-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Speed-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 6:
 					{
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "TeleToStart-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "TeleToStart-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 7:
 					{
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Validator-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Validator-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 					case 8:
 					{
-						Format(g_mapZones[g_mapZonesCount][zoneName], 128, "Checker-%i", g_mapZones[g_mapZonesCount][zoneTypeId]);
+						Format(g_mapZones[g_mapZonesCount].zoneName, 128, "Checker-%i", g_mapZones[g_mapZonesCount].zoneTypeId);
 					}
 				}
 			}
 			else
 			{
-				switch (g_mapZones[g_mapZonesCount][zoneType])
+				switch (g_mapZones[g_mapZonesCount].zoneType)
 				{
 					case 1:
 					{
-						if (g_mapZones[g_mapZonesCount][zoneGroup] > 0)
+						if (g_mapZones[g_mapZonesCount].zoneGroup > 0)
 							g_bhasBonus = true;
-						Format(g_szZoneGroupName[g_mapZones[g_mapZonesCount][zoneGroup]], 128, "%s", g_mapZones[g_mapZonesCount][zoneName]);
+						Format(g_szZoneGroupName[g_mapZones[g_mapZonesCount].zoneGroup], 128, "%s", g_mapZones[g_mapZonesCount].zoneName);
 					}
 					case 3:
 					g_bhasStages = true;
@@ -5237,21 +5242,21 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 			**/
 			// Center
 			float posA[3], posB[3], result[3];
-			Array_Copy(g_mapZones[g_mapZonesCount][PointA], posA, 3);
-			Array_Copy(g_mapZones[g_mapZonesCount][PointB], posB, 3);
+			Array_Copy(g_mapZones[g_mapZonesCount].PointA, posA, 3);
+			Array_Copy(g_mapZones[g_mapZonesCount].PointB, posB, 3);
 			AddVectors(posA, posB, result);
-			g_mapZones[g_mapZonesCount][CenterPoint][0] = FloatDiv(result[0], 2.0);
-			g_mapZones[g_mapZonesCount][CenterPoint][1] = FloatDiv(result[1], 2.0);
-			g_mapZones[g_mapZonesCount][CenterPoint][2] = FloatDiv(result[2], 2.0);
+			g_mapZones[g_mapZonesCount].CenterPoint[0] = result[0] / 2.0;
+			g_mapZones[g_mapZonesCount].CenterPoint[1] = result[1] / 2.0;
+			g_mapZones[g_mapZonesCount].CenterPoint[2] = result[2] / 2.0;
 
 			for (int i = 0; i < 3; i++)
 			{
-				g_fZoneCorners[g_mapZonesCount][0][i] = g_mapZones[g_mapZonesCount][PointA][i];
-				g_fZoneCorners[g_mapZonesCount][7][i] = g_mapZones[g_mapZonesCount][PointB][i];
+				g_fZoneCorners[g_mapZonesCount][0][i] = g_mapZones[g_mapZonesCount].PointA[i];
+				g_fZoneCorners[g_mapZonesCount][7][i] = g_mapZones[g_mapZonesCount].PointB[i];
 			}
 
 			// Zone counts:
-			g_mapZonesTypeCount[g_mapZones[g_mapZonesCount][zoneGroup]][g_mapZones[g_mapZonesCount][zoneType]]++;
+			g_mapZonesTypeCount[g_mapZones[g_mapZonesCount].zoneGroup][g_mapZones[g_mapZonesCount].zoneType]++;
 			g_mapZonesCount++;
 		}
 
@@ -5278,8 +5283,8 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 				// Check if entity is inside zone
 				if (IsInsideZone(pos) == x)
 				{
-					Array_Copy(pos, g_mapZones[x][TeleportPosition], 3);
-					Array_Copy(ang, g_mapZones[x][TeleportAngles], 3);
+					Array_Copy(pos, g_mapZones[x].TeleportPosition, 3);
+					Array_Copy(ang, g_mapZones[x].TeleportAngles, 3);
 					break;
 				}
 			}
@@ -5346,10 +5351,10 @@ public void SQL_selectMapZonesCallback(Handle owner, Handle hndl, const char[] e
 		// Clear old stage records
 		for (int i = 0; i < CPLIMIT; i++)
 		{
-			g_StageRecords[i][srRunTime] = 9999999.0;
-			g_StageRecords[i][srLoaded] = false;
-			g_StageRecords[i][srCompletions] = 0;
-			g_StageRecords[i][srStartSpeed] = -1.0;
+			g_StageRecords[i].srRunTime = 9999999.0;
+			g_StageRecords[i].srLoaded = false;
+			g_StageRecords[i].srCompletions = 0;
+			g_StageRecords[i].srStartSpeed = -1.0;
 
 			g_fStageMaxVelocity[i] = g_hStagePreSpeed.FloatValue;
 			g_bStageIgnorePrehop[i] = false;
@@ -5569,7 +5574,7 @@ public void sql_selectLatestRecordsCallback(Handle owner, Handle hndl, const cha
 }
 
 
-public void db_InsertLatestRecords(char szSteamID[32], char szName[32], float FinalTime)
+public void db_InsertLatestRecords(char szSteamID[32], char szName[MAX_NAME_LENGTH], float FinalTime)
 {
 	char szQuery[512];
 	Format(szQuery, 512, sql_insertLatestRecords, szSteamID, szName, FinalTime, g_szMapName);
@@ -6772,7 +6777,7 @@ public void sql_insertStageRecordCallback(Handle owner, Handle hndl, const char[
 
 	db_updateStageRank(client, stage);
 
-	g_StageRecords[stage][srCompletions]++;
+	g_StageRecords[stage].srCompletions++;
 }
 
 
@@ -6831,12 +6836,12 @@ public void sql_loadStageServerRecordsCallback(Handle owner, Handle hndl, const 
 		int completions = SQL_FetchInt(hndl, 3);
 		float startSpeed = SQL_FetchFloat(hndl, 4);
 
-		g_StageRecords[stage][srRunTime] = runtime;
-		g_StageRecords[stage][srLoaded] = true;
-		g_StageRecords[stage][srCompletions] = completions;
-		g_StageRecords[stage][srStartSpeed] = startSpeed;
+		g_StageRecords[stage].srRunTime = runtime;
+		g_StageRecords[stage].srLoaded = true;
+		g_StageRecords[stage].srCompletions = completions;
+		g_StageRecords[stage].srStartSpeed = startSpeed;
 
-		strcopy(g_StageRecords[stage][srPlayerName], sizeof(name), name);
+		strcopy(g_StageRecords[stage].srPlayerName, sizeof(name), name);
 	}
 
 
@@ -7005,7 +7010,7 @@ public void SQL_updateStageRankCallback(Handle owner, Handle hndl, const char[] 
 
 		// Check if the player improved his time
 		if (rank != -1 && rank < g_StagePlayerRank[client][stage])
-			PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage][srCompletions]);
+			PrintToChat(client, "[%cSurf Timer%c] %cYou improved your time, your rank is now %c%d/%d", MOSSGREEN, WHITE, YELLOW, LIMEGREEN, rank, g_StageRecords[stage].srCompletions);
 			
 		g_StagePlayerRank[client][stage] = rank;
 

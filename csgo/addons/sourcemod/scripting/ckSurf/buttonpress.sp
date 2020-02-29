@@ -675,10 +675,10 @@ public void StartStageTimer(int client)
 		Format(speedDiffMsg, sizeof(speedDiffMsg), "%s | PB: %s", speedDiffMsg, srDiff);
 	}
 
-	if (g_StageRecords[stage][srStartSpeed] != -1)
+	if (g_StageRecords[stage].srStartSpeed != -1)
 	{
 		// Get difference between server record 
-		float fDiff = fPlayerVelocity - g_StageRecords[stage][srStartSpeed];
+		float fDiff = fPlayerVelocity - g_StageRecords[stage].srStartSpeed;
 		char srDiff[16];
 
 		if (fDiff < 0)
@@ -702,8 +702,8 @@ public void StartStageTimer(int client)
 			continue;
 			
 		int ObserverTarget = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");
-			if (ObserverTarget != client)
-				continue;
+		if (ObserverTarget != client)
+			continue;
 
 		PrintToChat(i, speedDiffMsg);
 	}
@@ -742,21 +742,21 @@ public void EndStageTimer(int client)
 
 
 	// Get record diff
-	float srdiff = g_StageRecords[stage][srRunTime] - runtime;
+	float srdiff = g_StageRecords[stage].srRunTime - runtime;
 	float pbdiff = g_fStagePlayerRecord[client][stage] - runtime;
 	char srdiff_str[32], pbdiff_str[32];
 
 	FormatTimeFloat(client, srdiff, 5, srdiff_str, sizeof(srdiff_str));
 	FormatTimeFloat(client, pbdiff, 5, pbdiff_str, sizeof(pbdiff_str));
 
-	if (g_StageRecords[stage][srRunTime] != 9999999.0)
+	if (g_StageRecords[stage].srRunTime != 9999999.0)
 	{
 		if (srdiff > 0)	
 			Format(srdiff_str, sizeof(srdiff_str), "-%s", srdiff_str);
 		else
 			Format(srdiff_str, sizeof(srdiff_str), "+%s", srdiff_str);
 	}
-	else if (!g_StageRecords[stage][srLoaded])
+	else if (!g_StageRecords[stage].srLoaded)
 		Format(srdiff_str, sizeof(srdiff_str), "N/A");
 	else
 	{
@@ -774,7 +774,7 @@ public void EndStageTimer(int client)
 		Format(pbdiff_str, sizeof(pbdiff_str), "N/A");
 
 	// Check if the player beaten the record
-	if (g_StageRecords[stage][srRunTime] > runtime)
+	if (g_StageRecords[stage].srRunTime > runtime)
 	{
 		
 		// Check if the stage records were loaded before sending the message
@@ -797,10 +797,10 @@ public void EndStageTimer(int client)
 		char name[45];
 		GetClientName(client, name, sizeof(name));
 
-		strcopy(g_StageRecords[stage][srPlayerName], sizeof(name), name);
-		g_StageRecords[stage][srRunTime] = runtime;
-		g_StageRecords[stage][srLoaded] = true;
-		g_StageRecords[stage][srStartSpeed] = g_fPlayerCurrentStartSpeed[client][stage];
+		strcopy(g_StageRecords[stage].srPlayerName, sizeof(name), name);
+		g_StageRecords[stage].srRunTime = runtime;
+		g_StageRecords[stage].srLoaded = true;
+		g_StageRecords[stage].srStartSpeed = g_fPlayerCurrentStartSpeed[client][stage];
 
 		g_fStagePlayerRecord[client][stage] = runtime;
 

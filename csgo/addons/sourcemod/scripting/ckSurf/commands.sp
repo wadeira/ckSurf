@@ -661,7 +661,7 @@ public void ListStages(int client, int zonegroup)
 	{
 		for (int i = 0; i <= g_mapZonesCount; i++)
 		{
-			if (g_mapZones[i][zoneType] == 3 && g_mapZones[i][zoneGroup] == zonegroup)
+			if (g_mapZones[i].zoneType == 3 && g_mapZones[i].zoneGroup == zonegroup)
 			{
 				StageIds[amount] = i;
 				amount++;
@@ -1933,17 +1933,18 @@ public Action Client_Ranks(int client, int args)
 	{
 		char ChatLine[512];
 		Format(ChatLine, 512, "[%cSurf Timer%c] ", MOSSGREEN, WHITE);
-		int i, RankValue[SkillGroup];
+		int i;
+		SkillGroup RankValue;
 		for (i = 0; i < GetArraySize(g_hSkillGroups); i++)
 		{
-			GetArrayArray(g_hSkillGroups, i, RankValue[0]);
+			GetArrayArray(g_hSkillGroups, i, RankValue);
 
 			if (i != 0 && i % 3 == 0)
 			{
 				PrintToChat(client, ChatLine);
 				Format(ChatLine, 512, " ");
 			}
-			Format(ChatLine, 512, "%s%s%c (%ip)   ", ChatLine, RankValue[RankNameColored], WHITE, RankValue[PointReq]);
+			Format(ChatLine, 512, "%s%s%c (%ip)   ", ChatLine, RankValue.RankNameColored, WHITE, RankValue.PointReq);
 		}
 		PrintToChat(client, ChatLine);
 	}
@@ -2095,9 +2096,9 @@ public void GotoMethod(int client, int target)
 				GetClientEyeAngles(target, angles);
 
 				AddVectors(position, angles, g_fTeleLocation[client]);
-				g_fTeleLocation[client][0] = FloatDiv(g_fTeleLocation[client][0], 2.0);
-				g_fTeleLocation[client][1] = FloatDiv(g_fTeleLocation[client][1], 2.0);
-				g_fTeleLocation[client][2] = FloatDiv(g_fTeleLocation[client][2], 2.0);
+				g_fTeleLocation[client][0] = g_fTeleLocation[client][0] / 2.0;
+				g_fTeleLocation[client][1] = g_fTeleLocation[client][1] / 2.0;
+				g_fTeleLocation[client][2] = g_fTeleLocation[client][2] / 2.0;
 
 				g_bRespawnPosition[client] = false;
 				g_specToStage[client] = true;
@@ -2721,16 +2722,16 @@ public Action Command_saveLoc(int client, int args)
 	GetClientEyeAngles(target, angles);
 
 	// Get Creator and Target name
-	GetClientName(client, g_SavedLocations[id][slCreator], 32);
-	GetClientName(target, g_SavedLocations[id][slPlayer], 32);
+	GetClientName(client, g_SavedLocations[id].creator, 32);
+	GetClientName(target, g_SavedLocations[id].player, 32);
 
 	// Get current run time
-	g_SavedLocations[id][slRunTime] = g_fCurrentRunTime[target];
+	g_SavedLocations[id].runTime = g_fCurrentRunTime[target];
 
 	// Save location
-	Array_Copy(origin, g_SavedLocations[id][slOrigin], sizeof(origin));
-	Array_Copy(velocity, g_SavedLocations[id][slVelocity], sizeof(velocity));
-	Array_Copy(angles, g_SavedLocations[id][slAngles], sizeof(angles));
+	Array_Copy(origin, g_SavedLocations[id].origin, sizeof(origin));
+	Array_Copy(velocity, g_SavedLocations[id].velocity, sizeof(velocity));
+	Array_Copy(angles, g_SavedLocations[id].angles, sizeof(angles));
 
 
 	// Print saveloc's info to chat
@@ -2789,9 +2790,9 @@ public Action Command_loadLoc(int client, int args)
 	// Get saved location
 	float origin[3], angles[3], velocity[3];
 
-	Array_Copy(g_SavedLocations[id][slOrigin], origin, sizeof(origin));
-	Array_Copy(g_SavedLocations[id][slAngles], angles, sizeof(angles));
-	Array_Copy(g_SavedLocations[id][slVelocity], velocity, sizeof(velocity));
+	Array_Copy(g_SavedLocations[id].origin, origin, sizeof(origin));
+	Array_Copy(g_SavedLocations[id].angles, angles, sizeof(angles));
+	Array_Copy(g_SavedLocations[id].velocity, velocity, sizeof(velocity));
 
 	// Teleport player
 	teleportEntitySafe(client, origin, angles, velocity, true);
@@ -2801,10 +2802,10 @@ public Action Command_loadLoc(int client, int args)
 	{
 		// Format run time
 		char sTime[64];
-		FormatTimeFloat(client, g_SavedLocations[id][slRunTime], 3, sTime, sizeof(sTime));
+		FormatTimeFloat(client, g_SavedLocations[id].runTime, 3, sTime, sizeof(sTime));
 
 		// Print message to chat
-		PrintToChat(client, "[%cSurf Timer%c] Loaded location %c#%d %ccreated by: %c%s %c[Player: %c%s %c| Time: %c%s%c]", MOSSGREEN, WHITE, GREEN, id, WHITE, GREEN, g_SavedLocations[id][slCreator], WHITE, GREEN, g_SavedLocations[id][slPlayer], WHITE, GREEN, sTime, WHITE);
+		PrintToChat(client, "[%cSurf Timer%c] Loaded location %c#%d %ccreated by: %c%s %c[Player: %c%s %c| Time: %c%s%c]", MOSSGREEN, WHITE, GREEN, id, WHITE, GREEN, g_SavedLocations[id].creator, WHITE, GREEN, g_SavedLocations[id].player, WHITE, GREEN, sTime, WHITE);
 	}
 
 	// Store the id
@@ -3184,7 +3185,7 @@ public Action Client_MapStats(int client, int args)
 				float stageTime = g_fStagePlayerRecord[client][i];
 				// Format(szTime, 32, "Time: %f", stageTime);
 				if (stageTime < 99999.0) {
-					Format(szValue, 128, "Stage %i: %.2f | Rank: %i/%i", (i), stageTime, g_StagePlayerRank[client][i], g_StageRecords[i][srCompletions]);
+					Format(szValue, 128, "Stage %i: %.2f | Rank: %i/%i", (i), stageTime, g_StagePlayerRank[client][i], g_StageRecords[i].srCompletions);
 					mapInfoMenu.AddItem(szItem, szValue, ITEMDRAW_DEFAULT);
 				}
 				else {

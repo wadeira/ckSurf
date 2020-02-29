@@ -1,2 +1,4 @@
 *.smx
 .atom-build.yml
+compile.ps1
+.vscode
